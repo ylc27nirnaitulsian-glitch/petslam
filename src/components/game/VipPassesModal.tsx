@@ -298,7 +298,7 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
 
         <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-neutral-400">
           <span>🔒 Simulated Instant Settlement</span>
-          <span>Apple Pay · Cards · In-Game</span>
+          <span>Google Pay · Cards · In-Game</span>
         </div>
       </div>
     </div>

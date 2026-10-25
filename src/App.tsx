@@ -5,8 +5,10 @@ import { PetSlamTitleScreen } from './components/game/PetSlamTitleScreen';
 import { MobileGameContainer } from './components/game/MobileGameContainer';
 import { SystemRequiredDetailsPage } from './components/SystemRequiredDetailsPage';
 import { AlphaQueueModal } from './components/game/AlphaQueueModal';
+import { PetSlamIntroSplash } from './components/game/PetSlamIntroSplash';
 
 export default function App() {
+  const [showIntro, setShowIntro] = useState<boolean>(true);
   const [hasEnteredGame, setHasEnteredGame] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
@@ -56,6 +58,7 @@ export default function App() {
     <GameProvider>
       <PetCompanionProvider>
         <div className="min-h-screen bg-[#0B0E14] text-neutral-100 flex flex-col selection:bg-[#CCFF00] selection:text-black">
+        {showIntro && <PetSlamIntroSplash onComplete={() => setShowIntro(false)} />}
         {showSystemDetailsDirect ? (
           <>
             <SystemRequiredDetailsPage

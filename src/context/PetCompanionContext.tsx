@@ -503,13 +503,13 @@ const INITIAL_AUCTIONS: PetAuctionItem[] = [
   {
     id: 'auc_05',
     pet: {
-      ...createInitialPet('bagheera'),
-      name: 'Shadow Bagheera',
-      level: 8,
-      stage: 2,
-      stats: { attack: 78, defense: 50, agility: 84, stamina: 58, cp: 760 },
+      ...createInitialPet('germanshepherd'),
+      name: 'Kaiser Apex',
+      level: 9,
+      stage: 3,
+      stats: { attack: 85, defense: 80, agility: 82, stamina: 88, cp: 820 },
     },
-    sellerName: 'JungleGuild',
+    sellerName: 'BavariaKennel',
     isUserListing: false,
     currentBid: 3200,
     minNextBid: 3450,
@@ -518,7 +518,7 @@ const INITIAL_AUCTIONS: PetAuctionItem[] = [
     highestBidder: 'NightWalker',
     endTime: Date.now() + 1000 * 60 * 180, // 3h left
     status: 'active',
-    notes: 'Mythic panther with stealth critical ambush buff.',
+    notes: 'Max tactical clamp German Shepherd champion with iron jaw bite.',
     bidHistory: [
       { id: 'b_12', bidder: 'NightWalker', amount: 3200, timestamp: Date.now() - 1000 * 60 * 8, isUser: false },
       { id: 'b_13', bidder: 'ShadowBlade', amount: 2900, timestamp: Date.now() - 1000 * 60 * 35, isUser: false },

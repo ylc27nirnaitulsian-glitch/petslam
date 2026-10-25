@@ -16,6 +16,7 @@ import { animalImages } from '../../assets/images';
 import { sound } from '../../utils/audio';
 import { GameGuideModal } from './GameGuideModal';
 import { AccountAuthModal } from './AccountAuthModal';
+import { PetSlamIntroSplash } from './PetSlamIntroSplash';
 
 interface PetSlamTitleScreenProps {
   onEnterGame: () => void;
@@ -29,6 +30,7 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
   const { pet } = usePetCompanion();
   const [guideOpen, setGuideOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [showIntroSplash, setShowIntroSplash] = useState(false);
   const [glowPulse, setGlowPulse] = useState(true);
 
   useEffect(() => {
@@ -83,7 +85,7 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
             )}
           </button>
 
-          {/* Account Login Option (Google / Apple) */}
+          {/* Account Login Option (Google Hub) */}
           <button
             onClick={() => {
               sound.playClick();
@@ -175,18 +177,34 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
             <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
 
-          <button
-            onClick={() => {
-              sound.playClick();
-              setGuideOpen(true);
-            }}
-            className="w-full py-2.5 px-3 rounded-xl font-display font-bold text-xs uppercase tracking-wider text-neutral-300 bg-white/10 hover:bg-white/15 border border-white/15 transition-all cursor-pointer flex items-center justify-center gap-2 backdrop-blur-md"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-[#CCFF00]" />
-            <span>HOW TO PLAY · ARENA GUIDE</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                sound.playClick();
+                setGuideOpen(true);
+              }}
+              className="flex-1 py-2.5 px-3 rounded-xl font-display font-bold text-xs uppercase tracking-wider text-neutral-300 bg-white/10 hover:bg-white/15 border border-white/15 transition-all cursor-pointer flex items-center justify-center gap-1.5 backdrop-blur-md"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-[#CCFF00]" />
+              <span>Guide</span>
+            </button>
+            <button
+              onClick={() => {
+                setShowIntroSplash(true);
+              }}
+              className="flex-1 py-2.5 px-3 rounded-xl font-display font-bold text-xs uppercase tracking-wider text-[#CCFF00] bg-[#CCFF00]/10 hover:bg-[#CCFF00]/20 border border-[#CCFF00]/30 transition-all cursor-pointer flex items-center justify-center gap-1.5 backdrop-blur-md"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#CCFF00]" />
+              <span>Intro FX</span>
+            </button>
+          </div>
         </div>
       </main>
+
+      {/* Cinematic Intro Animation Overlay */}
+      {showIntroSplash && (
+        <PetSlamIntroSplash onComplete={() => setShowIntroSplash(false)} />
+      )}
 
       {/* Account Login Modal */}
       {authOpen && (

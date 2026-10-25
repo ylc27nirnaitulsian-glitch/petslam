@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePetCompanion } from '../../../context/PetCompanionContext';
 import { useGame } from '../../../context/GameContext';
 import { PetAuctionItem, CompanionPet } from '../../../types/pet';
-import { ProceduralPetCanvas } from './ProceduralPetCanvas';
+import { getPetPhoto, getPetBreedName } from '../../../utils/petVisuals';
 import { sound } from '../../../utils/audio';
 import {
   Gavel,
@@ -253,15 +253,13 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                   key={item.id}
                   className="bg-[#121824] border border-white/5 hover:border-white/20 rounded-2xl p-3 flex items-center justify-between transition-all"
                 >
-                  {/* Left: Pet Canvas & Details */}
+                  {/* Left: Authentic Pet Portrait & Details */}
                   <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-                      <ProceduralPetCanvas
-                        species={item.pet.species}
-                        stage={item.pet.stage}
-                        width={64}
-                        height={64}
-                        interactive={false}
+                    <div className="w-16 h-16 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                      <img
+                        src={getPetPhoto(item.pet)}
+                        alt={item.pet.name}
+                        className="w-full h-full object-cover rounded-xl"
                       />
                     </div>
 
@@ -275,7 +273,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                               : 'bg-amber-500/20 text-amber-300'
                           }`}
                         >
-                          {item.pet.category} · Lv.{item.pet.level}
+                          {getPetBreedName(item.pet)} · Lv.{item.pet.level}
                         </span>
                       </div>
                       <div className="text-[11px] font-mono text-[#CCFF00]">
@@ -340,13 +338,11 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                           : 'border-white/5 bg-black/40 text-neutral-400 hover:text-white'
                       }`}
                     >
-                      <div className="w-10 h-10 shrink-0">
-                        <ProceduralPetCanvas
-                          species={p.species}
-                          stage={p.stage}
-                          width={40}
-                          height={40}
-                          interactive={false}
+                      <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                        <img
+                          src={getPetPhoto(p)}
+                          alt={p.name}
+                          className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="overflow-hidden">
@@ -426,17 +422,20 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                     className="bg-[#121824] border border-[#CCFF00]/20 rounded-2xl p-3 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden">
-                        <ProceduralPetCanvas
-                          species={item.pet.species}
-                          stage={item.pet.stage}
-                          width={56}
-                          height={56}
-                          interactive={false}
+                      <div className="w-14 h-14 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                        <img
+                          src={getPetPhoto(item.pet)}
+                          alt={item.pet.name}
+                          className="w-full h-full object-cover rounded-xl"
                         />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-white">{item.pet.name}</div>
+                        <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <span>{item.pet.name}</span>
+                          <span className="text-[9px] px-1 rounded bg-white/10 text-neutral-300 font-mono">
+                            {getPetBreedName(item.pet)}
+                          </span>
+                        </div>
                         <div className="text-[10px] text-[#CCFF00] font-mono">
                           Current Bid: {item.currentBid.toLocaleString()} Credits ({item.bidCount} bids)
                         </div>
@@ -558,7 +557,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                   }}
                   className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase cursor-pointer border border-white/15"
                 >
-                  2,500 Credits
+                  1,500 Credits
                 </button>
               </div>
 

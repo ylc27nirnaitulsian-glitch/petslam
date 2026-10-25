@@ -3,6 +3,7 @@ import JSZip from 'jszip';
 import { usePetCompanion, SPECIES_CONFIG } from '../../../context/PetCompanionContext';
 import { useGame } from '../../../context/GameContext';
 import { ProceduralPetCanvas } from './ProceduralPetCanvas';
+import { getPetPhoto } from '../../../utils/petVisuals';
 import { PetSpecies, CompanionPet } from '../../../types/pet';
 import {
   X,
@@ -108,10 +109,10 @@ export const ExtensionExporterModal: React.FC<ExtensionExporterModalProps> = ({ 
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [showPassModal, setShowPassModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'popup' | 'kennel' | 'radar' | 'auctions' | 'install'>('popup');
+  const [activeTab, setActiveTab] = useState<'popup' | 'kennel' | 'radar' | 'install'>('popup');
   const [previewSpecies, setPreviewSpecies] = useState<PetSpecies>(pet.species);
 
-  // All 16 Pet Breeds (8 Dogs & 8 Cats)
+  // All 16 Pet Breeds (8 Dogs & 8 Cats) - 100% Uniform with App
   const allDogBreeds: { id: PetSpecies; name: string; breed: string; cp: number; tag: string }[] = [
     { id: 'germanshepherd', name: 'Kaiser', breed: 'German Shepherd', cp: 440, tag: 'Tactical Clamp' },
     { id: 'rottweiler', name: 'Vulkan', breed: 'Rottweiler', cp: 460, tag: 'Bone Crusher' },
@@ -127,11 +128,11 @@ export const ExtensionExporterModal: React.FC<ExtensionExporterModalProps> = ({ 
     { id: 'bengal', name: 'Leonidas', breed: 'Bengal Cat', cp: 480, tag: 'Leopard Pounce' },
     { id: 'mainecoon', name: 'Thor', breed: 'Maine Coon', cp: 460, tag: 'Colossus Claws' },
     { id: 'siamese', name: 'Mochi', breed: 'Siamese Cat', cp: 420, tag: 'Sapphire Stare' },
-    { id: 'tabby', name: 'Ginger', breed: 'Orange Tabby', cp: 400, tag: 'Agile Leap' },
+    { id: 'tabby', name: 'Garfield', breed: 'Orange Tabby', cp: 400, tag: 'Agile Leap' },
     { id: 'british', name: 'Winston', breed: 'British Shorthair', cp: 430, tag: 'Velvet Armor' },
-    { id: 'scottish', name: 'Cleo', breed: 'Scottish Fold', cp: 410, tag: 'Stealth Reflex' },
-    { id: 'calico', name: 'Luna', breed: 'Calico Cat', cp: 390, tag: 'Lucky Tri-Color' },
-    { id: 'blackcat', name: 'Midnight', breed: 'Bombay Black Cat', cp: 450, tag: 'Shadow Ambush' },
+    { id: 'scottish', name: 'Luna', breed: 'Scottish Fold', cp: 410, tag: 'Stealth Reflex' },
+    { id: 'calico', name: 'Cleo', breed: 'Calico Cat', cp: 390, tag: 'Lucky Tri-Color' },
+    { id: 'blackcat', name: 'Shadow', breed: 'Bombay Black Cat', cp: 450, tag: 'Shadow Ambush' },
   ];
 
   // Generate the Single Unified Chrome Extension package containing ALL pets and ALL Buddy page features
@@ -2244,16 +2245,6 @@ Includes:
             🎯 Pokemon GO Radar
           </button>
           <button
-            onClick={() => setActiveTab('auctions')}
-            className={`pb-2 px-2 border-b-2 transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'auctions'
-                ? 'border-[#CCFF00] text-[#CCFF00]'
-                : 'border-transparent text-neutral-400 hover:text-white'
-            }`}
-          >
-            ⚖️ Auction Market
-          </button>
-          <button
             onClick={() => setActiveTab('install')}
             className={`pb-2 px-2 border-b-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'install'
@@ -2368,20 +2359,24 @@ Includes:
                         switchSpecies(cat.id);
                         sound.playClick();
                       }}
-                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                      className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center gap-2 ${
                         previewSpecies === cat.id
                           ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-white'
                           : 'border-white/10 bg-[#131824] hover:border-white/30 text-neutral-300'
                       }`}
                     >
-                      <div>
-                        <div className="text-xs font-bold text-white">{cat.name}</div>
-                        <div className="text-[10px] text-neutral-400">{cat.breed} · CP {cat.cp}</div>
-                        <span className="text-[9px] text-[#CCFF00] font-mono">{cat.tag}</span>
+                      <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                        <img
+                          src={getPetPhoto({ species: cat.id, name: cat.name })}
+                          alt={cat.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <span className="text-xs font-bold font-mono">
-                        {previewSpecies === cat.id ? '✓ Selected' : 'Choose'}
-                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-white truncate">{cat.name}</div>
+                        <div className="text-[10px] text-neutral-400 truncate">{cat.breed}</div>
+                        <span className="text-[9px] text-[#CCFF00] font-mono">CP {cat.cp}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2401,20 +2396,24 @@ Includes:
                         switchSpecies(dog.id);
                         sound.playClick();
                       }}
-                      className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                      className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center gap-2 ${
                         previewSpecies === dog.id
                           ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-white'
                           : 'border-white/10 bg-[#131824] hover:border-white/30 text-neutral-300'
                       }`}
                     >
-                      <div>
-                        <div className="text-xs font-bold text-white">{dog.name}</div>
-                        <div className="text-[10px] text-neutral-400">{dog.breed} · CP {dog.cp}</div>
-                        <span className="text-[9px] text-[#CCFF00] font-mono">{dog.tag}</span>
+                      <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-white/10">
+                        <img
+                          src={getPetPhoto({ species: dog.id, name: dog.name })}
+                          alt={dog.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <span className="text-xs font-bold font-mono">
-                        {previewSpecies === dog.id ? '✓ Selected' : 'Choose'}
-                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-white truncate">{dog.name}</div>
+                        <div className="text-[10px] text-neutral-400 truncate">{dog.breed}</div>
+                        <span className="text-[9px] text-[#CCFF00] font-mono">CP {dog.cp}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2454,28 +2453,7 @@ Includes:
             </div>
           )}
 
-          {/* TAB 4: AUCTIONS MARKET */}
-          {activeTab === 'auctions' && (
-            <div className="space-y-3">
-              <p className="text-xs text-neutral-300">
-                Full Pet Auction Market directly inside the extension popup:
-              </p>
-
-              <div className="bg-[#0B101D] border border-amber-500/30 p-3 rounded-xl flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                    <Gavel className="w-4 h-4" />
-                    <span>Real-Time Bidding & Instant Buyouts</span>
-                  </div>
-                  <div className="text-[11px] text-neutral-300 mt-1">
-                    Bid with coins on rare pets, instant buyout, or list your own companions for sale to earn coins!
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: SETUP GUIDE */}
+          {/* TAB 4: SETUP GUIDE */}
           {activeTab === 'install' && (
             <div className="space-y-3 text-xs">
               <h3 className="font-bold text-white text-sm">30-Second Chrome Extension Install</h3>

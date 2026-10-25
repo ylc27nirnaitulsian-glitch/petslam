@@ -57,11 +57,11 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
             </button>
           )}
 
-          {/* Account Button (Google / Apple Account Hub) */}
+          {/* Account Button (Google Cloud Player Hub) */}
           <button
             onClick={() => setAuthModalOpen(true)}
             className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-2 py-1 transition-all cursor-pointer shadow-xs min-w-0 shrink text-left"
-            title="Google & Apple Account Hub"
+            title="Google Player Hub"
           >
             {connectedAccount.avatarUrl ? (
               <div className="w-6 h-6 rounded-lg overflow-hidden border border-[#CCFF00]/60 shrink-0 shadow-xs">
@@ -154,7 +154,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
       {/* Guide Modal */}
       {guideModalOpen && <GameGuideModal isOpen={guideModalOpen} onClose={() => setGuideModalOpen(false)} />}
 
-      {/* Account Auth Modal (Google & Apple) */}
+      {/* Account Auth Modal (Google Player Hub) */}
       {authModalOpen && (
         <AccountAuthModal
           currentTrainerName={trainerName}
