@@ -372,12 +372,12 @@ export const ArenaScreen: React.FC = () => {
           VIEW 1: ARENA LOBBY (Clash Royale Style Deck & Queue)
          ========================================================================= */}
       {!inBattle && (
-        <div className="flex-1 flex flex-col justify-between p-4 overflow-y-auto max-w-md mx-auto w-full">
+        <div className="flex-1 flex flex-col p-3.5 sm:p-5 overflow-y-auto space-y-3 max-w-lg mx-auto w-full pb-28 overscroll-contain">
           {/* Header Stadium Banner */}
-          <div className="bg-gradient-to-r from-[#131B2D] via-[#1A2640] to-[#131B2D] border border-white/10 rounded-3xl p-4 shadow-xl text-center relative overflow-hidden">
+          <div className="bg-gradient-to-r from-[#131B2D] via-[#1A2640] to-[#131B2D] border border-white/10 rounded-2xl p-3.5 shadow-xl text-center relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#CCFF00]/10 rounded-full blur-2xl pointer-events-none" />
-            
-            <div className="flex items-center justify-between text-xs font-mono text-neutral-400 mb-2">
+
+            <div className="flex items-center justify-between text-xs font-mono text-neutral-400 mb-1.5">
               <span className="flex items-center gap-1.5 text-white font-bold">
                 <Crown className="w-4 h-4 text-amber-400" />
                 <span>Colosseum League</span>
@@ -385,18 +385,18 @@ export const ArenaScreen: React.FC = () => {
               <span className="text-[#CCFF00] font-black">{trophies} 🏆 Trophies</span>
             </div>
 
-            <h2 className="font-display font-black text-2xl uppercase tracking-wider text-white">
+            <h2 className="font-display font-black text-xl sm:text-2xl uppercase tracking-wider text-white">
               Pet Clash Arena
             </h2>
-            <p className="text-[11px] text-neutral-300 font-mono mt-0.5">
+            <p className="text-[10px] sm:text-[11px] text-neutral-300 font-mono mt-0.5">
               Real 1v1 Pet Duels · Real Dog & Cat Breeds · Skill-Based Clash
             </p>
           </div>
 
           {/* Active Champion Showcase */}
-          <div className="my-auto py-4 flex flex-col items-center">
+          <div className="py-2 flex flex-col items-center">
             <div className="relative group">
-              <div className="w-48 h-56 rounded-3xl overflow-hidden border-3 border-[#CCFF00] shadow-[0_0_30px_rgba(204,255,0,0.3)] bg-black relative">
+              <div className="w-44 h-52 sm:w-52 sm:h-60 rounded-3xl overflow-hidden border-3 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.25)] bg-black relative">
                 <img
                   src={currentActiveFighter.image}
                   alt={currentActiveFighter.name}
@@ -412,11 +412,11 @@ export const ArenaScreen: React.FC = () => {
                   {currentActiveFighter.category}
                 </div>
 
-                <div className="absolute bottom-3 inset-x-3 text-center">
+                <div className="absolute bottom-2.5 inset-x-3 text-center">
                   <h3 className="font-display font-black text-lg text-white uppercase tracking-wider truncate">
                     {currentActiveFighter.name}
                   </h3>
-                  <div className="text-[11px] text-[#CCFF00] font-mono font-bold">
+                  <div className="text-[10px] sm:text-[11px] text-[#CCFF00] font-mono font-bold">
                     {currentActiveFighter.species} · {currentActiveFighter.combatArchetype}
                   </div>
                 </div>

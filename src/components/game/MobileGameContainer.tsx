@@ -20,7 +20,7 @@ export const MobileGameContainer: React.FC<MobileGameContainerProps> = ({ onRetu
   const [currentTab, setCurrentTab] = useState<GameTab>('arena');
   const [showSystemDetails, setShowSystemDetails] = useState<boolean>(false);
   const [showAlphaQueue, setShowAlphaQueue] = useState<boolean>(false);
-  const [isWideView, setIsWideView] = useState<boolean>(false);
+  const [isWideView, setIsWideView] = useState<boolean>(true);
 
   return (
     <div className="relative min-h-screen w-full bg-[#07090E] text-white flex flex-col items-center justify-center overflow-x-hidden select-none">
@@ -36,27 +36,27 @@ export const MobileGameContainer: React.FC<MobileGameContainerProps> = ({ onRetu
         <span className="text-neutral-400 text-[11px]">Display:</span>
         <button
           onClick={() => setIsWideView(false)}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded-full cursor-pointer transition-all ${
+          className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full cursor-pointer transition-all ${
             !isWideView ? 'bg-[#CCFF00] text-black font-bold' : 'text-neutral-400 hover:text-white'
           }`}
         >
           <Smartphone className="w-3 h-3" />
-          <span>Mobile</span>
+          <span>Phone</span>
         </button>
         <button
           onClick={() => setIsWideView(true)}
-          className={`flex items-center gap-1 px-2 py-0.5 rounded-full cursor-pointer transition-all ${
+          className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full cursor-pointer transition-all ${
             isWideView ? 'bg-[#CCFF00] text-black font-bold' : 'text-neutral-400 hover:text-white'
           }`}
         >
           <Monitor className="w-3 h-3" />
-          <span>Wide Arena</span>
+          <span>Web Desktop</span>
         </button>
       </div>
 
-      {/* Main Smartphone / Game Frame */}
-      <div className={`relative z-10 w-full flex flex-col h-[100dvh] md:h-[min(94vh,890px)] ${
-        isWideView ? 'md:max-w-3xl' : 'md:max-w-[440px]'
+      {/* Main Responsive Game Frame */}
+      <div className={`relative z-10 w-full flex flex-col h-[100dvh] md:h-[min(95vh,920px)] ${
+        isWideView ? 'md:max-w-2xl lg:max-w-3xl' : 'md:max-w-[440px]'
       } md:my-auto md:rounded-[36px] md:border-4 md:border-[#1E293B] md:shadow-[0_25px_80px_rgba(0,0,0,0.85)] bg-[#0B0E17] overflow-hidden transition-all duration-300`}>
         {showSystemDetails ? (
           /* System Required Details View */

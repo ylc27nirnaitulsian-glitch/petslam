@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { usePetCompanion } from '../../../context/PetCompanionContext';
+import { useGame } from '../../../context/GameContext';
 import { ProceduralPetCanvas } from './ProceduralPetCanvas';
 import { PetAnimationState } from '../../../types/pet';
 import {
@@ -32,6 +33,7 @@ interface FloatingPetOverlayProps {
 export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   onOpenSanctuary,
 }) => {
+  const { activeBeast } = useGame();
   const { pet, isOverlayActive, toggleOverlay, feedPet, strokePet, availableBerries } =
     usePetCompanion();
 
@@ -419,7 +421,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
           className="bg-[#0F172A]/90 hover:bg-[#1E293B] border border-[#CCFF00]/50 text-white px-3 py-1.5 rounded-full shadow-2xl flex items-center gap-2 cursor-pointer text-xs font-bold"
         >
           <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] animate-pulse" />
-          <span>{pet.name} (Screen Buddy)</span>
+          <span>{activeBeast.name} (Screen Buddy)</span>
           <ChevronUp className="w-3.5 h-3.5 text-neutral-400" />
         </button>
       ) : (
@@ -431,25 +433,30 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
         >
           {/* Status Badge */}
           <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/85 backdrop-blur-sm text-[10px] font-mono px-2 py-0.5 rounded-full border border-white/10 text-neutral-300 flex items-center gap-1.5 mb-1 pointer-events-none">
-            <span className="text-[#CCFF00] font-bold">{pet.name}</span>
+            <span className="text-[#CCFF00] font-bold">{activeBeast.name}</span>
             {isCharging && <span className="text-cyan-400 font-bold">⚡ CHARGING</span>}
             <span className="text-pink-400">{'❤️'.repeat(pet.affectionHearts)}</span>
           </div>
 
-          {/* Procedural Canvas */}
-          <ProceduralPetCanvas
-            species={pet.species}
-            stage={pet.stage}
-            animationState={animState}
-            mood={pet.mood}
-            talkingVolume={talkingVolume}
-            width={120}
-            height={120}
-            interactive={false}
-            customPalette={pet.customPalette}
-            customFeatures={pet.customFeatures}
-            avatarImageUrl={pet.avatarImageUrl}
-          />
+          {/* Living Realistic Pet Standee */}
+          <div className="relative w-24 h-28 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.35)] bg-black">
+            <img
+              src={activeBeast.image}
+              alt={activeBeast.name}
+              className={`w-full h-full object-cover object-center transition-transform ${
+                animState === 'eat' ? 'animate-bounce' : 'group-hover:scale-105'
+              }`}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute bottom-1 inset-x-1 text-center">
+              <span className="text-[10px] font-display font-black text-white uppercase truncate block">
+                {activeBeast.name}
+              </span>
+              <span className="text-[8px] font-mono text-[#CCFF00] font-bold block truncate">
+                {activeBeast.species}
+              </span>
+            </div>
+          </div>
 
           {/* Mini Control Dock on hover */}
           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-1 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10">
