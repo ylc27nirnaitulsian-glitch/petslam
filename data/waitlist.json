@@ -1,0 +1,71 @@
+[
+  {
+    "id": "ps_f95959390d3e",
+    "email": "beastmaster@petslam.gg",
+    "created_at": "2026-10-11T10:16:57.822Z",
+    "signup_status": "confirmed",
+    "perks": {
+      "credits": 10000,
+      "founder_badge": true,
+      "alpha_access": true
+    }
+  },
+  {
+    "id": "ps_60c971134b26",
+    "email": "nirnaitulsian12345678@gmail.com",
+    "created_at": "2026-10-11T10:03:47.325Z",
+    "signup_status": "confirmed",
+    "perks": {
+      "credits": 10000,
+      "founder_badge": true,
+      "alpha_access": true
+    }
+  },
+  {
+    "id": "ps_1076e9caedf2",
+    "email": "tester@petslam.gg",
+    "created_at": "2026-10-11T09:50:28.564Z",
+    "signup_status": "confirmed",
+    "perks": {
+      "credits": 10000,
+      "founder_badge": true,
+      "alpha_access": true
+    }
+  },
+  {
+    "id": "ps_seed_01",
+    "email": "alex.vanguard@esports.gg",
+    "created_at": "2026-10-06T09:50:03.443Z",
+    "signup_status": "confirmed",
+    "source": "early_bird",
+    "perks": {
+      "credits": 10000,
+      "founder_badge": true,
+      "alpha_access": true
+    }
+  },
+  {
+    "id": "ps_seed_02",
+    "email": "kane.apex@beastzone.io",
+    "created_at": "2026-10-08T09:50:03.444Z",
+    "signup_status": "confirmed",
+    "source": "alpha_circuit",
+    "perks": {
+      "credits": 10000,
+      "founder_badge": true,
+      "alpha_access": true
+    }
+  },
+  {
+    "id": "ps_seed_03",
+    "email": "valeria.strike@predatorarena.net",
+    "created_at": "2026-10-09T09:50:03.444Z",
+    "signup_status": "confirmed",
+    "source": "pvp_invite",
+    "perks": {
+      "credits": 10000,
+      "founder_badge": true,
+      "alpha_access": true
+    }
+  }
+]
