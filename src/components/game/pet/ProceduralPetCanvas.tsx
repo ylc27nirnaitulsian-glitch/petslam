@@ -61,6 +61,13 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
 
+  // Keep references to customPalette and customFeatures for 60 FPS reactive updates without re-mounting
+  const customPaletteRef = useRef(customPalette);
+  customPaletteRef.current = customPalette;
+
+  const customFeaturesRef = useRef(customFeatures);
+  customFeaturesRef.current = customFeatures;
+
   // Determine photo URL: ONLY used when renderMode is explicitly 'photo'
   const effectiveImageUrl = renderMode === 'photo' ? (avatarImageUrl || PET_SPECIES_PHOTOS[species] || '') : '';
 
@@ -777,14 +784,17 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         noseColor = '#78350F';
       }
 
-      // Custom User Photo Avatar Palette Override
-      if (customPalette) {
-        if (customPalette.primary) primaryColor = customPalette.primary;
-        if (customPalette.secondary) secondaryColor = customPalette.secondary;
-        if (customPalette.belly) bellyColor = customPalette.belly;
-        if (customPalette.ear) earColor = customPalette.ear;
-        if (customPalette.eye) eyeColor = customPalette.eye;
-        if (customPalette.nose) noseColor = customPalette.nose;
+      const curPalette = customPaletteRef.current || customPalette;
+      const curFeatures = customFeaturesRef.current || customFeatures;
+
+      // Custom User Photo Avatar / DNA Builder Palette Override
+      if (curPalette) {
+        if (curPalette.primary) primaryColor = curPalette.primary;
+        if (curPalette.secondary) secondaryColor = curPalette.secondary;
+        if (curPalette.belly) bellyColor = curPalette.belly;
+        if (curPalette.ear) earColor = curPalette.ear;
+        if (curPalette.eye) eyeColor = curPalette.eye;
+        if (curPalette.nose) noseColor = curPalette.nose;
       }
 
       // (Stage scaling is cleanly incorporated into totalScaleX / totalScaleY above)
@@ -896,7 +906,57 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       // F. EARS
       const earTwitch = Math.sin(s.time * 8) * (s.pettingIntensity > 0 ? 0.2 : 0.05);
 
-      if (isCat) {
+      if (curFeatures?.earType === 'floppy') {
+        [-1, 1].forEach((side) => {
+          ctx.save();
+          ctx.translate(side * 36, -42);
+          ctx.rotate(side * (0.15 + earTwitch));
+          ctx.fillStyle = primaryColor;
+          ctx.beginPath();
+          ctx.ellipse(0, 16, 14, 26, side * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = earColor;
+          ctx.beginPath();
+          ctx.ellipse(0, 15, 8, 17, side * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      } else if (curFeatures?.earType === 'pointed') {
+        [-1, 1].forEach((side) => {
+          ctx.save();
+          ctx.translate(side * 28, -58);
+          ctx.rotate(side * (0.24 - earTwitch));
+          ctx.fillStyle = primaryColor;
+          ctx.beginPath();
+          ctx.moveTo(-14, 15);
+          ctx.lineTo(0, -26);
+          ctx.lineTo(14, 15);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = earColor;
+          ctx.beginPath();
+          ctx.moveTo(-7, 12);
+          ctx.lineTo(0, -18);
+          ctx.lineTo(7, 12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        });
+      } else if (curFeatures?.earType === 'round') {
+        [-1, 1].forEach((side) => {
+          ctx.save();
+          ctx.translate(side * 30, -56);
+          ctx.fillStyle = primaryColor;
+          ctx.beginPath();
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = earColor;
+          ctx.beginPath();
+          ctx.arc(0, 2, 9, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      } else if (isCat) {
         if (species === 'scottish') {
           // Scottish Fold flat-folded rounded ears
           [-1, 1].forEach((side) => {
@@ -1126,8 +1186,9 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       ctx.ellipse(0, -20, 22, 16, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // CAT WHISKERS
-      if (isCat) {
+      // CAT & CUSTOM WHISKERS
+      const shouldDrawWhiskers = curFeatures?.hasWhiskers !== undefined ? curFeatures.hasWhiskers : isCat;
+      if (shouldDrawWhiskers) {
         ctx.strokeStyle = species === 'blackcat' ? '#94A3B8' : '#78716C';
         ctx.lineWidth = 1.8;
         // Left whiskers
@@ -1212,7 +1273,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       const rightEyeX = eyeSpacing;
 
       // Custom Eye Patch
-      if (customFeatures?.eyePatch) {
+      if (curFeatures?.eyePatch) {
         ctx.fillStyle = secondaryColor;
         ctx.beginPath();
         ctx.ellipse(leftEyeX, eyeY, 15, 14, 0.1, 0, Math.PI * 2);
@@ -1220,8 +1281,8 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       }
 
       // Custom Collar
-      if (customFeatures?.collarColor) {
-        ctx.fillStyle = customFeatures.collarColor;
+      if (curFeatures?.collarColor) {
+        ctx.fillStyle = curFeatures.collarColor;
         ctx.beginPath();
         ctx.roundRect(-22, 0, 44, 7, 3);
         ctx.fill();
@@ -1371,7 +1432,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       }
 
       // Glasses / Shades Accessory
-      if (customFeatures?.glasses === 'shades') {
+      if (curFeatures?.glasses === 'shades') {
         ctx.save();
         ctx.fillStyle = '#0F172A';
         ctx.strokeStyle = '#38BDF8';
@@ -1388,7 +1449,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         ctx.lineTo(eyeSpacing - 12, eyeY);
         ctx.stroke();
         ctx.restore();
-      } else if (customFeatures?.glasses === 'vr') {
+      } else if (curFeatures?.glasses === 'vr') {
         ctx.save();
         ctx.fillStyle = '#1E1B4B';
         ctx.strokeStyle = '#CCFF00';
@@ -1405,7 +1466,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       }
 
       // Hats Accessory
-      if (customFeatures?.hat === 'crown') {
+      if (curFeatures?.hat === 'crown') {
         ctx.save();
         ctx.fillStyle = '#F59E0B';
         ctx.strokeStyle = '#B45309';
@@ -1426,7 +1487,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         ctx.arc(0, -56, 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
-      } else if (customFeatures?.hat === 'party') {
+      } else if (curFeatures?.hat === 'party') {
         ctx.save();
         ctx.fillStyle = '#EC4899';
         ctx.beginPath();
@@ -1440,7 +1501,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         ctx.arc(0, -82, 5, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
-      } else if (customFeatures?.hat === 'detective') {
+      } else if (curFeatures?.hat === 'detective') {
         ctx.save();
         ctx.fillStyle = '#78350F';
         ctx.beginPath();

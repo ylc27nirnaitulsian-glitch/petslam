@@ -143,6 +143,13 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
   const [activePalette, setActivePalette] = useState<PetCustomPalette | null>(null);
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [showPassModal, setShowPassModal] = useState<boolean>(false);
+  const [hasUsedFreeCustomPet, setHasUsedFreeCustomPet] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('petslam_used_free_custom_pet') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // 3D Tilt Cyber Holo-Foil Card State
@@ -311,10 +318,18 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
   // Save pet to kennel AND register as playable fighter in Arena!
   const handleSaveToKennelAndArena = () => {
-    // If not unlocked, allow 1 free starter creation or show pass unlock
-    if (!hasAvatarStudioPass) {
+    // If user hasn't unlocked pass and has already used free starter creation, prompt pass
+    if (!hasAvatarStudioPass && hasUsedFreeCustomPet) {
       setShowPassModal(true);
       return;
+    }
+
+    // Grant first starter pet completely free!
+    if (!hasAvatarStudioPass && !hasUsedFreeCustomPet) {
+      try {
+        localStorage.setItem('petslam_used_free_custom_pet', 'true');
+        setHasUsedFreeCustomPet(true);
+      } catch {}
     }
 
     finalizeSave();
@@ -508,10 +523,14 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
             <span>Custom DNA Builder (Manual)</span>
           </button>
 
-          <div className="ml-auto flex items-center gap-1 text-[11px] font-mono text-[#CCFF00]">
+          <div className="ml-auto flex items-center gap-1 text-[11px] font-mono">
             {hasAvatarStudioPass ? (
-              <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full text-[10px] font-bold">
+              <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
                 ✓ Pass Active
+              </span>
+            ) : !hasUsedFreeCustomPet ? (
+              <span className="bg-[#CCFF00]/20 text-[#CCFF00] border border-[#CCFF00]/60 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider animate-pulse">
+                ✨ Free Pass Available
               </span>
             ) : (
               <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full text-[10px] font-bold">
@@ -972,33 +991,42 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                   </div>
 
                   {/* Ear & Accessory Toggles */}
-                  <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
+                  <div className="grid grid-cols-4 gap-1.5 text-[10px] font-mono">
                     <button
                       type="button"
                       onClick={() => setBuilderEarType('pointed')}
-                      className={`p-2 rounded-lg border text-center cursor-pointer ${
-                        builderEarType === 'pointed' ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-[#CCFF00]' : 'border-white/10'
+                      className={`p-2 rounded-lg border text-center cursor-pointer transition-all ${
+                        builderEarType === 'pointed' ? 'border-[#CCFF00] bg-[#CCFF00]/15 text-[#CCFF00] font-bold' : 'border-white/10 text-neutral-400'
                       }`}
                     >
-                      Pointed Ears
+                      Pointed
                     </button>
                     <button
                       type="button"
                       onClick={() => setBuilderEarType('floppy')}
-                      className={`p-2 rounded-lg border text-center cursor-pointer ${
-                        builderEarType === 'floppy' ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-[#CCFF00]' : 'border-white/10'
+                      className={`p-2 rounded-lg border text-center cursor-pointer transition-all ${
+                        builderEarType === 'floppy' ? 'border-[#CCFF00] bg-[#CCFF00]/15 text-[#CCFF00] font-bold' : 'border-white/10 text-neutral-400'
                       }`}
                     >
-                      Floppy Ears
+                      Floppy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBuilderEarType('round')}
+                      className={`p-2 rounded-lg border text-center cursor-pointer transition-all ${
+                        builderEarType === 'round' ? 'border-[#CCFF00] bg-[#CCFF00]/15 text-[#CCFF00] font-bold' : 'border-white/10 text-neutral-400'
+                      }`}
+                    >
+                      Round
                     </button>
                     <button
                       type="button"
                       onClick={() => setBuilderEyePatch((p) => !p)}
-                      className={`p-2 rounded-lg border text-center cursor-pointer ${
-                        builderEyePatch ? 'border-[#CCFF00] bg-[#CCFF00]/10 text-[#CCFF00]' : 'border-white/10'
+                      className={`p-2 rounded-lg border text-center cursor-pointer transition-all ${
+                        builderEyePatch ? 'border-[#CCFF00] bg-[#CCFF00]/15 text-[#CCFF00] font-bold' : 'border-white/10 text-neutral-400'
                       }`}
                     >
-                      Eye Patch: {builderEyePatch ? 'ON' : 'OFF'}
+                      Patch: {builderEyePatch ? 'ON' : 'OFF'}
                     </button>
                   </div>
 
@@ -1054,11 +1082,66 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
               </div>
 
               {/* Palette Choosers */}
-              <div className="bg-[#121724] border border-white/10 p-3 rounded-2xl space-y-2">
-                <span className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-[#CCFF00]" />
-                  <span>Customize Coat & Markings Palette:</span>
-                </span>
+              <div className="bg-[#121724] border border-white/10 p-3 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
+                    <Palette className="w-3.5 h-3.5 text-[#CCFF00]" />
+                    <span>Coat DNA Presets & Custom Swatches:</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-[#CCFF00]">1-Click Presets</span>
+                </div>
+
+                {/* Instant DNA Style Presets */}
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                  {[
+                    {
+                      name: 'Cyber Gold',
+                      palette: { primary: '#F59E0B', secondary: '#D97706', belly: '#FEF3C7', ear: '#D97706', eye: '#00F0FF', nose: '#1C1917' },
+                      bg: 'from-amber-500 to-amber-700',
+                    },
+                    {
+                      name: 'Neon Synth',
+                      palette: { primary: '#00F0FF', secondary: '#0284C7', belly: '#E0F2FE', ear: '#FF007A', eye: '#39FF14', nose: '#0B0F19' },
+                      bg: 'from-cyan-400 to-fuchsia-600',
+                    },
+                    {
+                      name: 'Midnight',
+                      palette: { primary: '#1E293B', secondary: '#0F172A', belly: '#334155', ear: '#475569', eye: '#F59E0B', nose: '#020617' },
+                      bg: 'from-slate-700 to-slate-900',
+                    },
+                    {
+                      name: 'Toxic Venom',
+                      palette: { primary: '#84CC16', secondary: '#4D7C0F', belly: '#ECFCCB', ear: '#65A30D', eye: '#D946EF', nose: '#14532D' },
+                      bg: 'from-lime-500 to-emerald-800',
+                    },
+                    {
+                      name: 'Arctic Frost',
+                      palette: { primary: '#E2E8F0', secondary: '#94A3B8', belly: '#FFFFFF', ear: '#CBD5E1', eye: '#0284C7', nose: '#0F172A' },
+                      bg: 'from-sky-200 to-blue-400',
+                    },
+                    {
+                      name: 'Crimson Flame',
+                      palette: { primary: '#DC2626', secondary: '#991B1B', belly: '#FEE2E2', ear: '#B91C1C', eye: '#FBBF24', nose: '#450A0A' },
+                      bg: 'from-red-500 to-rose-800',
+                    },
+                  ].map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        setBuilderPalette(preset.palette);
+                      }}
+                      className="group relative p-1.5 rounded-xl border border-white/10 hover:border-[#CCFF00] bg-[#0A0E18] text-center cursor-pointer transition-all hover:scale-102"
+                    >
+                      <div className={`w-full h-3.5 rounded-md bg-gradient-to-r ${preset.bg} mb-1`} />
+                      <span className="text-[9px] font-mono font-bold text-neutral-300 group-hover:text-white truncate block">
+                        {preset.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-[10px] font-mono">
                   {[
                     { key: 'primary', label: 'Main Fur', color: builderPalette.primary },

@@ -15,6 +15,9 @@ import {
   Info,
   Sparkles,
   Activity,
+  Dna,
+  Crown,
+  Target,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { usePetCompanion } from '../../context/PetCompanionContext';
@@ -27,7 +30,11 @@ export type MainNavId =
   | 'extension'
   | 'beasts'
   | 'market'
-  | 'multiplayer';
+  | 'multiplayer'
+  | 'ranked'
+  | 'genetics'
+  | 'pass'
+  | 'quests';
 
 interface DesktopNavRailProps {
   currentTab: MainNavId;
@@ -54,7 +61,11 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
 
   const navItems = [
     { id: 'arena' as const, label: 'Arena', icon: Swords, badge: '60 FPS' },
+    { id: 'ranked' as const, label: '1v1 Ranked', icon: Swords, badge: '20 TICK' },
     { id: 'sanctuary' as const, label: 'Sanctuary', icon: Heart, badge: null },
+    { id: 'genetics' as const, label: 'Breeding Lab', icon: Dna, badge: 'GEN-2' },
+    { id: 'pass' as const, label: 'Slam Pass', icon: Crown, badge: 'TIERS' },
+    { id: 'quests' as const, label: 'Daily Quests', icon: Target, badge: '3 NEW' },
     { id: 'studio' as const, label: 'AI Studio', icon: Camera, badge: 'AI' },
     { id: 'auctions' as const, label: 'Auctions', icon: Gavel, badge: 'LIVE' },
     { id: 'extension' as const, label: 'Buddy Hub', icon: Tv, badge: 'NEW' },

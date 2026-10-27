@@ -18,6 +18,7 @@ import {
   Server,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
+import { initClarity } from '../../utils/clarity';
 
 interface SystemDiagnosticsModalProps {
   isOpen: boolean;
@@ -44,8 +45,17 @@ export const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({
   const [aiPingResult, setAiPingResult] = useState<string | null>(null);
 
   // Read environment variable presence safely
-  const hasClarity = !!import.meta.env.VITE_CLARITY_PROJECT_ID;
-  const clarityId = (import.meta.env.VITE_CLARITY_PROJECT_ID as string) || '';
+  const [clarityCustomId, setClarityCustomId] = useState<string>(() => {
+    try {
+      return localStorage.getItem('petslam_clarity_project_id') || (import.meta.env.VITE_CLARITY_PROJECT_ID as string) || '';
+    } catch {
+      return '';
+    }
+  });
+  const [showClarityInput, setShowClarityInput] = useState(false);
+  const [clarityInputValue, setClarityInputValue] = useState(clarityCustomId);
+  const hasClarity = !!clarityCustomId;
+  const clarityId = clarityCustomId;
   const maskedClarity = clarityId
     ? `${clarityId.slice(0, 3)}••••${clarityId.slice(-3)}`
     : 'Simulated Local Telemetry';
@@ -288,6 +298,15 @@ export const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono">
                   <span className="text-neutral-300 font-bold">{item.metric}</span>
+                  {item.id === 'clarity' && (
+                    <button
+                      onClick={() => setShowClarityInput((p) => !p)}
+                      className="px-2 py-0.5 rounded bg-cyan-500/15 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 font-bold transition-all cursor-pointer flex items-center gap-1 active:scale-95"
+                    >
+                      <Zap className="w-2.5 h-2.5 text-cyan-400" />
+                      <span>{hasClarity ? 'Update ID' : 'Connect ID'}</span>
+                    </button>
+                  )}
                   {item.id === 'gemini' && (
                     <button
                       onClick={handleTestAiPing}
@@ -313,6 +332,51 @@ export const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({
               </div>
             ))}
           </div>
+
+          {/* Microsoft Clarity Quick Connect Drawer */}
+          {showClarityInput && (
+            <div className="mt-3 p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-500/40 flex flex-col sm:flex-row items-center gap-3">
+              <div className="flex-1 w-full">
+                <label className="block text-[11px] font-mono font-bold text-cyan-200 mb-1">
+                  Enter Microsoft Clarity Project ID:
+                </label>
+                <input
+                  type="text"
+                  value={clarityInputValue}
+                  onChange={(e) => setClarityInputValue(e.target.value.trim())}
+                  placeholder="e.g. q1a2b3c4d5"
+                  className="w-full bg-black/60 border border-cyan-500/40 focus:border-cyan-400 rounded-xl px-3 py-1.5 text-xs text-white font-mono outline-none"
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-2 sm:pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const trimmed = clarityInputValue.trim();
+                    if (trimmed) {
+                      try {
+                        localStorage.setItem('petslam_clarity_project_id', trimmed);
+                      } catch {}
+                      setClarityCustomId(trimmed);
+                      initClarity({ projectId: trimmed });
+                      sound.playVictory();
+                      setShowClarityInput(false);
+                    }
+                  }}
+                  className="flex-1 sm:flex-initial py-1.5 px-3 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-mono text-xs font-black uppercase cursor-pointer transition-all shadow-[0_0_12px_rgba(6,182,212,0.4)]"
+                >
+                  Save & Connect
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowClarityInput(false)}
+                  className="py-1.5 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-neutral-300 text-xs font-mono cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* DNS Checklist Quick Reference */}
           <div className="mt-4 p-4 rounded-2xl bg-black/50 border border-white/10 space-y-2">

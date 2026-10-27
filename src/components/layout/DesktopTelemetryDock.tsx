@@ -23,6 +23,10 @@ interface DesktopTelemetryDockProps {
   onOpenBuddyHub: () => void;
   onOpenVipStore: () => void;
   onOpenStudio: () => void;
+  onOpenRanked?: () => void;
+  onOpenBreeding?: () => void;
+  onOpenPass?: () => void;
+  onOpenQuests?: () => void;
 }
 
 export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
@@ -30,6 +34,10 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
   onOpenBuddyHub,
   onOpenVipStore,
   onOpenStudio,
+  onOpenRanked,
+  onOpenBreeding,
+  onOpenPass,
+  onOpenQuests,
 }) => {
   const {
     ownedBeasts,
@@ -219,6 +227,61 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* LiveOps & Netcode Shortcuts */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onOpenRanked}
+          className="p-2.5 rounded-xl bg-cyan-950/60 border border-cyan-400/50 hover:border-cyan-300 text-left transition-all cursor-pointer shadow-md active:scale-95 group"
+        >
+          <div className="text-[10px] font-mono text-cyan-400 font-bold flex items-center justify-between">
+            <span>NETCODE</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+          </div>
+          <div className="text-xs font-bold text-white uppercase mt-0.5 group-hover:text-cyan-200">
+            1v1 Ranked
+          </div>
+          <div className="text-[9px] font-mono text-neutral-400">±150 CP Match</div>
+        </button>
+
+        <button
+          onClick={onOpenBreeding}
+          className="p-2.5 rounded-xl bg-fuchsia-950/60 border border-fuchsia-400/50 hover:border-fuchsia-300 text-left transition-all cursor-pointer shadow-md active:scale-95 group"
+        >
+          <div className="text-[10px] font-mono text-fuchsia-400 font-bold flex items-center justify-between">
+            <span>GENETICS</span>
+            <Sparkles className="w-2.5 h-2.5 text-fuchsia-300" />
+          </div>
+          <div className="text-xs font-bold text-white uppercase mt-0.5 group-hover:text-fuchsia-200">
+            Breeding Lab
+          </div>
+          <div className="text-[9px] font-mono text-neutral-400">5% Mutant Roll</div>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onOpenPass}
+          className="p-2.5 rounded-xl bg-amber-950/60 border border-amber-400/50 hover:border-amber-300 text-left transition-all cursor-pointer shadow-md active:scale-95 group"
+        >
+          <div className="text-[10px] font-mono text-amber-400 font-bold">50 TIERS</div>
+          <div className="text-xs font-bold text-white uppercase mt-0.5 group-hover:text-amber-200">
+            Slam Pass
+          </div>
+          <div className="text-[9px] font-mono text-neutral-400">Season 1 Live</div>
+        </button>
+
+        <button
+          onClick={onOpenQuests}
+          className="p-2.5 rounded-xl bg-lime-950/60 border border-lime-400/50 hover:border-lime-300 text-left transition-all cursor-pointer shadow-md active:scale-95 group"
+        >
+          <div className="text-[10px] font-mono text-lime-400 font-bold">3 ACTIVE</div>
+          <div className="text-xs font-bold text-white uppercase mt-0.5 group-hover:text-lime-200">
+            Daily Quests
+          </div>
+          <div className="text-[9px] font-mono text-neutral-400">XP & Credits</div>
+        </button>
       </div>
 
       {/* 4. VIP Genesis Store Promotion */}

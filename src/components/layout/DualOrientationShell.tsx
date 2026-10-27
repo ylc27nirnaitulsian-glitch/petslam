@@ -22,6 +22,10 @@ import { ExtensionExporterModal } from '../game/pet/ExtensionExporterModal';
 import { FriendsHubModal } from '../game/FriendsHubModal';
 import { VipPassesModal } from '../game/VipPassesModal';
 import { SystemDiagnosticsModal } from '../diagnostic/SystemDiagnosticsModal';
+import { RankedMatchmakingModal } from '../game/RankedMatchmakingModal';
+import { BreedingLabModal } from '../game/pet/BreedingLabModal';
+import { SlamBattlePassModal } from '../game/liveops/SlamBattlePassModal';
+import { DailyQuestsDrawer } from '../game/liveops/DailyQuestsDrawer';
 import { RotateCw, Smartphone, Sparkles } from 'lucide-react';
 
 interface DualOrientationShellProps {
@@ -46,6 +50,10 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   const [auctionsModalOpen, setAuctionsModalOpen] = useState<boolean>(false);
   const [buddyModalOpen, setBuddyModalOpen] = useState<boolean>(false);
   const [friendsModalOpen, setFriendsModalOpen] = useState<boolean>(false);
+  const [rankedModalOpen, setRankedModalOpen] = useState<boolean>(false);
+  const [breedingModalOpen, setBreedingModalOpen] = useState<boolean>(false);
+  const [passModalOpen, setPassModalOpen] = useState<boolean>(false);
+  const [questsDrawerOpen, setQuestsDrawerOpen] = useState<boolean>(false);
 
   // Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -149,6 +157,22 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       setFriendsModalOpen(true);
       return;
     }
+    if (tab === 'ranked') {
+      setRankedModalOpen(true);
+      return;
+    }
+    if (tab === 'genetics') {
+      setBreedingModalOpen(true);
+      return;
+    }
+    if (tab === 'pass') {
+      setPassModalOpen(true);
+      return;
+    }
+    if (tab === 'quests') {
+      setQuestsDrawerOpen(true);
+      return;
+    }
     setCurrentTab(tab);
   };
 
@@ -183,6 +207,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
           onOpenSystemDetails={onOpenSystemDetails || (() => setShowInfoDrawer(true))}
           onReturnToTitle={onReturnToTitle}
           onStartPracticeDrill={() => setCurrentTab('arena')}
+          onOpenQuests={() => setQuestsDrawerOpen(true)}
         />
 
         {/* Mobile Orientation Suggestion Banner in Arena */}
@@ -219,6 +244,10 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
         onOpenBuddyHub={() => setBuddyModalOpen(true)}
         onOpenVipStore={() => setShowVipStore(true)}
         onOpenStudio={() => setStudioModalOpen(true)}
+        onOpenRanked={() => setRankedModalOpen(true)}
+        onOpenBreeding={() => setBreedingModalOpen(true)}
+        onOpenPass={() => setPassModalOpen(true)}
+        onOpenQuests={() => setQuestsDrawerOpen(true)}
       />
 
       {/* 4. Mobile Bottom Navigation Dock (< 1024px) */}
@@ -247,6 +276,31 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
         <SystemDiagnosticsModal
           isOpen={isDiagnosticsOpen}
           onClose={() => setIsDiagnosticsOpen(false)}
+        />
+      )}
+      {rankedModalOpen && (
+        <RankedMatchmakingModal
+          isOpen={rankedModalOpen}
+          onClose={() => setRankedModalOpen(false)}
+        />
+      )}
+      {breedingModalOpen && (
+        <BreedingLabModal
+          isOpen={breedingModalOpen}
+          onClose={() => setBreedingModalOpen(false)}
+        />
+      )}
+      {passModalOpen && (
+        <SlamBattlePassModal
+          isOpen={passModalOpen}
+          onClose={() => setPassModalOpen(false)}
+        />
+      )}
+      {questsDrawerOpen && (
+        <DailyQuestsDrawer
+          isOpen={questsDrawerOpen}
+          onClose={() => setQuestsDrawerOpen(false)}
+          onOpenPass={() => setPassModalOpen(true)}
         />
       )}
 

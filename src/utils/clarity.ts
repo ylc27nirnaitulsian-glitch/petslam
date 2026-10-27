@@ -29,6 +29,7 @@ export function initClarity(config?: ClarityConfig): boolean {
   const projectId =
     config?.projectId ||
     (import.meta.env.VITE_CLARITY_PROJECT_ID as string) ||
+    (typeof window !== 'undefined' && typeof localStorage !== 'undefined' ? localStorage.getItem('petslam_clarity_project_id') || '' : '') ||
     '';
 
   if (!projectId || projectId === 'YOUR_CLARITY_PROJECT_ID') {

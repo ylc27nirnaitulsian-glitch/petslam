@@ -10,6 +10,7 @@ import {
   Shield,
   Crown,
   Radio,
+  Target,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { usePetCompanion } from '../../context/PetCompanionContext';
@@ -25,12 +26,14 @@ interface GameTopBarProps {
   onReturnToTitle?: () => void;
   onChallengeFriend?: (friend: any) => void;
   onStartPracticeDrill?: () => void;
+  onOpenQuests?: () => void;
 }
 
 export const GameTopBar: React.FC<GameTopBarProps> = ({
   onReturnToTitle,
   onChallengeFriend,
   onStartPracticeDrill,
+  onOpenQuests,
 }) => {
   const {
     trainerName,
@@ -134,6 +137,18 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
               {isOverlayActive ? 'Buddy Live 🟢' : 'Summon Buddy'}
             </span>
           </button>
+
+          {/* Daily Quests Drawer Button */}
+          {onOpenQuests && (
+            <button
+              onClick={onOpenQuests}
+              className="flex items-center gap-1.5 bg-cyan-950/70 hover:bg-cyan-900/80 border border-cyan-400/60 rounded-xl px-2.5 py-1.5 text-xs font-mono font-black text-cyan-200 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
+              title="Daily Quests & Battle Directives"
+            >
+              <Target className="w-4 h-4 text-cyan-400" />
+              <span className="text-xs font-black hidden sm:inline">Quests</span>
+            </button>
+          )}
 
           {/* VIP Pass Button */}
           <button

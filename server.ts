@@ -1,4 +1,5 @@
 import express from 'express';
+import http from 'http';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -6,6 +7,7 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import DodoPayments from 'dodopayments';
+import { authoritativeCombatServer } from './src/server/authoritativeCombatServer';
 
 dotenv.config();
 
@@ -817,7 +819,12 @@ async function startServer() {
     });
   }
 
-  app.listen(Number(PORT), '0.0.0.0', () => {
+  const server = http.createServer(app);
+
+  // Initialize Authoritative 20-Tick Combat WebSocket Server
+  authoritativeCombatServer.init(server);
+
+  server.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`[PET SLAM] Server operational on http://0.0.0.0:${PORT} (${isProduction ? 'production' : 'development'})`);
   });
 }
