@@ -27,7 +27,7 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0A0D14]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-5px_25px_rgba(0,0,0,0.5)] select-none px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-center justify-around">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080C16]/98 backdrop-blur-2xl border-t border-white/20 shadow-[0_-8px_30px_rgba(0,0,0,0.7)] select-none px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = currentTab === tab.id;
@@ -36,26 +36,26 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
           <button
             key={tab.id}
             onClick={() => handleSelect(tab.id)}
-            className={`relative flex flex-col items-center justify-center min-w-[50px] min-h-[46px] px-1 py-1 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer ${
-              isActive ? 'text-[#CCFF00]' : 'text-neutral-400 hover:text-white'
+            className={`relative flex flex-col items-center justify-center min-w-[54px] min-h-[50px] px-1 py-1 rounded-xl transition-all duration-150 active:scale-90 cursor-pointer ${
+              isActive ? 'text-[#CCFF00]' : 'text-slate-300 hover:text-white'
             }`}
           >
             {/* Active Pill Glow */}
             {isActive && (
-              <div className="absolute -top-1.5 w-6 h-1 bg-[#CCFF00] rounded-full shadow-[0_0_8px_#CCFF00]" />
+              <div className="absolute -top-2 w-8 h-1 bg-[#CCFF00] rounded-full shadow-[0_0_10px_#CCFF00]" />
             )}
 
             <div
               className={`p-1 rounded-lg transition-transform duration-200 ${
-                isActive ? 'scale-115 text-[#CCFF00]' : 'text-neutral-400'
+                isActive ? 'scale-115 text-[#CCFF00] drop-shadow-[0_0_8px_rgba(204,255,0,0.6)]' : 'text-slate-300'
               }`}
             >
               <Icon className="w-5 h-5" />
             </div>
 
             <span
-              className={`text-[9px] font-mono font-bold tracking-tight uppercase leading-none mt-0.5 ${
-                isActive ? 'text-white' : 'text-neutral-400'
+              className={`text-xs font-mono uppercase leading-none mt-1 ${
+                isActive ? 'text-white font-black tracking-wider' : 'text-slate-300 font-bold'
               }`}
             >
               {tab.label}

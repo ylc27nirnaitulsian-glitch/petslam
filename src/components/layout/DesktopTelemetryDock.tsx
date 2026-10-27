@@ -56,28 +56,28 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
   ];
 
   return (
-    <aside className="hidden xl:flex flex-col w-[300px] h-full bg-[#0A0D14]/90 backdrop-blur-xl border-l border-white/10 select-none z-30 shrink-0 p-3.5 space-y-3.5 overflow-y-auto scrollbar-thin text-white">
+    <aside className="hidden xl:flex flex-col w-[320px] h-full bg-[#090D17]/98 backdrop-blur-xl border-l border-white/20 select-none z-30 shrink-0 p-4 space-y-4 overflow-y-auto scrollbar-thin text-white shadow-2xl">
       {/* Dock Header */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+      <div className="flex items-center justify-between border-b border-white/15 pb-3">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#CCFF00] animate-pulse" />
-          <span className="font-display font-black text-xs uppercase tracking-wider text-white">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] animate-pulse shadow-[0_0_8px_#CCFF00]" />
+          <span className="font-display font-black text-sm uppercase tracking-wider text-white">
             Combat Telemetry
           </span>
         </div>
-        <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+        <span className="text-xs font-mono text-emerald-300 font-black bg-emerald-500/20 border border-emerald-400/50 px-2.5 py-0.5 rounded-full shadow-xs">
           60 FPS LIVE
         </span>
       </div>
 
       {/* 1. Active Battle Deck (Squad Roster) */}
-      <div className="bg-[#0E121B] border border-white/10 rounded-2xl p-3 shadow-md">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-[#CCFF00]" />
+      <div className="bg-[#0E1424] border border-white/15 rounded-2xl p-3.5 shadow-lg">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-xs font-mono font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+            <Shield className="w-4 h-4 text-[#CCFF00]" />
             Active Squad Deck (4)
           </span>
-          <span className="text-[10px] font-mono text-[#CCFF00]">Tag-In Ready</span>
+          <span className="text-xs font-mono text-[#CCFF00] font-bold">Tag-In Ready</span>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -93,31 +93,31 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
                   sound.playClick();
                   selectActiveBeast(beast.id);
                 }}
-                className={`relative flex items-center gap-2 p-2 rounded-xl text-left border cursor-pointer transition-all duration-200 ${
+                className={`relative flex items-center gap-2 p-2.5 rounded-xl text-left border cursor-pointer transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-[#CCFF00]/15 to-transparent border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.25)]'
-                    : 'bg-white/5 border-white/10 hover:border-white/25 hover:bg-white/10'
+                    ? 'bg-gradient-to-r from-[#CCFF00]/25 to-transparent border-2 border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.3)]'
+                    : 'bg-white/5 border-white/15 hover:border-white/30 hover:bg-white/10'
                 }`}
               >
-                <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-black/60 shrink-0 border border-white/10">
+                <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-black/60 shrink-0 border border-white/20">
                   <img src={photo} alt={beast.name} className="w-full h-full object-cover" />
                   {isActive && (
-                    <div className="absolute inset-0 bg-[#CCFF00]/20 flex items-center justify-center">
-                      <Zap className="w-3.5 h-3.5 text-[#CCFF00]" />
+                    <div className="absolute inset-0 bg-[#CCFF00]/30 flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-[#CCFF00]" />
                     </div>
                   )}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-display font-black uppercase text-white truncate">
+                  <div className="text-xs font-display font-black uppercase text-white truncate">
                     {beast.name}
                   </div>
-                  <div className="text-[9px] font-mono text-[#CCFF00] font-bold">
+                  <div className="text-xs font-mono text-[#CCFF00] font-black">
                     CP {cp}
                   </div>
                 </div>
 
-                <span className="absolute top-1 right-1 text-[8px] font-mono text-neutral-500">
+                <span className="absolute top-1 right-1 text-[9px] font-mono text-slate-400 font-bold">
                   #{idx + 1}
                 </span>
               </button>
@@ -127,30 +127,30 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
       </div>
 
       {/* 2. Desktop Companion Sync Status */}
-      <div className="bg-[#0E121B] border border-white/10 rounded-2xl p-3 shadow-md">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <Tv className="w-3.5 h-3.5 text-cyan-400" />
+      <div className="bg-[#0E1424] border border-white/15 rounded-2xl p-3.5 shadow-lg">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-xs font-mono font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+            <Tv className="w-4 h-4 text-cyan-400" />
             Companion Buddy Bridge
           </span>
           <button
             onClick={onOpenBuddyHub}
-            className="text-[10px] font-mono text-cyan-400 hover:underline cursor-pointer flex items-center gap-0.5"
+            className="text-xs font-mono font-bold text-cyan-300 hover:underline cursor-pointer flex items-center gap-0.5"
           >
-            Hub <ChevronRight className="w-3 h-3" />
+            Hub <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="flex items-center justify-between bg-black/40 border border-white/5 rounded-xl p-2.5">
+        <div className="flex items-center justify-between bg-black/60 border border-white/10 rounded-xl p-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/25 border border-cyan-400/50 text-cyan-300 flex items-center justify-center shrink-0">
               <Tv className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-bold text-white truncate">
+              <div className="text-sm font-bold text-white truncate">
                 {pet.name} ({pet.species})
               </div>
-              <div className="text-[10px] font-mono text-neutral-400">
+              <div className="text-xs font-mono text-cyan-300 font-semibold">
                 {isOverlayActive ? '🟢 Roaming Screen' : '⚪ Asleep in Kennel'}
               </div>
             </div>
@@ -161,10 +161,10 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
               sound.playClick();
               toggleOverlay();
             }}
-            className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold cursor-pointer transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-black cursor-pointer transition-all ${
               isOverlayActive
-                ? 'bg-cyan-500 text-black shadow-xs font-black'
-                : 'bg-white/10 text-neutral-300 hover:text-white'
+                ? 'bg-cyan-400 text-black shadow-md'
+                : 'bg-white/15 text-white hover:bg-white/25 border border-white/20'
             }`}
           >
             {isOverlayActive ? 'Dock' : 'Summon'}
@@ -176,45 +176,45 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
             sound.playClick();
             toggleOverlay();
           }}
-          className={`w-full mt-2 py-1.5 px-2 rounded-xl text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+          className={`w-full mt-2.5 py-2 px-3 rounded-xl text-xs font-mono font-black flex items-center justify-center gap-2 transition-all cursor-pointer border shadow-sm ${
             isOverlayActive
-              ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-sm'
-              : 'bg-white/5 border-white/10 text-neutral-300 hover:text-white hover:bg-white/10'
+              ? 'bg-cyan-950/80 border-2 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(0,240,255,0.3)]'
+              : 'bg-white/10 border-white/20 text-white hover:bg-white/15'
           }`}
         >
-          <span>🐾</span>
+          <span className="text-sm">🐾</span>
           <span>{isOverlayActive ? 'Buddy Roaming Active 🟢' : 'Preview Desktop Buddy on Screen'}</span>
         </button>
       </div>
 
       {/* 3. Live Auction House Ticker */}
-      <div className="bg-[#0E121B] border border-white/10 rounded-2xl p-3 shadow-md">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-neutral-400 flex items-center gap-1.5">
-            <Gavel className="w-3.5 h-3.5 text-amber-400" />
+      <div className="bg-[#0E1424] border border-white/15 rounded-2xl p-3.5 shadow-lg">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-xs font-mono font-black uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+            <Gavel className="w-4 h-4 text-amber-400" />
             Live Auction Stream
           </span>
           <button
             onClick={onOpenAuctions}
-            className="text-[10px] font-mono text-amber-400 hover:underline cursor-pointer flex items-center gap-0.5"
+            className="text-xs font-mono font-bold text-amber-300 hover:underline cursor-pointer flex items-center gap-0.5"
           >
-            Enter <ChevronRight className="w-3 h-3" />
+            Enter <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {liveTickers.map((item, idx) => (
             <div
               key={idx}
-              className="flex items-center justify-between p-2 rounded-xl bg-black/40 border border-white/5 text-[11px]"
+              className="flex items-center justify-between p-2.5 rounded-xl bg-black/60 border border-white/10 text-xs font-mono"
             >
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-                <span className="font-bold text-white truncate max-w-[110px]">{item.pet}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
+                <span className="font-bold text-white truncate max-w-[120px]">{item.pet}</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="font-mono text-amber-300 font-bold">{item.bid}</span>
-                <span className="text-[9px] font-mono text-neutral-500">{item.time}</span>
+                <span className="text-amber-300 font-black">{item.bid}</span>
+                <span className="text-[10px] text-slate-400">{item.time}</span>
               </div>
             </div>
           ))}
@@ -225,24 +225,24 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
       <div className="mt-auto pt-2">
         <button
           onClick={onOpenVipStore}
-          className="w-full relative overflow-hidden group p-3 rounded-2xl bg-gradient-to-r from-fuchsia-600/20 via-pink-600/20 to-purple-600/20 border border-fuchsia-500/40 hover:border-fuchsia-400 cursor-pointer shadow-lg transition-all"
+          className="w-full relative overflow-hidden group p-3.5 rounded-2xl bg-gradient-to-r from-fuchsia-600/30 via-pink-600/30 to-purple-600/30 border-2 border-fuchsia-400/60 hover:border-fuchsia-300 cursor-pointer shadow-xl transition-all"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-xl bg-fuchsia-500 text-white shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-fuchsia-500 text-white shadow-sm">
                 <Crown className="w-4 h-4" />
               </div>
               <div className="text-left">
-                <div className="font-display font-black text-xs uppercase text-white tracking-wider flex items-center gap-1">
+                <div className="font-display font-black text-sm uppercase text-white tracking-wider flex items-center gap-1">
                   Genesis VIP Passes
-                  <Sparkles className="w-3 h-3 text-[#CCFF00]" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#CCFF00]" />
                 </div>
-                <div className="text-[10px] font-mono text-neutral-300">
+                <div className="text-xs font-mono text-slate-200 font-medium">
                   Dodo Payments · Cards & Apple Pay
                 </div>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-fuchsia-400 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-4 h-4 text-fuchsia-300 group-hover:translate-x-1 transition-transform" />
           </div>
         </button>
       </div>

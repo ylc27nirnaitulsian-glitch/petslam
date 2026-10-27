@@ -57,7 +57,7 @@ export default function App() {
   return (
     <GameProvider>
       <PetCompanionProvider>
-        <div className="min-h-screen bg-[#0B0E14] text-neutral-100 flex flex-col selection:bg-[#CCFF00] selection:text-black">
+        <div className="min-h-screen bg-[#06080D] text-white font-medium flex flex-col selection:bg-[#CCFF00] selection:text-black">
         {showIntro && <PetSlamIntroSplash onComplete={() => setShowIntro(false)} />}
         {showSystemDetailsDirect ? (
           <>
