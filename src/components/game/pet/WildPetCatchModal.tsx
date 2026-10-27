@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { WildPetEncounter, CompanionPet, BerryItem, BERRIES } from '../../../types/pet';
 import { ProceduralPetCanvas } from './ProceduralPetCanvas';
 import { sound } from '../../../utils/audio';
+import { triggerVictoryExplosion } from '../../../utils/confetti';
 import {
   X,
   Sparkles,
@@ -13,6 +14,7 @@ import {
   Compass,
   AlertCircle,
   CheckCircle,
+  RotateCw,
 } from 'lucide-react';
 
 interface WildPetCatchModalProps {
@@ -34,6 +36,8 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
   );
   const [shakeCount, setShakeCount] = useState(0);
   const [throwQuality, setThrowQuality] = useState<string | null>(null);
+  const [isCurveball, setIsCurveball] = useState(false);
+  const [ballSpinAngle, setBallSpinAngle] = useState(0);
   const [caughtResultPet, setCaughtResultPet] = useState<CompanionPet | null>(null);
   const [ballPos, setBallPos] = useState({ x: 0, y: 0, scale: 1 });
   const [isAiming, setIsAiming] = useState(false);
@@ -63,6 +67,13 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
     if (!isAiming || !dragStartRef.current) return;
     const dy = e.clientY - dragStartRef.current.y;
     const dx = e.clientX - dragStartRef.current.x;
+
+    // Detect spin curve
+    if (Math.abs(dx) > 30) {
+      setIsCurveball(true);
+      setBallSpinAngle((prev) => prev + (dx > 0 ? 15 : -15));
+    }
+
     if (dy < 0) {
       // Pulling / aiming upwards
       setBallPos({ x: dx * 0.4, y: dy * 0.6, scale: Math.max(0.7, 1 + dy * 0.001) });
@@ -77,18 +88,21 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
     } catch {}
 
     const dy = e.clientY - dragStartRef.current.y;
+    const dx = e.clientX - dragStartRef.current.x;
     dragStartRef.current = null;
 
     // Minimum flick threshold to throw
     if (dy < -40) {
-      executeThrow();
+      const detectedCurve = Math.abs(dx) > 30;
+      executeThrow(detectedCurve, dx);
     } else {
       // Reset position
       setBallPos({ x: 0, y: 0, scale: 1 });
+      setIsCurveball(false);
     }
   };
 
-  const executeThrow = () => {
+  const executeThrow = (hasCurve: boolean, dxOffset: number) => {
     setBallState('thrown');
     sound.playPokeBallThrow();
 
@@ -102,10 +116,23 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
       quality = 'GREAT THROW!';
       bonus = 1.4;
     }
+
+    if (hasCurve) {
+      quality = `🌀 SPIN CURVEBALL! + ${quality}`;
+      bonus *= 1.35;
+    }
+
     setThrowQuality(quality);
 
-    // Animate ball flying toward pet
-    setBallPos({ x: 0, y: -220, scale: 0.35 });
+    // Animate curved ball trajectory toward pet
+    if (hasCurve) {
+      setBallPos({ x: dxOffset * 0.5, y: -110, scale: 0.65 });
+      setTimeout(() => {
+        setBallPos({ x: 0, y: -220, scale: 0.35 });
+      }, 150);
+    } else {
+      setBallPos({ x: 0, y: -220, scale: 0.35 });
+    }
 
     setTimeout(() => {
       // Ball hits pet
@@ -132,6 +159,7 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
             if (roll <= catchRate) {
               // GOTCHA!
               sound.playPokeBallCatch();
+              triggerVictoryExplosion();
               setBallState('caught');
 
               const caught: CompanionPet = {
@@ -172,6 +200,7 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
               sound.playLightHit();
               setBallState('escaped');
               setBallPos({ x: 0, y: 0, scale: 1 });
+              setIsCurveball(false);
               setTimeout(() => {
                 setBallState('ready');
                 setShakeCount(0);
@@ -179,8 +208,8 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
               }, 1200);
             }
           }, 600);
-        }, 650);
-      }, 650);
+        }, 700);
+      }, 700);
     }, 450);
   };
 
@@ -384,7 +413,7 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
               ))}
             </div>
 
-            {/* Draggable Pokeball */}
+            {/* Draggable Pokeball with Spin-Curve */}
             <div className="relative flex flex-col items-center">
               <div
                 onPointerDown={handleBallPointerDown}
@@ -392,12 +421,12 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
                 onPointerUp={handleBallPointerUp}
                 onPointerCancel={handleBallPointerUp}
                 style={{
-                  transform: `translate(${ballPos.x}px, ${ballPos.y}px) scale(${ballPos.scale})`,
+                  transform: `translate(${ballPos.x}px, ${ballPos.y}px) scale(${ballPos.scale}) rotate(${ballSpinAngle}deg)`,
                   transition: isAiming ? 'none' : 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }}
                 className={`w-14 h-14 rounded-full border-2 border-black flex flex-col overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing touch-none select-none ${
                   ballState === 'ready' ? 'hover:scale-105 active:scale-95' : 'pointer-events-none'
-                }`}
+                } ${isCurveball ? 'ring-2 ring-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.8)]' : ''}`}
               >
                 {/* Red top */}
                 <div className="flex-1 bg-red-600 border-b border-black flex items-end justify-center">
@@ -407,12 +436,26 @@ export const WildPetCatchModal: React.FC<WildPetCatchModalProps> = ({
                 <div className="flex-1 bg-white" />
                 {/* Center latch */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-2 border-black flex items-center justify-center shadow-inner">
-                  <div className="w-1.5 h-1.5 rounded-full bg-neutral-200" />
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isCurveball ? 'bg-cyan-400 animate-ping' : 'bg-neutral-200'
+                    }`}
+                  />
                 </div>
               </div>
 
-              <div className="mt-2 text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
-                {isAiming ? 'Flick Upwards to Throw!' : 'Swipe Up to Catch Pet'}
+              <div className="mt-2 flex flex-col items-center text-center">
+                {isCurveball ? (
+                  <span className="text-[10px] font-mono font-bold text-cyan-300 animate-pulse flex items-center gap-1">
+                    <span>🌀</span> Curveball Arc Active (+35% Catch Rate!)
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
+                    {isAiming
+                      ? 'Flick Upwards (Curve Sideways for Bonus)!'
+                      : 'Swipe Up to Throw · Curve for Bonus'}
+                  </span>
+                )}
               </div>
             </div>
           </div>

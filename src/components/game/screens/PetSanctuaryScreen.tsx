@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from '../../../context/GameContext';
 import { usePetCompanion, SPECIES_CONFIG } from '../../../context/PetCompanionContext';
 import {
@@ -23,6 +23,9 @@ import {
   Tv,
   Layers,
   Sparkle,
+  Smile,
+  Droplets,
+  Flame,
 } from 'lucide-react';
 import { sound } from '../../../utils/audio';
 import { voiceMimic } from '../../../utils/voiceMimic';
@@ -33,10 +36,69 @@ import { WildPetCatchModal } from '../pet/WildPetCatchModal';
 import { PetAuctionHouseModal } from '../pet/PetAuctionHouseModal';
 import { PetAvatarPhotoStudioModal } from '../pet/PetAvatarPhotoStudioModal';
 import { PetWorldMapView } from '../pet/PetWorldMapView';
+import { triggerConfetti } from '../../../utils/confetti';
 
 interface PetSanctuaryScreenProps {
   onGoToArena?: () => void;
 }
+
+interface DraggableCareTool {
+  id: string;
+  name: string;
+  type: 'food' | 'sponge' | 'milk' | 'treat';
+  emoji: string;
+  label: string;
+  bgClass: string;
+  borderClass: string;
+}
+
+const CARE_TOOLS: DraggableCareTool[] = [
+  {
+    id: 'steak',
+    name: 'Prime Steak',
+    type: 'food',
+    emoji: '🥩',
+    label: 'Steak',
+    bgClass: 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300',
+    borderClass: 'border-rose-400/40',
+  },
+  {
+    id: 'kibble',
+    name: 'Kibble Feast',
+    type: 'food',
+    emoji: '🥣',
+    label: 'Kibble',
+    bgClass: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300',
+    borderClass: 'border-amber-400/40',
+  },
+  {
+    id: 'berry',
+    name: 'Oran Berry',
+    type: 'treat',
+    emoji: '🫐',
+    label: 'Berries',
+    bgClass: 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300',
+    borderClass: 'border-blue-400/40',
+  },
+  {
+    id: 'milk',
+    name: 'Milk Bowl',
+    type: 'milk',
+    emoji: '🥛',
+    label: 'Milk',
+    bgClass: 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300',
+    borderClass: 'border-cyan-400/40',
+  },
+  {
+    id: 'sponge',
+    name: 'Soapy Sponge',
+    type: 'sponge',
+    emoji: '🧽',
+    label: 'Sponge',
+    bgClass: 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300',
+    borderClass: 'border-emerald-400/40',
+  },
+];
 
 export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToArena }) => {
   const { activeBeast, ownedBeasts, selectActiveBeast } = useGame();
@@ -59,8 +121,17 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
   const [roomLighting, setRoomLighting] = useState<'day' | 'night'>('day');
   const [heartsCount, setHeartsCount] = useState<number>(4);
   const [hungerLevel, setHungerLevel] = useState<number>(85);
+  const [cleanlinessLevel, setCleanlinessLevel] = useState<number>(90);
   const [pettingHearts, setPettingHearts] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [bubbleParticles, setBubbleParticles] = useState<{ id: number; x: number; y: number; size: number }[]>([]);
+  const [bubbleParticles, setBubbleParticles] = useState<
+    { id: number; x: number; y: number; size: number }[]
+  >([]);
+
+  // Drag & Drop Physics State
+  const [activeDragTool, setActiveDragTool] = useState<DraggableCareTool | null>(null);
+  const [dragPointerPos, setDragPointerPos] = useState<{ x: number; y: number } | null>(null);
+  const [isHoveringPetStage, setIsHoveringPetStage] = useState(false);
+  const petStageRef = useRef<HTMLDivElement | null>(null);
 
   // Modals
   const [showExtensionModal, setShowExtensionModal] = useState(false);
@@ -70,12 +141,14 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
 
   // Status & Speech
   const [speechBubbleText, setSpeechBubbleText] = useState<string | null>(
-    `Hi Trainer! I'm ${activeBeast.name}! Tap me to pet or use the buttons below!`
+    `Hi Trainer! I'm ${activeBeast.name}! Drag treats or the soapy sponge onto me, or tap below!`
   );
 
   // Keep speech in sync when pet changes
   useEffect(() => {
-    setSpeechBubbleText(`Ready to train, Trainer! I'm ${activeBeast.name} (${activeBeast.breed || activeBeast.species})!`);
+    setSpeechBubbleText(
+      `Ready to train, Trainer! I'm ${activeBeast.name} (${activeBeast.breed || activeBeast.species})!`
+    );
   }, [activeBeast.id, activeBeast.name, activeBeast.breed, activeBeast.species]);
 
   const showSpeech = (text: string, duration = 3000) => {
@@ -84,35 +157,35 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
   };
 
   // Trigger floating heart particles
-  const spawnHearts = (e?: React.MouseEvent) => {
+  const spawnHearts = (x?: number, y?: number) => {
     const id = Date.now() + Math.random();
-    const x = e ? e.clientX : window.innerWidth / 2;
-    const y = e ? e.clientY : window.innerHeight / 2;
-    setPettingHearts((prev) => [...prev, { id, x, y }]);
+    const spawnX = x !== undefined ? x : window.innerWidth / 2;
+    const spawnY = y !== undefined ? y : window.innerHeight / 2;
+    setPettingHearts((prev) => [...prev, { id, x: spawnX, y: spawnY }]);
     setTimeout(() => {
       setPettingHearts((prev) => prev.filter((h) => h.id !== id));
     }, 1400);
   };
 
-  // Trigger floating bubble particles for bath
-  const spawnBubbles = () => {
-    const newBubbles = Array.from({ length: 8 }).map((_, i) => ({
-      id: Date.now() + i,
-      x: 30 + Math.random() * 40,
-      y: 35 + Math.random() * 35,
-      size: 14 + Math.random() * 18,
+  // Trigger floating bubble particles for bath / scrubbing
+  const spawnBubblesAt = (relXPercent: number, relYPercent: number, count = 4) => {
+    const newBubbles = Array.from({ length: count }).map((_, i) => ({
+      id: Date.now() + Math.random() + i,
+      x: Math.max(10, Math.min(90, relXPercent + (Math.random() - 0.5) * 15)),
+      y: Math.max(10, Math.min(90, relYPercent + (Math.random() - 0.5) * 15)),
+      size: 10 + Math.random() * 16,
     }));
     setBubbleParticles((prev) => [...prev, ...newBubbles]);
     setTimeout(() => {
-      setBubbleParticles([]);
-    }, 2400);
+      setBubbleParticles((prev) => prev.filter((b) => !newBubbles.some((nb) => nb.id === b.id)));
+    }, 1800);
   };
 
   // Interactive Care: Petting (Stroke)
   const handlePetTheBeast = (e: React.MouseEvent) => {
     sound.playGiggle();
     setAnimState('pet');
-    spawnHearts(e);
+    spawnHearts(e.clientX, e.clientY);
     strokePet();
     setHeartsCount((prev) => Math.min(5, prev + 1));
     showSpeech(`*Purrrrr!* You give the best pets! ❤️`);
@@ -120,12 +193,13 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
   };
 
   // Interactive Care: Feeding
-  const handleFeedKibble = () => {
+  const handleFeedKibble = (treatName = 'kibble', bonus = 20) => {
     sound.playChew();
     setAnimState('eat');
-    setHungerLevel((prev) => Math.min(100, prev + 20));
+    setHungerLevel((prev) => Math.min(100, prev + bonus));
     feedPet(BERRIES[0]);
-    showSpeech(`*Munch munch* Delicious gourmet kibble! Energy +20! 🥣`);
+    spawnHearts();
+    showSpeech(`*Nom nom nom!* Loved that ${treatName}! Hunger -${bonus}%! 😋`);
     setTimeout(() => setAnimState('idle'), 2000);
   };
 
@@ -133,7 +207,8 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
   const handleBubbleBath = () => {
     sound.playBubblePop();
     setAnimState('bath');
-    spawnBubbles();
+    spawnBubblesAt(50, 50, 10);
+    setCleanlinessLevel(100);
     showSpeech(`Splish splash! Squeaky clean bubble bath! 🧼✨`);
     setTimeout(() => setAnimState('idle'), 2400);
   };
@@ -142,7 +217,8 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
   const handlePourMilk = () => {
     sound.playMilkSlurp();
     setAnimState('drink_milk');
-    showSpeech(`*Slurp slurp* Fresh milk bowl! Satiety +15! 🥛`);
+    setHungerLevel((prev) => Math.min(100, prev + 15));
+    showSpeech(`*Slurp slurp* Fresh cold milk! Satiety +15! 🥛`);
     setTimeout(() => setAnimState('idle'), 2200);
   };
 
@@ -152,6 +228,87 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     setAnimState('fart');
     showSpeech(`Oops! Excuse me! Hehehe! 💨😹`);
     setTimeout(() => setAnimState('idle'), 1800);
+  };
+
+  // --- DRAGGABLE TOOLS TOUCH & POINTER PHYSICS ---
+  const handleToolPointerDown = (tool: DraggableCareTool, e: React.PointerEvent) => {
+    e.preventDefault();
+    sound.playClick();
+    setActiveDragTool(tool);
+    setDragPointerPos({ x: e.clientX, y: e.clientY });
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+    if (tool.type === 'food' || tool.type === 'treat' || tool.type === 'milk') {
+      showSpeech(`Drag ${tool.name} into ${activeBeast.name}'s mouth!`);
+    } else if (tool.type === 'sponge') {
+      showSpeech(`Rub the soapy sponge all over ${activeBeast.name}! 🧽`);
+    }
+  };
+
+  const handleGlobalPointerMove = (e: React.PointerEvent) => {
+    if (!activeDragTool) return;
+    setDragPointerPos({ x: e.clientX, y: e.clientY });
+
+    // Check if pointer is over the pet stage
+    if (petStageRef.current) {
+      const rect = petStageRef.current.getBoundingClientRect();
+      const isInside =
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom;
+
+      setIsHoveringPetStage(isInside);
+
+      if (isInside && activeDragTool.type === 'sponge') {
+        // Scrubbing physics: spawn dynamic bubbles as sponge is dragged across pet
+        const relX = ((e.clientX - rect.left) / rect.width) * 100;
+        const relY = ((e.clientY - rect.top) / rect.height) * 100;
+        if (Math.random() < 0.4) {
+          spawnBubblesAt(relX, relY, 2);
+          sound.playBubblePop();
+          setCleanlinessLevel((prev) => Math.min(100, prev + 2));
+        }
+      }
+    }
+  };
+
+  const handleGlobalPointerUp = (e: React.PointerEvent) => {
+    if (!activeDragTool) return;
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
+
+    const wasHovering = isHoveringPetStage;
+    const tool = activeDragTool;
+    setActiveDragTool(null);
+    setDragPointerPos(null);
+    setIsHoveringPetStage(false);
+
+    // If dropped inside pet stage, execute targeted drop reaction
+    if (wasHovering) {
+      if (tool.type === 'food' || tool.type === 'treat') {
+        handleFeedKibble(tool.name, tool.id === 'steak' ? 30 : 20);
+        triggerConfetti();
+      } else if (tool.type === 'milk') {
+        handlePourMilk();
+      } else if (tool.type === 'sponge') {
+        sound.playBubblePop();
+        setAnimState('bath');
+        setCleanlinessLevel(100);
+        showSpeech(`✨ Super clean! ${activeBeast.name} is squeaky clean and sparkling!`);
+        setTimeout(() => setAnimState('idle'), 2000);
+      }
+    } else {
+      // Direct click fallback (if released without dragging far)
+      if (tool.type === 'food' || tool.type === 'treat') {
+        handleFeedKibble(tool.name, 20);
+      } else if (tool.type === 'milk') {
+        handlePourMilk();
+      } else if (tool.type === 'sponge') {
+        handleBubbleBath();
+      }
+    }
   };
 
   // Talking Tom Voice Mimic (Repeater)
@@ -206,10 +363,25 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
 
   return (
     <div
+      onPointerMove={handleGlobalPointerMove}
+      onPointerUp={handleGlobalPointerUp}
       className={`h-full w-full flex flex-col justify-between overflow-hidden p-2 sm:p-2.5 transition-colors duration-500 select-none ${
         roomLighting === 'night' ? 'bg-[#05070D]' : 'bg-[#080B12]'
       } text-white`}
     >
+      {/* Active Floating Dragged Tool Physics Ghost */}
+      {activeDragTool && dragPointerPos && (
+        <div
+          className="fixed pointer-events-none z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/90 border border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.6)] backdrop-blur-md transform -translate-x-1/2 -translate-y-1/2 scale-125 transition-transform"
+          style={{ left: `${dragPointerPos.x}px`, top: `${dragPointerPos.y}px` }}
+        >
+          <span className="text-2xl animate-bounce">{activeDragTool.emoji}</span>
+          <span className="text-xs font-mono font-bold text-[#CCFF00]">
+            {isHoveringPetStage ? 'Drop to Apply!' : activeDragTool.name}
+          </span>
+        </div>
+      )}
+
       {/* Floating Petting Hearts Animation */}
       {pettingHearts.map((h) => (
         <div
@@ -235,7 +407,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
         />
       ))}
 
-      {/* SECTION 1: COMPACT TOP BAR (Single row, no wrapping, zero vertical bloat) */}
+      {/* SECTION 1: COMPACT TOP BAR */}
       <div className="shrink-0 bg-gradient-to-b from-[#141C2E] to-[#0D121F] border border-white/10 rounded-2xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-sm">
         {/* Active Pet Identity */}
         <div className="flex items-center gap-2 min-w-0 shrink">
@@ -261,7 +433,31 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
           </div>
         </div>
 
-        {/* Center: Cute Buddy vs Photo Card Switcher */}
+        {/* Center: Pet Condition Indicators (Hunger & Cleanliness) */}
+        <div className="hidden sm:flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-2.5 py-1 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <Utensils className="w-3 h-3 text-amber-400" />
+            <div className="w-16 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-300"
+                style={{ width: `${hungerLevel}%` }}
+              />
+            </div>
+            <span className="text-[9px] font-mono text-amber-300">{hungerLevel}%</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Droplets className="w-3 h-3 text-cyan-400" />
+            <div className="w-16 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 transition-all duration-300"
+                style={{ width: `${cleanlinessLevel}%` }}
+              />
+            </div>
+            <span className="text-[9px] font-mono text-cyan-300">{cleanlinessLevel}%</span>
+          </div>
+        </div>
+
+        {/* Cute Buddy vs Photo Card Switcher */}
         <div className="flex items-center bg-black/60 border border-white/15 rounded-xl p-0.5 shrink-0">
           <button
             onClick={() => setDisplayMode('cute')}
@@ -292,14 +488,14 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
           <button
             onClick={() => setShowPhotoStudioModal(true)}
             className="p-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-300 transition-colors cursor-pointer"
-            title="Upload Photo to Create Custom Avatar"
+            title="AI Pet Photo Studio & Card Creator"
           >
             <Camera className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setShowAuctionModal(true)}
             className="p-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 transition-colors cursor-pointer"
-            title="VIP Auction House ($1.99)"
+            title="Live Auction House Floor"
           >
             <Gavel className="w-3.5 h-3.5" />
           </button>
@@ -309,7 +505,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
             title="Real-Time GPS Pet Radar"
           >
             <Compass className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden sm:inline">Pet Radar</span>
+            <span className="hidden sm:inline">Radar</span>
           </button>
           <button
             onClick={handleToggleRoomLights}
@@ -320,13 +516,24 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
             }`}
             title="Toggle Day / Night"
           >
-            {roomLighting === 'night' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+            {roomLighting === 'night' ? (
+              <Moon className="w-3.5 h-3.5" />
+            ) : (
+              <Sun className="w-3.5 h-3.5" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* SECTION 2: LIVING STAGE (Fits gracefully in remaining space, ZERO scrollbar) */}
-      <div className="flex-1 flex flex-col items-center justify-center relative min-h-0 my-1 overflow-hidden">
+      {/* SECTION 2: LIVING STAGE WITH DRAG & DROP TARGET RECEPTOR */}
+      <div
+        ref={petStageRef}
+        className={`flex-1 flex flex-col items-center justify-center relative min-h-0 my-1 overflow-hidden rounded-2xl transition-all duration-300 ${
+          isHoveringPetStage
+            ? 'ring-2 ring-[#CCFF00] bg-[#CCFF00]/5 scale-[1.01]'
+            : 'border border-transparent'
+        }`}
+      >
         {/* Ambient Stage Lighting Background */}
         <div
           className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${
@@ -338,23 +545,34 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
 
         {/* Speech Bubble (Floating above pet) */}
         {speechBubbleText && (
-          <div className="relative z-20 mb-1 px-3 py-1 rounded-xl bg-black/90 backdrop-blur-md text-[#CCFF00] text-[11px] font-mono font-bold shadow-lg animate-in fade-in zoom-in-95 max-w-[280px] text-center border border-[#CCFF00]/50">
+          <div className="relative z-20 mb-1 px-3 py-1 rounded-xl bg-black/90 backdrop-blur-md text-[#CCFF00] text-[11px] font-mono font-bold shadow-lg animate-in fade-in zoom-in-95 max-w-[320px] text-center border border-[#CCFF00]/50">
             {speechBubbleText}
             <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-black/90 rotate-45 border-r border-b border-[#CCFF00]/50" />
+          </div>
+        )}
+
+        {/* Hover Target Indicator */}
+        {isHoveringPetStage && (
+          <div className="absolute top-2 z-30 px-2.5 py-0.5 rounded-full bg-[#CCFF00] text-black font-mono font-bold text-[10px] animate-pulse">
+            🎯 Release to Care for {activeBeast.name}!
           </div>
         )}
 
         {/* THE LIVING PET AVATAR DISPLAY */}
         <div className="relative z-10 flex flex-col items-center justify-center">
           {displayMode === 'cute' ? (
-            /* 🐾 CUTE PROCEDURAL ANIMATED BUDDY (Talking Tom physics, blinking, tail wagging, ear twitches) */
+            /* 🐾 CUTE PROCEDURAL ANIMATED BUDDY */
             <div
               className="relative cursor-pointer flex flex-col items-center group"
               onClick={handlePetTheBeast}
               title="Tap to pet & purr!"
             >
               {/* Pedestal Glow Shadow */}
-              <div className="absolute -bottom-2 inset-x-2 h-6 bg-[#CCFF00]/15 rounded-full blur-md" />
+              <div
+                className={`absolute -bottom-2 inset-x-2 h-6 rounded-full blur-md transition-colors ${
+                  isHoveringPetStage ? 'bg-[#CCFF00]/40 scale-125' : 'bg-[#CCFF00]/15'
+                }`}
+              />
 
               <ProceduralPetCanvas
                 species={speciesKey}
@@ -382,7 +600,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
               <div className="flex items-center gap-1 text-[10px] mt-0.5 text-pink-400 font-bold">
                 {'❤️'.repeat(heartsCount)}
                 <span className="text-neutral-400 text-[9px] font-mono ml-1">
-                  (Tap to pet · Rub belly)
+                  (Drag treats or sponge onto pet · Tap to tickle)
                 </span>
               </div>
             </div>
@@ -401,19 +619,16 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
 
-                {/* Level Pill */}
                 <div className="absolute top-2 left-2 bg-black/80 px-1.5 py-0.5 rounded border border-white/20 text-[9px] font-mono font-bold text-[#CCFF00]">
                   LVL {activeBeast.level}
                 </div>
 
-                {/* Rarity Pill */}
                 <div className="absolute top-2 right-2">
                   <span className={getRarityBadgeClasses(activeBeast.rarity)}>
                     {activeBeast.rarity}
                   </span>
                 </div>
 
-                {/* Bottom Title */}
                 <div className="absolute bottom-2 inset-x-2 text-center">
                   <span className="font-display font-black text-sm text-white uppercase truncate block">
                     {activeBeast.name}
@@ -428,77 +643,67 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
         </div>
       </div>
 
-      {/* SECTION 3: TALKING TOM INTERACTION DOCK (5 buttons, 1 row, h-11, zero overlapping text) */}
-      <div className="shrink-0 w-full grid grid-cols-5 gap-1 sm:gap-1.5 my-1">
-        {/* 1. Feed Kibble */}
-        <button
-          onClick={handleFeedKibble}
-          className="h-11 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-black font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all"
-          title="Feed gourmet bowl of kibble"
-        >
-          <Utensils className="w-3.5 h-3.5 shrink-0" />
-          <span className="leading-none">Feed</span>
-        </button>
+      {/* SECTION 3: TACTILE DRAGGABLE CARE TRAY & VOICE DOCK */}
+      <div className="shrink-0 w-full space-y-1.5 my-1">
+        {/* Tray Label */}
+        <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 px-1">
+          <span className="flex items-center gap-1 font-bold text-neutral-300">
+            <span>✨ Tactile Care Tray</span>
+            <span className="text-[9px] text-[#CCFF00] font-normal">(Drag onto pet or tap)</span>
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px]">Satiety: {hungerLevel}%</span>
+            <span>·</span>
+            <span className="text-[9px]">Clean: {cleanlinessLevel}%</span>
+          </div>
+        </div>
 
-        {/* 2. Bubble Bath */}
-        <button
-          onClick={handleBubbleBath}
-          className="h-11 rounded-xl bg-blue-500 hover:bg-blue-400 active:scale-95 text-white font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all"
-          title="Wash with soap and bubbles"
-        >
-          <Bath className="w-3.5 h-3.5 shrink-0" />
-          <span className="leading-none">Shower</span>
-        </button>
+        {/* Care Tools Grid */}
+        <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
+          {CARE_TOOLS.map((tool) => (
+            <button
+              key={tool.id}
+              onPointerDown={(e) => handleToolPointerDown(tool, e)}
+              className={`h-11 rounded-xl border flex flex-col items-center justify-center p-1 transition-all cursor-grab active:cursor-grabbing active:scale-95 shadow-xs ${tool.bgClass} ${tool.borderClass}`}
+              title={`Drag ${tool.name} onto pet or click to use`}
+            >
+              <span className="text-base leading-none select-none">{tool.emoji}</span>
+              <span className="text-[9px] font-mono font-bold leading-none mt-0.5 truncate max-w-full">
+                {tool.label}
+              </span>
+            </button>
+          ))}
 
-        {/* 3. Milk Bowl */}
-        <button
-          onClick={handlePourMilk}
-          className="h-11 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-95 text-white font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all"
-          title="Pour fresh bowl of milk"
-        >
-          <Coffee className="w-3.5 h-3.5 shrink-0" />
-          <span className="leading-none">Milk</span>
-        </button>
-
-        {/* 4. Funny Cartoon Prank */}
-        <button
-          onClick={handlePlayfulToot}
-          className="h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all"
-          title="Playful cartoon sound prank"
-        >
-          <Sparkles className="w-3.5 h-3.5 shrink-0" />
-          <span className="leading-none">Prank</span>
-        </button>
-
-        {/* 5. Talking Tom Voice Mimic */}
-        <button
-          onClick={handleToggleVoiceRecord}
-          className={`h-11 rounded-xl active:scale-95 font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all ${
-            isRecordingVoice
-              ? 'bg-red-500 text-white animate-pulse'
-              : 'bg-purple-600 hover:bg-purple-500 text-white'
-          }`}
-          title="Record speech to repeat in chipmunk voice"
-        >
-          {isRecordingVoice ? (
-            <MicOff className="w-3.5 h-3.5 shrink-0" />
-          ) : (
-            <Mic className="w-3.5 h-3.5 shrink-0" />
-          )}
-          <span className="leading-none">{isRecordingVoice ? 'Echoing' : 'Talk'}</span>
-        </button>
+          {/* Talking Tom Voice Mimic */}
+          <button
+            onClick={handleToggleVoiceRecord}
+            className={`h-11 rounded-xl border border-purple-400/40 flex flex-col items-center justify-center p-1 transition-all cursor-pointer active:scale-95 shadow-xs ${
+              isRecordingVoice
+                ? 'bg-red-500 text-white animate-pulse'
+                : 'bg-purple-600/30 hover:bg-purple-600/40 text-purple-200'
+            }`}
+            title="Record voice to repeat in chipmunk pitch"
+          >
+            {isRecordingVoice ? (
+              <MicOff className="w-4 h-4 text-white" />
+            ) : (
+              <Mic className="w-4 h-4 text-purple-300" />
+            )}
+            <span className="text-[9px] font-mono font-bold leading-none mt-0.5">
+              {isRecordingVoice ? 'Echoing' : 'Mimic'}
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* SECTION 4: COMPACT COMPANION KENNEL & BROWSER BUDDY STRIP (Slim, perfectly proportioned) */}
+      {/* SECTION 4: COMPACT COMPANION KENNEL */}
       <div className="shrink-0 bg-[#0E131F] border border-white/10 rounded-2xl p-1.5 space-y-1">
-        {/* Header row */}
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1.5 text-[11px] font-display font-black uppercase text-white">
             <Layers className="w-3 h-3 text-[#CCFF00]" />
             <span>Companion Kennel ({ownedBeasts.length})</span>
           </div>
 
-          {/* Desktop Screen Buddy Extension Toggle */}
           <button
             onClick={toggleOverlay}
             className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold transition-all cursor-pointer ${
@@ -513,7 +718,6 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
           </button>
         </div>
 
-        {/* Horizontal Mini Cards Strip */}
         <div className="flex gap-1.5 overflow-x-auto scrollbar-none py-0.5">
           {ownedBeasts.map((beast) => {
             const isActive = beast.id === activeBeast.id;
@@ -553,9 +757,13 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
       </div>
 
       {/* POPUP MODALS */}
-      {showPhotoStudioModal && <PetAvatarPhotoStudioModal onClose={() => setShowPhotoStudioModal(false)} />}
+      {showPhotoStudioModal && (
+        <PetAvatarPhotoStudioModal onClose={() => setShowPhotoStudioModal(false)} />
+      )}
       {showAuctionModal && <PetAuctionHouseModal onClose={() => setShowAuctionModal(false)} />}
-      {showExtensionModal && <ExtensionExporterModal onClose={() => setShowExtensionModal(false)} />}
+      {showExtensionModal && (
+        <ExtensionExporterModal onClose={() => setShowExtensionModal(false)} />
+      )}
       {showWorldMap && <PetWorldMapView onClose={() => setShowWorldMap(false)} />}
     </div>
   );

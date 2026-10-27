@@ -36,6 +36,7 @@ import {
 import { Animal } from '../../../data/animals';
 import { animalImages } from '../../../assets/images';
 import { sound } from '../../../utils/audio';
+import { triggerVictoryExplosion } from '../../../utils/confetti';
 
 interface PetAvatarPhotoStudioModalProps {
   onClose: () => void;
@@ -143,6 +144,29 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [showPassModal, setShowPassModal] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // 3D Tilt Cyber Holo-Foil Card State
+  const [cardTilt, setCardTilt] = useState<{
+    rotateX: number;
+    rotateY: number;
+    glareX: number;
+    glareY: number;
+  }>({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+
+  const handleCardPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const px = (x / rect.width) * 100;
+    const py = (y / rect.height) * 100;
+    const rotateY = ((x - rect.width / 2) / (rect.width / 2)) * 12;
+    const rotateX = -((y - rect.height / 2) / (rect.height / 2)) * 12;
+    setCardTilt({ rotateX, rotateY, glareX: px, glareY: py });
+  };
+
+  const handleCardPointerLeave = () => {
+    setCardTilt({ rotateX: 0, rotateY: 0, glareX: 50, glareY: 50 });
+  };
 
   // Manual Builder State
   const [builderCategory, setBuilderCategory] = useState<PetCategory>('dog');
@@ -298,6 +322,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
   const finalizeSave = () => {
     sound.playVictory();
+    triggerVictoryExplosion();
 
     let newPet: CompanionPet;
 
@@ -537,10 +562,42 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                 >
                   {imagePreview ? (
                     <div className="flex flex-col items-center gap-3">
-                      <div className="relative w-44 h-44 aspect-square rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.25)]">
-                        <img src={imagePreview} alt="Your Pet" className="w-full h-full object-cover object-center aspect-square" />
-                        <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm text-[9px] font-mono font-bold text-[#CCFF00] px-2 py-0.5 rounded-full border border-white/10">
-                          Photo Ready ✓
+                      <div className="relative w-52 h-52 aspect-square rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.3)] group">
+                        <img
+                          src={imagePreview}
+                          alt="Your Pet"
+                          className="w-full h-full object-cover object-center aspect-square"
+                        />
+
+                        {/* CYBER SCANNER HUD OVERLAY */}
+                        <div className="absolute inset-0 pointer-events-none">
+                          {/* 4 Corner Targeting Brackets */}
+                          <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400" />
+                          <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400" />
+                          <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400" />
+                          <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400" />
+
+                          {/* Sweeping Laser Scanline */}
+                          <div
+                            className={`absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#22d3ee] transition-all duration-700 ${
+                              isAnalyzing
+                                ? 'animate-bounce opacity-100 top-1/2'
+                                : 'opacity-40 top-1/4'
+                            }`}
+                          />
+
+                          {/* Center Biometric Reticle */}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-cyan-400/40 flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-cyan-400/80 animate-ping" />
+                          </div>
+
+                          {/* Status Badge */}
+                          <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md text-[8px] font-mono font-bold text-cyan-300 px-2 py-0.5 rounded border border-cyan-400/40">
+                            {isAnalyzing ? '⚡ AI SCANNING...' : 'SCANNER LOCKED ✓'}
+                          </div>
+                          <div className="absolute bottom-2 left-2 bg-black/80 backdrop-blur-md text-[8px] font-mono text-neutral-300 px-2 py-0.5 rounded border border-white/10">
+                            TARGET: {petNameInput ? petNameInput.toUpperCase() : 'PET SPECIES'}
+                          </div>
                         </div>
                       </div>
                       <span className="text-xs text-neutral-400 hover:text-white flex items-center gap-1 font-mono">
@@ -607,52 +664,158 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                 </button>
               </div>
             ) : (
-              /* PHOTO RESULT PREVIEW & ARENA ACTIVATION */
+              /* CYBER HOLO-FOIL 3D TILT TRADING CARD REVEAL */
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Real Photo */}
-                  <div className="bg-[#0E1320] border border-white/10 rounded-2xl p-3 flex flex-col items-center">
-                    <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-wider mb-2">
-                      📷 Uploaded Real Pet Photo
-                    </span>
-                    <div className="relative w-44 h-44 aspect-square rounded-2xl overflow-hidden border-2 border-white/20 shadow-xl mb-2">
-                      {imagePreview && (
-                        <img src={imagePreview} alt={analyzedAvatar.name} className="w-full h-full object-cover object-center aspect-square" />
-                      )}
-                    </div>
-                    <span className="text-xs font-bold text-white">{analyzedAvatar.name}</span>
-                    <span className="text-[10px] text-neutral-400 font-mono">{analyzedAvatar.breedName}</span>
-                  </div>
+                <div className="flex flex-col items-center">
+                  <div
+                    onPointerMove={handleCardPointerMove}
+                    onPointerLeave={handleCardPointerLeave}
+                    style={{
+                      transform: `perspective(1000px) rotateX(${cardTilt.rotateX}deg) rotateY(${cardTilt.rotateY}deg)`,
+                      transition: 'transform 0.15s ease-out',
+                    }}
+                    className="relative w-full max-w-sm rounded-3xl overflow-hidden p-1 shadow-[0_0_40px_rgba(204,255,0,0.25)] border-2 border-[#CCFF00] bg-gradient-to-b from-[#1E293B] via-[#0F172A] to-[#050811] cursor-pointer group select-none"
+                  >
+                    {/* Dynamic Iridescent Holo-Foil Overlay */}
+                    <div
+                      className="absolute inset-0 pointer-events-none z-30 transition-opacity duration-300 mix-blend-color-dodge opacity-60"
+                      style={{
+                        background: `radial-gradient(circle at ${cardTilt.glareX}% ${cardTilt.glareY}%, rgba(255,255,255,0.85) 0%, rgba(204,255,0,0.5) 25%, rgba(6,182,212,0.6) 50%, rgba(217,70,239,0.5) 75%, transparent 100%)`,
+                      }}
+                    />
 
-                  {/* Procedural Avatar */}
-                  <div className="bg-[#0E1320] border border-[#CCFF00]/40 rounded-2xl p-3 flex flex-col items-center shadow-[0_0_25px_rgba(204,255,0,0.15)]">
-                    <span className="text-[10px] font-mono font-bold text-[#CCFF00] uppercase tracking-wider mb-2 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      <span>🎮 Live Interactive Game Avatar</span>
-                    </span>
-                    <div className="relative w-44 h-44 bg-[radial-gradient(circle,#1e293b_0%,#07090e_80%)] rounded-2xl border border-white/10 flex items-center justify-center mb-2 overflow-hidden">
-                      <ProceduralPetCanvas
-                        species={analyzedAvatar.species}
-                        stage={1}
-                        width={170}
-                        height={170}
-                        interactive={true}
-                        customPalette={activePalette || analyzedAvatar.palette}
-                        customFeatures={analyzedAvatar.features}
-                      />
+                    {/* Shiny Holo Sheen Diagonal Reflection */}
+                    <div
+                      className="absolute inset-0 pointer-events-none z-30 opacity-40 mix-blend-screen"
+                      style={{
+                        background: `linear-gradient(${115 + cardTilt.rotateY * 2}deg, transparent 20%, rgba(255,255,255,0.4) 45%, rgba(204,255,0,0.6) 50%, rgba(6,182,212,0.4) 55%, transparent 80%)`,
+                      }}
+                    />
+
+                    {/* Card Content Container */}
+                    <div className="relative z-20 rounded-[22px] bg-[#090D18]/90 backdrop-blur-md p-4 flex flex-col items-center text-white border border-white/10">
+                      {/* Card Top Stamp Header */}
+                      <div className="w-full flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+                        <span className="text-[10px] font-mono font-black text-[#CCFF00] tracking-widest flex items-center gap-1">
+                          <span>✦</span>
+                          <span>CYBER HOLO-FOIL EDITION</span>
+                          <span>✦</span>
+                        </span>
+                        <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
+                          HOLO MINT ✓
+                        </span>
+                      </div>
+
+                      {/* Card Visual Hero: Dual View Uploaded Photo + Procedural Game Avatar */}
+                      <div className="w-full grid grid-cols-2 gap-2 mb-3">
+                        {/* Uploaded Photo */}
+                        <div className="relative aspect-square rounded-xl overflow-hidden border border-white/20 bg-black">
+                          {imagePreview && (
+                            <img
+                              src={imagePreview}
+                              alt={analyzedAvatar.name}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                          <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/80 text-[8px] font-mono text-neutral-300">
+                            Real Pet Photo
+                          </div>
+                        </div>
+
+                        {/* Live Procedural Game Avatar */}
+                        <div className="relative aspect-square rounded-xl overflow-hidden border border-[#CCFF00]/40 bg-gradient-to-b from-[#141C2E] to-black flex items-center justify-center">
+                          <ProceduralPetCanvas
+                            species={analyzedAvatar.species}
+                            stage={1}
+                            width={130}
+                            height={130}
+                            interactive={true}
+                            customPalette={activePalette || analyzedAvatar.palette}
+                            customFeatures={analyzedAvatar.features}
+                          />
+                          <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-[#CCFF00]/20 border border-[#CCFF00]/40 text-[8px] font-mono font-bold text-[#CCFF00]">
+                            Live Avatar
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Pet Identity & Title */}
+                      <div className="text-center mb-3">
+                        <h3 className="font-display font-black text-lg text-white uppercase tracking-wider">
+                          {analyzedAvatar.name}
+                        </h3>
+                        <div className="flex items-center justify-center gap-2 mt-0.5">
+                          <span className="text-xs font-mono font-bold text-[#CCFF00]">
+                            {analyzedAvatar.breedName}
+                          </span>
+                          <span className="text-neutral-500">·</span>
+                          <span className="text-xs font-mono text-cyan-300">
+                            {analyzedAvatar.title}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Stat Radar Hex Badges */}
+                      <div className="w-full grid grid-cols-4 gap-1.5 mb-3 text-center font-mono">
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-1.5">
+                          <div className="text-[9px] text-neutral-400">ATK</div>
+                          <div className="text-xs font-black text-rose-400">
+                            {analyzedAvatar.stats.attack}
+                          </div>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-1.5">
+                          <div className="text-[9px] text-neutral-400">DEF</div>
+                          <div className="text-xs font-black text-blue-400">
+                            {analyzedAvatar.stats.defense}
+                          </div>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-1.5">
+                          <div className="text-[9px] text-neutral-400">AGI</div>
+                          <div className="text-xs font-black text-emerald-400">
+                            {analyzedAvatar.stats.agility}
+                          </div>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-1.5">
+                          <div className="text-[9px] text-neutral-400">STA</div>
+                          <div className="text-xs font-black text-amber-400">
+                            {analyzedAvatar.stats.stamina}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Signature Move & CP Banner */}
+                      <div className="w-full bg-[#CCFF00]/10 border border-[#CCFF00]/40 rounded-xl p-2 mb-1 flex items-center justify-between text-xs font-mono">
+                        <div className="flex items-center gap-1.5">
+                          <Zap className="w-4 h-4 text-[#CCFF00]" />
+                          <div>
+                            <div className="font-bold text-white uppercase text-[11px]">
+                              {analyzedAvatar.signatureMove.name}
+                            </div>
+                            <div className="text-[9px] text-neutral-400 line-clamp-1">
+                              {analyzedAvatar.signatureMove.description}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[9px] text-neutral-400 uppercase">Power</div>
+                          <div className="text-sm font-black text-[#CCFF00]">
+                            CP {analyzedAvatar.stats.cp}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-xs font-black text-[#CCFF00] font-mono">
-                      CP {analyzedAvatar.stats.cp} · Ready for Arena Combat!
-                    </span>
                   </div>
                 </div>
 
                 {/* Extracted Colors */}
                 {activePalette && (
                   <div className="bg-[#121724] border border-white/10 p-3 rounded-2xl space-y-2">
-                    <div className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
-                      <Palette className="w-3.5 h-3.5 text-[#CCFF00]" />
-                      <span>Extracted Fur & Features Palette (Tap to edit):</span>
+                    <div className="text-xs font-mono font-bold text-white flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Palette className="w-3.5 h-3.5 text-[#CCFF00]" />
+                        <span>Extracted Fur & Features Palette (Tap to fine-tune):</span>
+                      </div>
+                      <span className="text-[10px] text-[#CCFF00] font-mono">6 Swatches</span>
                     </div>
                     <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-[10px] font-mono">
                       {[
@@ -704,7 +867,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                   ) : (
                     <>
                       <Award className="w-4 h-4 text-black" />
-                      <span>Mint Avatar & Deploy {analyzedAvatar.name} to Battle Arena!</span>
+                      <span>Mint Holo Card & Deploy {analyzedAvatar.name} to Battle Arena!</span>
                     </>
                   )}
                 </button>

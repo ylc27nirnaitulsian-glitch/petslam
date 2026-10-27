@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePetCompanion } from '../../../context/PetCompanionContext';
 import { useGame } from '../../../context/GameContext';
 import { PetAuctionItem, CompanionPet } from '../../../types/pet';
 import { getPetPhoto, getPetBreedName } from '../../../utils/petVisuals';
 import { sound } from '../../../utils/audio';
+import { triggerConfetti, triggerVictoryExplosion } from '../../../utils/confetti';
 import { createDodoCheckout } from '../../../services/dodo';
 import { trackClarityEvent } from '../../../utils/clarity';
 import {
@@ -46,6 +47,50 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
   const [buyoutPrice, setBuyoutPrice] = useState<number>(2500);
   const [durationHours, setDurationHours] = useState<number>(6);
 
+  // Dynamic Simulated Rival AI Bidders State
+  const [rivalBiddersEnabled, setRivalBiddersEnabled] = useState<boolean>(true);
+  const [liveOutbidAlert, setLiveOutbidAlert] = useState<string | null>(null);
+
+  // Simulated Dynamic Rival AI Bidders Floor (3-8s interval)
+  useEffect(() => {
+    if (!rivalBiddersEnabled || activeTab !== 'live' || auctions.length === 0) return;
+
+    const RIVAL_NAMES = [
+      'ShadowFang',
+      'ApexPredator',
+      'NeonKitsune',
+      'VoltHound',
+      'CyberTrainer99',
+      'TitanShiba',
+      'ValkyrieCat',
+    ];
+
+    const timer = setInterval(() => {
+      const eligible = auctions.filter((a) => !a.isUserListing && a.currentBid < a.buyoutPrice);
+      if (eligible.length === 0) return;
+
+      const target = eligible[Math.floor(Math.random() * eligible.length)];
+      const rival = RIVAL_NAMES[Math.floor(Math.random() * RIVAL_NAMES.length)];
+      const increment = Math.floor(Math.random() * 3 + 1) * 50;
+      const newBid = Math.min(target.buyoutPrice - 50, target.currentBid + increment);
+
+      if (newBid > target.currentBid) {
+        placeAuctionBid(target.id, newBid);
+
+        const wasUserWinning = target.highestBidder === 'Trainer (You)';
+        if (wasUserWinning) {
+          sound.playLightHit();
+          setLiveOutbidAlert(
+            `⚠️ Outbid Alert! ${rival} just outbid you on ${target.pet.name} with ${newBid.toLocaleString()} CR!`
+          );
+          setTimeout(() => setLiveOutbidAlert(null), 4000);
+        }
+      }
+    }, Math.floor(Math.random() * 4000 + 4000));
+
+    return () => clearInterval(timer);
+  }, [rivalBiddersEnabled, activeTab, auctions, placeAuctionBid]);
+
   const showToast = (text: string, isError = false) => {
     setToastMessage({ text, isError });
     setTimeout(() => setToastMessage(null), 3500);
@@ -77,6 +122,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
     if (res.success) {
       // Deduct credits from user wallet
       addCredits(-bidAmountInput);
+      triggerConfetti();
       showToast(res.message);
       setSelectedAuction(null);
     } else {
@@ -101,6 +147,8 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
     const res = buyoutAuction(item.id);
     if (res.success) {
       addCredits(-item.buyoutPrice);
+      sound.playVictory();
+      triggerVictoryExplosion();
       showToast(`🎉 Buyout Complete! ${item.pet.name} is now in your Kennel!`);
     } else {
       showToast(res.message, true);
@@ -193,39 +241,65 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
           </div>
         )}
 
-        {/* Navigation Tabs */}
-        <div className="flex items-center border-b border-white/10 bg-[#0B0E17] px-4 pt-2 gap-2 text-xs font-mono font-bold">
+        {/* Navigation Tabs + Rival AI Switch */}
+        <div className="flex items-center justify-between border-b border-white/10 bg-[#0B0E17] px-4 pt-2 gap-2 text-xs font-mono font-bold overflow-x-auto">
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setActiveTab('live')}
+              className={`pb-2 px-2 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'live'
+                  ? 'border-[#CCFF00] text-[#CCFF00]'
+                  : 'border-transparent text-neutral-400 hover:text-white'
+              }`}
+            >
+              Live Auctions ({auctions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('create')}
+              className={`pb-2 px-2 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'create'
+                  ? 'border-[#CCFF00] text-[#CCFF00]'
+                  : 'border-transparent text-neutral-400 hover:text-white'
+              }`}
+            >
+              + List Pet
+            </button>
+            <button
+              onClick={() => setActiveTab('my_listings')}
+              className={`pb-2 px-2 border-b-2 transition-all cursor-pointer ${
+                activeTab === 'my_listings'
+                  ? 'border-[#CCFF00] text-[#CCFF00]'
+                  : 'border-transparent text-neutral-400 hover:text-white'
+              }`}
+            >
+              My Listings ({userListings.length})
+            </button>
+          </div>
+
+          {/* Rival AI Bidders Toggle */}
           <button
-            onClick={() => setActiveTab('live')}
-            className={`pb-2 px-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === 'live'
-                ? 'border-[#CCFF00] text-[#CCFF00]'
-                : 'border-transparent text-neutral-400 hover:text-white'
+            onClick={() => setRivalBiddersEnabled(!rivalBiddersEnabled)}
+            className={`mb-1.5 px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer border shrink-0 ${
+              rivalBiddersEnabled
+                ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300'
+                : 'bg-white/5 border-white/10 text-neutral-400'
             }`}
+            title="Toggle simulated rival AI bidder floor"
           >
-            Live Auctions ({auctions.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('create')}
-            className={`pb-2 px-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === 'create'
-                ? 'border-[#CCFF00] text-[#CCFF00]'
-                : 'border-transparent text-neutral-400 hover:text-white'
-            }`}
-          >
-            + List Pet for Auction
-          </button>
-          <button
-            onClick={() => setActiveTab('my_listings')}
-            className={`pb-2 px-2 border-b-2 transition-all cursor-pointer ${
-              activeTab === 'my_listings'
-                ? 'border-[#CCFF00] text-[#CCFF00]'
-                : 'border-transparent text-neutral-400 hover:text-white'
-            }`}
-          >
-            My Listings ({userListings.length})
+            <span>🤖 Rival Bots:</span>
+            <span className={rivalBiddersEnabled ? 'text-[#CCFF00]' : 'text-neutral-500'}>
+              {rivalBiddersEnabled ? 'ON' : 'OFF'}
+            </span>
           </button>
         </div>
+
+        {/* Live Outbid Alert Notification */}
+        {liveOutbidAlert && (
+          <div className="mx-4 mt-2.5 p-2 rounded-xl text-xs font-mono bg-amber-500/20 border border-amber-400/60 text-amber-200 flex items-center gap-2 animate-bounce">
+            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="font-bold">{liveOutbidAlert}</span>
+          </div>
+        )}
 
         {/* Toast Feedback */}
         {toastMessage && (
