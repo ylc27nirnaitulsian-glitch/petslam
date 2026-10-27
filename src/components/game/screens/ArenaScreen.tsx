@@ -128,6 +128,17 @@ export const ArenaScreen: React.FC = () => {
   const [opponentAllyHp, setOpponentAllyHp] = useState<number>(850);
   const [maxOpponentAllyHp, setMaxOpponentAllyHp] = useState<number>(850);
 
+  // Esports Combo Counter & Announcer State
+  const [comboCount, setComboCount] = useState<number>(0);
+  const [comboLabel, setComboLabel] = useState<string>('');
+  const comboTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [announcerText, setAnnouncerText] = useState<string>('ROUND 1 — FIGHT!');
+  const [announcerPulse, setAnnouncerPulse] = useState<boolean>(true);
+  const [hasAnnouncedOverdrive, setHasAnnouncedOverdrive] = useState<boolean>(false);
+
+  // Desktop Keyboard Hotkey Press State (for active visual feedback)
+  const [pressedHotkey, setPressedHotkey] = useState<string | null>(null);
+
   // Helper to spawn floating damage numbers
   const addPopup = (text: string, type: DamagePopup['type'], x: number, y: number) => {
     const id = Date.now() + Math.random();
@@ -218,6 +229,14 @@ export const ArenaScreen: React.FC = () => {
     );
     setActiveSlashFx(null);
     sound.playBattleStart();
+
+    // Reset Esports Combo & Announcer Callout
+    setComboCount(0);
+    setComboLabel('');
+    setHasAnnouncedOverdrive(false);
+    setAnnouncerText('ROUND 1 — FIGHT!');
+    setAnnouncerPulse(true);
+    setTimeout(() => setAnnouncerPulse(false), 2400);
   };
 
   // Match Countdown Timer (180s)
@@ -250,12 +269,21 @@ export const ArenaScreen: React.FC = () => {
     const intervalRate = isDoubleElixir ? 250 : 450;
 
     const interval = setInterval(() => {
-      setElixir((prev) => Math.min(10, Number((prev + 0.35).toFixed(1))));
+      setElixir((prev) => {
+        const next = Math.min(10, Number((prev + 0.35).toFixed(1)));
+        if (prev < 6 && next >= 6 && !hasAnnouncedOverdrive) {
+          setHasAnnouncedOverdrive(true);
+          setAnnouncerText('⚡ OVERDRIVE READY!');
+          setAnnouncerPulse(true);
+          setTimeout(() => setAnnouncerPulse(false), 2000);
+        }
+        return next;
+      });
       setOpponentElixir((prev) => Math.min(10, Number((prev + 0.32).toFixed(1))));
     }, intervalRate);
 
     return () => clearInterval(interval);
-  }, [inBattle, battleOver, battleTimerSec]);
+  }, [inBattle, battleOver, battleTimerSec, hasAnnouncedOverdrive]);
 
   // AI Opponent Tactical Loop
   useEffect(() => {
@@ -319,6 +347,8 @@ export const ArenaScreen: React.FC = () => {
         sound.playBlock();
       } else {
         sound.playImpact();
+        setComboCount(0);
+        setComboLabel('');
       }
 
       setPlayerHp((prev) => {
@@ -377,6 +407,31 @@ export const ArenaScreen: React.FC = () => {
     };
     setLastCombatLog(`⚡ ${currentActiveFighter.name} used ${moveNames[cardType]}!`);
     sound.playAttack();
+
+    // Esports Combo Counter Update
+    setComboCount((prev) => {
+      const next = prev + 1;
+      if (next === 2) setComboLabel('🔥 2x COMBO!');
+      else if (next === 3) setComboLabel('⚡ 3x SUPER EFFECTIVE!');
+      else if (next >= 4) setComboLabel(`💥 ${next}x UNSTOPPABLE!`);
+      return next;
+    });
+    if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
+    comboTimerRef.current = setTimeout(() => {
+      setComboCount(0);
+      setComboLabel('');
+    }, 3500);
+
+    // Announcer Callout Trigger
+    if (cardType === 'slam') {
+      setAnnouncerText('💥 PET SLAM OVERDRIVE!');
+      setAnnouncerPulse(true);
+      setTimeout(() => setAnnouncerPulse(false), 2200);
+    } else if (cardType === 'bite') {
+      setAnnouncerText('🐾 FIERCE BITE STRIKE!');
+      setAnnouncerPulse(true);
+      setTimeout(() => setAnnouncerPulse(false), 1800);
+    }
 
     let baseDamage = currentActiveFighter.damage;
     let multiplier = 1;
@@ -478,6 +533,8 @@ export const ArenaScreen: React.FC = () => {
   const handleMatchConclusion = (won: boolean) => {
     setBattleOver(true);
     setBattleResult(won ? 'victory' : 'defeat');
+    setAnnouncerText(won ? '🏆 K.O.! VICTORY!' : '💀 K.O.! DEFEATED');
+    setAnnouncerPulse(true);
 
     if (won) {
       sound.playVictory();
@@ -487,6 +544,66 @@ export const ArenaScreen: React.FC = () => {
 
     recordMatchResult(won, selectedOpponent, 3);
   };
+
+  // Desktop Hotkey Listener ([1] Pounce, [2] Bark, [3] Guard, [4] Bite, [SPACE] SLAM, [Q/W/E/R] Tag-in)
+  useEffect(() => {
+    if (!inBattle || battleOver) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      const key = e.key.toLowerCase();
+      if (key === '1') {
+        e.preventDefault();
+        setPressedHotkey('1');
+        handlePlayCard('pounce');
+      } else if (key === '2') {
+        e.preventDefault();
+        setPressedHotkey('2');
+        handlePlayCard('bark');
+      } else if (key === '3') {
+        e.preventDefault();
+        setPressedHotkey('3');
+        handlePlayCard('shield');
+      } else if (key === '4') {
+        e.preventDefault();
+        setPressedHotkey('4');
+        handlePlayCard('bite');
+      } else if (e.code === 'Space' || key === ' ') {
+        e.preventDefault();
+        setPressedHotkey('space');
+        handlePlayCard('slam');
+      } else if (key === 'q') {
+        e.preventDefault();
+        setPressedHotkey('q');
+        if (safeDeck[0]) handleTagIn(safeDeck[0]);
+      } else if (key === 'w') {
+        e.preventDefault();
+        setPressedHotkey('w');
+        if (safeDeck[1]) handleTagIn(safeDeck[1]);
+      } else if (key === 'e') {
+        e.preventDefault();
+        setPressedHotkey('e');
+        if (safeDeck[2]) handleTagIn(safeDeck[2]);
+      } else if (key === 'r') {
+        e.preventDefault();
+        setPressedHotkey('r');
+        if (safeDeck[3]) handleTagIn(safeDeck[3]);
+      }
+    };
+
+    const handleKeyUp = () => {
+      setPressedHotkey(null);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [inBattle, battleOver, elixir, safeDeck, currentActiveFighter, isOpponentShielded, isPlayerShielded]);
 
   const playerHpPct = Math.max(0, Math.min(100, (playerHp / maxPlayerHp) * 100));
   const oppHpPct = Math.max(0, Math.min(100, (opponentHp / maxOpponentHp) * 100));
@@ -845,14 +962,16 @@ export const ArenaScreen: React.FC = () => {
                     {selectedOpponent.breed}
                   </span>
                 </div>
-                {/* Dual Layer HP Bar with Ghost Drain */}
-                <div className="w-24 sm:w-36 h-2 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-0.5 relative">
+                {/* Esports Parallelogram Skewed HP Bar with Delayed Damage Drain Trail */}
+                <div className="relative -skew-x-12 overflow-hidden bg-neutral-950 border border-red-500/40 h-2.5 sm:h-3.5 w-28 sm:w-44 rounded-xs mt-1 shadow-inner">
+                  {/* Delayed gold/white damage drain trail */}
                   <div
-                    className="absolute inset-y-0 left-0 bg-amber-400 transition-all duration-700 ease-out rounded-full opacity-70"
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-300 to-yellow-100 transition-all duration-700 ease-out opacity-85"
                     style={{ width: `${(ghostOpponentHp / maxOpponentHp) * 100}%` }}
                   />
+                  {/* Real-time active HP */}
                   <div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-600 to-amber-500 transition-all duration-200 rounded-full"
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 transition-all duration-150 shadow-[0_0_10px_rgba(239,68,68,0.8)]"
                     style={{ width: `${(opponentHp / maxOpponentHp) * 100}%` }}
                   />
                 </div>
@@ -918,6 +1037,29 @@ export const ArenaScreen: React.FC = () => {
               className="w-full h-full absolute inset-0"
             />
 
+            {/* Esports Broadcast Announcer Callout Banner */}
+            {announcerText && (
+              <div className="absolute top-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-in zoom-in-95 duration-200">
+                <div className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-black/90 via-[#10172A]/95 to-black/90 border-2 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.5)] flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#CCFF00] animate-spin" />
+                  <span className="font-display font-black text-xs sm:text-sm text-[#CCFF00] tracking-widest uppercase italic">
+                    {announcerText}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Real-time Combo Counter Badge */}
+            {comboCount >= 2 && (
+              <div className="absolute bottom-3 right-3 z-20 pointer-events-none animate-bounce">
+                <div className="px-2.5 py-1 rounded-lg bg-black/85 border border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.5)] flex items-center gap-1.5">
+                  <span className="font-display font-black text-xs text-amber-300 italic tracking-wider">
+                    {comboLabel}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Live Combat Announcement Ticker Banner */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/85 backdrop-blur-md border border-[#CCFF00]/40 shadow-[0_0_15px_rgba(204,255,0,0.25)] flex items-center gap-1.5 z-20 pointer-events-none max-w-[85%]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#CCFF00] animate-ping shrink-0" />
@@ -951,14 +1093,16 @@ export const ArenaScreen: React.FC = () => {
                     {currentActiveFighter.breed}
                   </span>
                 </div>
-                {/* Dual Layer HP Bar with Ghost Drain */}
-                <div className="w-24 sm:w-36 h-2 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-0.5 relative">
+                {/* Esports Parallelogram Skewed HP Bar with Delayed Damage Drain Trail */}
+                <div className="relative -skew-x-12 overflow-hidden bg-neutral-950 border border-cyan-400/40 h-2.5 sm:h-3.5 w-28 sm:w-44 rounded-xs mt-1 shadow-inner">
+                  {/* Delayed gold/white damage drain trail */}
                   <div
-                    className="absolute inset-y-0 left-0 bg-amber-400 transition-all duration-700 ease-out rounded-full opacity-70"
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-300 to-yellow-100 transition-all duration-700 ease-out opacity-85"
                     style={{ width: `${(ghostPlayerHp / maxPlayerHp) * 100}%` }}
                   />
+                  {/* Real-time active HP */}
                   <div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-200 rounded-full"
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 via-cyan-400 to-[#CCFF00] transition-all duration-150 shadow-[0_0_10px_rgba(0,229,255,0.8)]"
                     style={{ width: `${(playerHp / maxPlayerHp) * 100}%` }}
                   />
                 </div>
@@ -989,26 +1133,38 @@ export const ArenaScreen: React.FC = () => {
               </div>
             )}
 
-            {/* Squad Tag-In Drawer */}
+            {/* Squad Tag-In Drawer with Desktop Hotkey Hints [Q/W/E/R] */}
             <div className="flex items-center gap-1 shrink-0">
-              {safeDeck.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={() => handleTagIn(b)}
-                  title={`Tag in ${b.name} (Instant 75 DMG slam)`}
-                  className={`w-7 h-7 rounded-lg overflow-hidden border cursor-pointer transition-all active:scale-95 ${
-                    b.id === currentActiveFighter.id
-                      ? 'border-[#CCFF00] ring-1 ring-[#CCFF00]'
-                      : 'border-white/20 hover:border-white/50 opacity-60'
-                  }`}
-                >
-                  <img
-                    src={getPetPhoto(b)}
-                    alt={b.name}
-                    className="w-full h-full object-cover aspect-square"
-                  />
-                </button>
-              ))}
+              {safeDeck.map((b, idx) => {
+                const hotkeyLetters = ['Q', 'W', 'E', 'R'];
+                const letter = hotkeyLetters[idx];
+                const isKeyActive = pressedHotkey === letter?.toLowerCase();
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => handleTagIn(b)}
+                    title={`[${letter}] Tag in ${b.name} (Instant 75 DMG slam)`}
+                    className={`w-7 h-7 rounded-lg overflow-hidden border cursor-pointer transition-all relative active:scale-95 ${
+                      b.id === currentActiveFighter.id
+                        ? 'border-[#CCFF00] ring-1 ring-[#CCFF00]'
+                        : isKeyActive
+                        ? 'border-cyan-400 ring-2 ring-cyan-400 scale-95'
+                        : 'border-white/20 hover:border-white/50 opacity-60'
+                    }`}
+                  >
+                    <img
+                      src={getPetPhoto(b)}
+                      alt={b.name}
+                      className="w-full h-full object-cover aspect-square"
+                    />
+                    {letter && (
+                      <span className="absolute bottom-0 right-0 px-0.5 bg-black/80 text-[7px] font-mono font-bold text-[#CCFF00] rounded-tl leading-none">
+                        {letter}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -1036,81 +1192,116 @@ export const ArenaScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* 6. SLAM ACTION MOVES DOCK */}
+          {/* 6. SLAM ACTION MOVES DOCK (With Desktop Hotkeys [1-4, SPACE] & Mobile Thumb Arc) */}
           <div className="grid grid-cols-5 gap-1 shrink-0">
-            {/* Card 1: Quick Pounce (2 Energy) */}
+            {/* Card 1: Quick Pounce (2 Energy / Hotkey [1]) */}
             <button
               onClick={() => handlePlayCard('pounce')}
               disabled={elixir < 2}
-              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
+              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 relative ${
                 elixir >= 2
-                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-cyan-400 text-white shadow active:scale-95'
+                  ? pressedHotkey === '1'
+                    ? 'bg-cyan-500/40 border-cyan-300 ring-2 ring-cyan-400 scale-95 text-white'
+                    : 'bg-[#151D30] hover:bg-[#1C2640] border-cyan-400 text-white shadow active:scale-95'
                   : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[8px] font-mono font-black text-cyan-400">2 ⚡</span>
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-[8px] font-mono font-black text-cyan-400">2 ⚡</span>
+                <span className="text-[7px] font-mono px-1 rounded bg-black/60 border border-cyan-400/40 text-cyan-300 font-bold hidden sm:inline">
+                  [1]
+                </span>
+              </div>
               <span className="text-xs">🐾</span>
               <span className="text-[8px] font-bold uppercase truncate">Pounce</span>
             </button>
 
-            {/* Card 2: Sonic Bark / Hiss (3 Energy) */}
+            {/* Card 2: Sonic Bark / Hiss (3 Energy / Hotkey [2]) */}
             <button
               onClick={() => handlePlayCard('bark')}
               disabled={elixir < 3}
-              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
+              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 relative ${
                 elixir >= 3
-                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-amber-400 text-white shadow active:scale-95'
+                  ? pressedHotkey === '2'
+                    ? 'bg-amber-500/40 border-amber-300 ring-2 ring-amber-400 scale-95 text-white'
+                    : 'bg-[#151D30] hover:bg-[#1C2640] border-amber-400 text-white shadow active:scale-95'
                   : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[8px] font-mono font-black text-amber-400">3 ⚡</span>
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-[8px] font-mono font-black text-amber-400">3 ⚡</span>
+                <span className="text-[7px] font-mono px-1 rounded bg-black/60 border border-amber-400/40 text-amber-300 font-bold hidden sm:inline">
+                  [2]
+                </span>
+              </div>
               <span className="text-xs">📢</span>
               <span className="text-[8px] font-bold uppercase truncate">Bark</span>
             </button>
 
-            {/* Card 3: Iron Guard (2 Energy) */}
+            {/* Card 3: Iron Guard (2 Energy / Hotkey [3]) */}
             <button
               onClick={() => handlePlayCard('shield')}
               disabled={elixir < 2}
-              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
+              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 relative ${
                 elixir >= 2
-                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-blue-400 text-white shadow active:scale-95'
+                  ? pressedHotkey === '3'
+                    ? 'bg-blue-500/40 border-blue-300 ring-2 ring-blue-400 scale-95 text-white'
+                    : 'bg-[#151D30] hover:bg-[#1C2640] border-blue-400 text-white shadow active:scale-95'
                   : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[8px] font-mono font-black text-blue-400">2 ⚡</span>
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-[8px] font-mono font-black text-blue-400">2 ⚡</span>
+                <span className="text-[7px] font-mono px-1 rounded bg-black/60 border border-blue-400/40 text-blue-300 font-bold hidden sm:inline">
+                  [3]
+                </span>
+              </div>
               <span className="text-xs">🛡️</span>
               <span className="text-[8px] font-bold uppercase truncate">
-                {battleMode === '2v2' ? 'Team Guard' : 'Guard'}
+                {battleMode === '2v2' ? 'Guard' : 'Guard'}
               </span>
             </button>
 
-            {/* Card 4: Fierce Bite (4 Energy) */}
+            {/* Card 4: Fierce Bite (4 Energy / Hotkey [4]) */}
             <button
               onClick={() => handlePlayCard('bite')}
               disabled={elixir < 4}
-              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
+              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 relative ${
                 elixir >= 4
-                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-red-400 text-white shadow active:scale-95'
+                  ? pressedHotkey === '4'
+                    ? 'bg-red-500/40 border-red-300 ring-2 ring-red-400 scale-95 text-white'
+                    : 'bg-[#151D30] hover:bg-[#1C2640] border-red-400 text-white shadow active:scale-95'
                   : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[8px] font-mono font-black text-red-400">4 ⚡</span>
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-[8px] font-mono font-black text-red-400">4 ⚡</span>
+                <span className="text-[7px] font-mono px-1 rounded bg-black/60 border border-red-400/40 text-red-300 font-bold hidden sm:inline">
+                  [4]
+                </span>
+              </div>
               <span className="text-xs">💥</span>
               <span className="text-[8px] font-bold uppercase truncate">Bite</span>
             </button>
 
-            {/* Card 5: PET SLAM / DUO SLAM OVERDRIVE (6 Energy) */}
+            {/* Card 5: PET SLAM / DUO SLAM OVERDRIVE (6 Energy / Hotkey [SPACE]) */}
             <button
               onClick={() => handlePlayCard('slam')}
               disabled={elixir < 6}
-              className={`p-1 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
+              className={`p-1 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 relative ${
                 elixir >= 6
-                  ? 'bg-gradient-to-b from-[#CCFF00] to-amber-500 border-white text-black shadow-[0_0_12px_rgba(204,255,0,0.6)] active:scale-95'
+                  ? pressedHotkey === 'space'
+                    ? 'bg-[#CCFF00] border-white ring-4 ring-[#CCFF00] scale-95 text-black'
+                    : 'bg-gradient-to-b from-[#CCFF00] to-amber-500 border-white text-black shadow-[0_0_15px_rgba(204,255,0,0.7)] active:scale-95 animate-pulse'
                   : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[8px] font-mono font-black text-black">6 ⚡</span>
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-[8px] font-mono font-black text-black">6 ⚡</span>
+                <span className="text-[7px] font-mono px-1 rounded bg-black text-[#CCFF00] font-black hidden sm:inline">
+                  [SPC]
+                </span>
+              </div>
               <span className="text-xs">⚡</span>
               <span className="text-[8px] font-black uppercase truncate">
                 {battleMode === '2v2' ? 'DUO SLAM' : 'SLAM'}

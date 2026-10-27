@@ -46,9 +46,34 @@ interface Particle {
   maxLife: number;
   size: number;
   color: string;
-  type: 'spark' | 'dust' | 'shockwave' | 'sonic' | 'petal' | 'text' | 'slash';
+  type: 'spark' | 'dust' | 'shockwave' | 'sonic' | 'petal' | 'text' | 'slash' | 'ember';
   text?: string;
   angle?: number;
+  spin?: number;
+}
+
+interface Afterimage {
+  x: number;
+  y: number;
+  jumpY: number;
+  facingRight: boolean;
+  scaleX: number;
+  scaleY: number;
+  species: PetSpecies;
+  color: string;
+  alpha: number;
+}
+
+interface WeatherParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  color: string;
+  alpha: number;
+  angle: number;
+  spin: number;
 }
 
 export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
@@ -75,17 +100,37 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
-  // Combat Animation & Physics State
+  // Combat Animation, Dynamic Camera & Physics State
   const stateRef = useRef({
     time: 0,
     particles: [] as Particle[],
+    afterimages: [] as Afterimage[],
+    weatherParticles: [] as WeatherParticle[],
+    afterimageSpawnTimer: 0,
+
+    // Dynamic Action Camera
     cameraShake: 0,
+    cameraShakeX: 0,
+    cameraShakeY: 0,
+    cameraZoom: 1.0,
+    targetZoom: 1.0,
+    cameraPanX: 0,
+    cameraPanY: 0,
+    targetPanX: 0,
+    targetPanY: 0,
+
+    // Hit-Stop Freeze Frame (45ms - 70ms visceral impact pause)
+    hitStopTimer: 0,
+
+    // Chromatic Aberration flash timer
+    chromaticFlash: 0,
+
     action: null as BattleAction | null,
     actionProgress: 0, // 0 to 1
     actionDuration: 0.7, // seconds
     hasDealtDamage: false,
 
-    // Player Fighter Physics
+    // Player Fighter Physics & Skeletal Animation
     player: {
       xRatio: 0.25,
       yRatio: 0.72,
@@ -101,9 +146,11 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
       flinchTimer: 0,
       breathCycle: 0,
       tailAngle: 0,
+      blinkTimer: 0,
+      isBlinking: false,
     },
 
-    // Opponent Fighter Physics
+    // Opponent Fighter Physics & Skeletal Animation
     opponent: {
       xRatio: 0.75,
       yRatio: 0.60,
@@ -119,10 +166,12 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
       flinchTimer: 0,
       breathCycle: 0,
       tailAngle: 0,
+      blinkTimer: 0,
+      isBlinking: false,
     },
   });
 
-  // Watch for incoming action triggers
+  // Watch for incoming action triggers & adjust Action Camera Targets
   useEffect(() => {
     if (!currentAction) return;
     const s = stateRef.current;
@@ -130,17 +179,34 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
     s.actionProgress = 0;
     s.hasDealtDamage = false;
 
-    // Set duration based on attack type
+    // Set duration and camera dynamics based on attack type
     if (currentAction.type === 'slam') {
       s.actionDuration = 0.95;
+      s.targetZoom = 1.24; // Dramatic zoom in during PET SLAM Overdrive
+      // Pan camera toward impact target
+      s.targetPanX = currentAction.attacker === 'player' ? 35 : -35;
+      s.targetPanY = -15;
     } else if (currentAction.type === 'bite') {
       s.actionDuration = 0.85;
+      s.targetZoom = 1.16; // Moderate zoom in on Fierce Bite
+      s.targetPanX = currentAction.attacker === 'player' ? 25 : -25;
+      s.targetPanY = -10;
     } else if (currentAction.type === 'bark') {
       s.actionDuration = 0.75;
+      s.targetZoom = 1.08;
+      s.targetPanX = currentAction.attacker === 'player' ? -15 : 15;
+      s.targetPanY = 0;
     } else if (currentAction.type === 'shield') {
       s.actionDuration = 0.6;
+      s.targetZoom = 1.04;
+      s.targetPanX = 0;
+      s.targetPanY = 0;
     } else {
+      // Pounce
       s.actionDuration = 0.65;
+      s.targetZoom = 1.1;
+      s.targetPanX = currentAction.attacker === 'player' ? 20 : -20;
+      s.targetPanY = -5;
     }
   }, [currentAction]);
 
@@ -158,10 +224,11 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
       type: p.type,
       text: p.text,
       angle: p.angle ?? Math.random() * Math.PI * 2,
+      spin: p.spin ?? (Math.random() - 0.5) * 4,
     });
   }, []);
 
-  // Main 60 FPS Canvas Game Engine
+  // Main 60 FPS AAA Canvas Game Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -176,7 +243,7 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
       const s = stateRef.current;
       s.time += dt;
 
-      // Handle Device Pixel Ratio for Retina Display
+      // Handle Device Pixel Ratio for crisp retina rendering
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const rect = canvas.getBoundingClientRect();
       const width = rect.width;
@@ -189,17 +256,50 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+      // =======================================================================
+      // HIT-STOP SYSTEM (Visceral Freeze Frame Impact)
+      // =======================================================================
+      let isHitStopActive = false;
+      if (s.hitStopTimer > 0) {
+        s.hitStopTimer -= dt;
+        isHitStopActive = true;
+      }
+
       // Camera Shake decay
       let shakeOffsetX = 0;
       let shakeOffsetY = 0;
       if (s.cameraShake > 0) {
         shakeOffsetX = (Math.random() - 0.5) * s.cameraShake;
         shakeOffsetY = (Math.random() - 0.5) * s.cameraShake;
-        s.cameraShake = Math.max(0, s.cameraShake - dt * 25);
+        s.cameraShake = Math.max(0, s.cameraShake - dt * 28);
+      }
+
+      // Spring-physics Camera Zoom & Pan Interpolation
+      const zoomSpringRate = 6.5;
+      s.cameraZoom += (s.targetZoom - s.cameraZoom) * Math.min(1, dt * zoomSpringRate);
+      s.cameraPanX += (s.targetPanX - s.cameraPanX) * Math.min(1, dt * zoomSpringRate);
+      s.cameraPanY += (s.targetPanY - s.cameraPanY) * Math.min(1, dt * zoomSpringRate);
+
+      // When no action is running, smoothly return camera to default 1.0x & center
+      if (!s.action) {
+        s.targetZoom = 1.0;
+        s.targetPanX = 0;
+        s.targetPanY = 0;
+      }
+
+      // Chromatic Aberration flash decay
+      if (s.chromaticFlash > 0) {
+        s.chromaticFlash = Math.max(0, s.chromaticFlash - dt * 4);
       }
 
       ctx.save();
-      ctx.translate(shakeOffsetX, shakeOffsetY);
+
+      // Apply Dynamic Action Camera: Zoom and Pan centered around battlefield focal point
+      const focalCenterX = width * 0.5;
+      const focalCenterY = height * 0.58;
+      ctx.translate(focalCenterX + shakeOffsetX, focalCenterY + shakeOffsetY);
+      ctx.scale(s.cameraZoom, s.cameraZoom);
+      ctx.translate(-focalCenterX - s.cameraPanX, -focalCenterY - s.cameraPanY);
 
       // Setup Base Fighter Coordinates
       const p = s.player;
@@ -209,18 +309,35 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
       opp.baseX = width * opp.xRatio;
       opp.baseY = height * opp.yRatio;
 
-      // Harmonic Idle Animation
-      p.breathCycle = Math.sin(s.time * 3.5);
-      opp.breathCycle = Math.sin(s.time * 3.5 + 1.2);
-      p.tailAngle = Math.sin(s.time * 5) * 0.25;
-      opp.tailAngle = Math.sin(s.time * 4) * 0.2;
+      // Harmonic Idle Animation with Organic Breathing Bob
+      p.breathCycle = Math.sin(s.time * 3.6);
+      opp.breathCycle = Math.sin(s.time * 3.4 + 1.2);
+      p.tailAngle = Math.sin(s.time * 5.2) * 0.28;
+      opp.tailAngle = Math.sin(s.time * 4.4) * 0.22;
+
+      // Procedural Eye Blinking timers (~every 3.5 seconds, blink lasts 0.12s)
+      p.blinkTimer += dt;
+      if (p.blinkTimer > 3.6) {
+        p.isBlinking = p.blinkTimer < 3.74;
+        if (p.blinkTimer > 3.75) p.blinkTimer = 0;
+      } else {
+        p.isBlinking = false;
+      }
+
+      opp.blinkTimer += dt;
+      if (opp.blinkTimer > 4.1) {
+        opp.isBlinking = opp.blinkTimer < 4.24;
+        if (opp.blinkTimer > 4.25) opp.blinkTimer = 0;
+      } else {
+        opp.isBlinking = false;
+      }
 
       // Flinch Decay
       if (p.flinchTimer > 0) p.flinchTimer -= dt;
       if (opp.flinchTimer > 0) opp.flinchTimer -= dt;
 
       // =======================================================================
-      // COMBAT ACTION SEQUENCE INTERPOLATION
+      // COMBAT ACTION SEQUENCE INTERPOLATION (WITH SQUASH & STRETCH)
       // =======================================================================
       let playerTargetX = p.baseX;
       let playerTargetY = p.baseY;
@@ -234,42 +351,76 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
       opp.scaleY = 1;
 
       if (s.action) {
-        s.actionProgress += dt / s.actionDuration;
+        // Freeze progress if hit-stop is active
+        if (!isHitStopActive) {
+          s.actionProgress += dt / s.actionDuration;
+        }
+
         const progress = Math.min(1, s.actionProgress);
         const isPlayerAttacking = s.action.attacker === 'player';
         const type = s.action.type;
 
+        // Spawn Afterimage Trail during fast rush/leaps
+        s.afterimageSpawnTimer += dt;
+        if (s.afterimageSpawnTimer > 0.045 && (type === 'pounce' || type === 'slam')) {
+          s.afterimageSpawnTimer = 0;
+          const activePet = isPlayerAttacking ? playerPet : opponentPet;
+          const activeCoords = isPlayerAttacking
+            ? { x: p.currentX, jumpY: p.jumpY, scaleX: p.scaleX, scaleY: p.scaleY, facingRight: true }
+            : { x: opp.currentX, jumpY: opp.jumpY, scaleX: opp.scaleX, scaleY: opp.scaleY, facingRight: false };
+
+          s.afterimages.push({
+            x: activeCoords.x,
+            y: (isPlayerAttacking ? p.baseY : opp.baseY),
+            jumpY: activeCoords.jumpY,
+            facingRight: activeCoords.facingRight,
+            scaleX: activeCoords.scaleX,
+            scaleY: activeCoords.scaleY,
+            species: mapBeastToSpecies(activePet.breed || activePet.species),
+            color: isPlayerAttacking ? '#CCFF00' : '#EF4444',
+            alpha: 0.45,
+          });
+        }
+
         if (isPlayerAttacking) {
           // --- PLAYER ATTACKING OPPONENT ---
           if (type === 'pounce' || type === 'bite') {
-            // Windup -> Rush -> Strike -> Return
             if (progress < 0.2) {
-              // Windup crouch
-              p.scaleY = 0.82;
-              p.scaleX = 1.15;
-              playerTargetX = p.baseX - 12;
+              // Windup: Anticipatory Crouch Squash
+              const crouchPct = progress / 0.2;
+              p.scaleY = 1 - crouchPct * 0.24; // 0.76
+              p.scaleX = 1 + crouchPct * 0.22; // 1.22
+              playerTargetX = p.baseX - crouchPct * 16;
             } else if (progress < 0.55) {
-              // Rush forward to opponent face
+              // Forward Dash: Stretch along velocity vector
               const rushPct = (progress - 0.2) / 0.35;
-              playerTargetX = p.baseX + (opp.baseX - p.baseX - 50) * rushPct;
-              p.jumpY = -Math.sin(rushPct * Math.PI) * 25;
+              p.scaleX = 1.25 - rushPct * 0.2;
+              p.scaleY = 0.85 + rushPct * 0.2;
+              playerTargetX = p.baseX + (opp.baseX - p.baseX - 45) * rushPct;
+              p.jumpY = -Math.sin(rushPct * Math.PI) * 28;
 
-              // Strike impact at progress ~0.55
+              // Strike Impact at rush apex (~0.55)
               if (!s.hasDealtDamage && rushPct > 0.85) {
                 s.hasDealtDamage = true;
-                opp.flinchTimer = 0.35;
-                opp.recoilX = 35;
-                s.cameraShake = type === 'bite' ? 8 : 5;
+                opp.flinchTimer = 0.38;
+                opp.recoilX = 38;
+                s.cameraShake = type === 'bite' ? 10 : 7;
+                s.hitStopTimer = type === 'bite' ? 0.065 : 0.05; // Hit-stop pause
+                s.chromaticFlash = 0.25;
 
-                // Spawn Slash & Sparks on Opponent
+                // Flinch squash on opponent
+                opp.scaleX = 0.82;
+                opp.scaleY = 1.22;
+
+                // Impact FX: Sparks & Slash
                 const impactX = opp.baseX;
                 const impactY = opp.baseY - 30;
-                for (let i = 0; i < 14; i++) {
+                for (let i = 0; i < 16; i++) {
                   spawnParticle({
                     x: impactX,
                     y: impactY,
-                    vx: (Math.random() - 0.3) * 7,
-                    vy: (Math.random() - 0.5) * 6,
+                    vx: (Math.random() - 0.3) * 8,
+                    vy: (Math.random() - 0.5) * 7,
                     color: type === 'bite' ? '#EF4444' : '#CCFF00',
                     type: 'spark',
                     size: 4 + Math.random() * 4,
@@ -279,72 +430,96 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
                   x: impactX,
                   y: impactY,
                   type: 'slash',
-                  color: '#EF4444',
-                  life: 0.35,
-                  size: 45,
+                  color: type === 'bite' ? '#EF4444' : '#CCFF00',
+                  life: 0.38,
+                  size: 50,
                 });
 
-                // Damage Popup
+                // Damage Popup Text
                 if (s.action.damage) {
                   spawnParticle({
                     x: impactX,
-                    y: impactY - 20,
+                    y: impactY - 22,
                     type: 'text',
                     text: s.action.isCrit ? `💥 CRIT -${s.action.damage}!` : `-${s.action.damage}`,
                     color: s.action.isCrit ? '#CCFF00' : '#EF4444',
-                    size: s.action.isCrit ? 18 : 15,
-                    life: 0.9,
+                    size: s.action.isCrit ? 20 : 16,
+                    life: 0.95,
                   });
                 }
               }
             } else {
-              // Retreat back to base
+              // Rebound Return: Settle back with landing squash
               const retPct = (progress - 0.55) / 0.45;
-              playerTargetX = p.baseX + (opp.baseX - p.baseX - 50) * (1 - retPct);
-              p.jumpY = -Math.sin(retPct * Math.PI) * 15;
+              playerTargetX = p.baseX + (opp.baseX - p.baseX - 45) * (1 - retPct);
+              p.jumpY = -Math.sin(retPct * Math.PI) * 16;
+              if (retPct > 0.8) {
+                // Landing compression
+                p.scaleY = 0.88;
+                p.scaleX = 1.12;
+              }
             }
           } else if (type === 'slam') {
-            // ULTIMATE PET SLAM: Leap off-screen -> Meteor Crash Down -> Shockwave
+            // ULTIMATE PET SLAM OVERDRIVE
             if (progress < 0.35) {
-              // Rocket jump UP into sky
+              // Rocket Jump: Extreme vertical stretch upwards
               const upPct = progress / 0.35;
-              p.jumpY = -upPct * height * 1.3;
-              playerTargetX = p.baseX + (opp.baseX - p.baseX) * (upPct * 0.5);
-              p.scaleY = 1.3;
+              p.jumpY = -upPct * height * 1.35;
+              playerTargetX = p.baseX + (opp.baseX - p.baseX) * (upPct * 0.55);
+              p.scaleY = 1.35;
+              p.scaleX = 0.78;
             } else if (progress < 0.65) {
-              // Meteor Crash DOWN onto opponent
+              // Meteor Crash Downward
               const downPct = (progress - 0.35) / 0.3;
-              p.jumpY = -height * 1.3 * (1 - downPct);
-              playerTargetX = p.baseX + (opp.baseX - p.baseX) * (0.5 + downPct * 0.5);
+              p.jumpY = -height * 1.35 * (1 - downPct);
+              playerTargetX = p.baseX + (opp.baseX - p.baseX) * (0.55 + downPct * 0.45);
+              p.scaleY = 1.25;
+              p.scaleX = 0.85;
 
-              // Ground Zero Impact!
+              // Ground Zero Epic Meteor Impact!
               if (!s.hasDealtDamage && downPct > 0.9) {
                 s.hasDealtDamage = true;
-                opp.flinchTimer = 0.55;
-                opp.recoilX = 55;
-                s.cameraShake = 16;
+                opp.flinchTimer = 0.6;
+                opp.recoilX = 58;
+                s.cameraShake = 18;
+                s.hitStopTimer = 0.07; // 70ms visceral hit-stop
+                s.chromaticFlash = 0.45;
                 sound.playImpact();
 
-                // Giant Shockwave Ring
+                // Heavy impact squash on opponent
+                opp.scaleX = 1.35;
+                opp.scaleY = 0.68;
+
+                // Ground Zero Expanding Shockwave Ring
                 spawnParticle({
                   x: opp.baseX,
                   y: opp.baseY + 10,
                   type: 'shockwave',
                   color: '#CCFF00',
-                  size: 15,
-                  life: 0.6,
+                  size: 20,
+                  life: 0.65,
                 });
 
-                // Explosive Sparks
-                for (let i = 0; i < 28; i++) {
+                // Secondary Cyan Shockwave
+                spawnParticle({
+                  x: opp.baseX,
+                  y: opp.baseY + 10,
+                  type: 'shockwave',
+                  color: '#00E5FF',
+                  size: 35,
+                  life: 0.75,
+                });
+
+                // Explosive Multi-Color Sparks
+                for (let i = 0; i < 32; i++) {
                   spawnParticle({
                     x: opp.baseX,
                     y: opp.baseY - 20,
-                    vx: (Math.random() - 0.5) * 12,
-                    vy: (Math.random() - 0.5) * 10 - 2,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: (Math.random() - 0.5) * 12 - 3,
                     color: Math.random() > 0.5 ? '#CCFF00' : '#F59E0B',
                     type: 'spark',
-                    size: 5 + Math.random() * 5,
+                    size: 5 + Math.random() * 6,
                   });
                 }
 
@@ -352,63 +527,66 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
                 if (s.action.damage) {
                   spawnParticle({
                     x: opp.baseX,
-                    y: opp.baseY - 45,
+                    y: opp.baseY - 48,
                     type: 'text',
-                    text: `💥 MEGA SLAM -${s.action.damage}!!`,
+                    text: `💥 OVERDRIVE -${s.action.damage}!!`,
                     color: '#CCFF00',
-                    size: 22,
-                    life: 1.1,
+                    size: 24,
+                    life: 1.15,
                   });
                 }
               }
             } else {
-              // Bounce back to base position
+              // High Arc Backflip Return to base
               const bouncePct = (progress - 0.65) / 0.35;
               playerTargetX = opp.baseX + (p.baseX - opp.baseX) * bouncePct;
-              p.jumpY = -Math.sin(bouncePct * Math.PI) * 35;
+              p.jumpY = -Math.sin(bouncePct * Math.PI) * 38;
+              p.scaleY = 1.05;
+              p.scaleX = 0.95;
             }
           } else if (type === 'bark') {
-            // Sonic Bark: Shockwaves shot across screen
-            p.scaleX = 1.25;
-            p.scaleY = 1.1;
+            // Sonic Bark / Roar: Chest expands, shockwaves shoot
+            p.scaleX = 1.28;
+            p.scaleY = 1.12;
             if (!s.hasDealtDamage && progress > 0.25) {
               s.hasDealtDamage = true;
-              s.cameraShake = 6;
-              opp.flinchTimer = 0.4;
-              opp.recoilX = 30;
+              s.cameraShake = 7;
+              opp.flinchTimer = 0.42;
+              opp.recoilX = 32;
+              s.hitStopTimer = 0.045;
 
-              // Concentric Sonic Rings shooting across
+              // Concentric Sonic Rings
               for (let i = 0; i < 3; i++) {
                 setTimeout(() => {
                   spawnParticle({
-                    x: p.baseX + 30,
+                    x: p.baseX + 32,
                     y: p.baseY - 25,
-                    vx: 7,
+                    vx: 8,
                     vy: 0,
                     type: 'sonic',
                     color: '#38BDF8',
-                    size: 20,
-                    life: 0.5,
+                    size: 22,
+                    life: 0.55,
                   });
-                }, i * 70);
+                }, i * 65);
               }
 
               if (s.action.damage) {
                 spawnParticle({
                   x: opp.baseX,
-                  y: opp.baseY - 25,
+                  y: opp.baseY - 26,
                   type: 'text',
                   text: `📢 -${s.action.damage}`,
                   color: '#38BDF8',
-                  size: 16,
+                  size: 17,
                   life: 0.9,
                 });
               }
             }
           } else if (type === 'shield') {
-            // Shield up!
-            p.scaleY = 0.85;
-            p.scaleX = 1.15;
+            // Iron Guard Brace Squash
+            p.scaleY = 0.82;
+            p.scaleX = 1.22;
             if (!s.hasDealtDamage && progress > 0.2) {
               s.hasDealtDamage = true;
               sound.playBlock();
@@ -416,10 +594,10 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
                 x: p.baseX,
                 y: p.baseY - 20,
                 type: 'text',
-                text: `🛡️ SHIELD DEPLOYED!`,
+                text: `🛡️ IRON GUARD!`,
                 color: '#38BDF8',
                 size: 15,
-                life: 0.8,
+                life: 0.85,
               });
             }
           }
@@ -427,28 +605,36 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
           // --- OPPONENT ATTACKING PLAYER ---
           if (type === 'pounce' || type === 'bite') {
             if (progress < 0.2) {
-              opp.scaleY = 0.82;
-              opp.scaleX = 1.15;
-              oppTargetX = opp.baseX + 12;
+              const crouchPct = progress / 0.2;
+              opp.scaleY = 1 - crouchPct * 0.24;
+              opp.scaleX = 1 + crouchPct * 0.22;
+              oppTargetX = opp.baseX + crouchPct * 16;
             } else if (progress < 0.55) {
               const rushPct = (progress - 0.2) / 0.35;
-              oppTargetX = opp.baseX - (opp.baseX - p.baseX - 50) * rushPct;
-              opp.jumpY = -Math.sin(rushPct * Math.PI) * 25;
+              opp.scaleX = 1.25 - rushPct * 0.2;
+              opp.scaleY = 0.85 + rushPct * 0.2;
+              oppTargetX = opp.baseX - (opp.baseX - p.baseX - 45) * rushPct;
+              opp.jumpY = -Math.sin(rushPct * Math.PI) * 28;
 
               if (!s.hasDealtDamage && rushPct > 0.85) {
                 s.hasDealtDamage = true;
-                p.flinchTimer = 0.35;
-                p.recoilX = -35;
-                s.cameraShake = 7;
+                p.flinchTimer = 0.38;
+                p.recoilX = -38;
+                s.cameraShake = 8;
+                s.hitStopTimer = 0.055;
+                s.chromaticFlash = 0.25;
+
+                p.scaleX = 0.82;
+                p.scaleY = 1.22;
 
                 const impactX = p.baseX;
                 const impactY = p.baseY - 30;
-                for (let i = 0; i < 14; i++) {
+                for (let i = 0; i < 16; i++) {
                   spawnParticle({
                     x: impactX,
                     y: impactY,
-                    vx: (Math.random() - 0.7) * 7,
-                    vy: (Math.random() - 0.5) * 6,
+                    vx: (Math.random() - 0.7) * 8,
+                    vy: (Math.random() - 0.5) * 7,
                     color: '#EF4444',
                     type: 'spark',
                     size: 4 + Math.random() * 4,
@@ -459,70 +645,83 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
                   y: impactY,
                   type: 'slash',
                   color: '#EF4444',
-                  life: 0.35,
-                  size: 45,
+                  life: 0.38,
+                  size: 50,
                 });
 
                 if (s.action.damage) {
                   spawnParticle({
                     x: impactX,
-                    y: impactY - 20,
+                    y: impactY - 22,
                     type: 'text',
                     text: `-${s.action.damage}`,
                     color: '#EF4444',
-                    size: 15,
-                    life: 0.9,
+                    size: 16,
+                    life: 0.95,
                   });
                 }
               }
             } else {
               const retPct = (progress - 0.55) / 0.45;
               oppTargetX = p.baseX + (opp.baseX - p.baseX) * retPct;
-              opp.jumpY = -Math.sin(retPct * Math.PI) * 15;
+              opp.jumpY = -Math.sin(retPct * Math.PI) * 16;
+              if (retPct > 0.8) {
+                opp.scaleY = 0.88;
+                opp.scaleX = 1.12;
+              }
             }
           } else if (type === 'slam') {
             // Opponent Heavy Slam
             if (progress < 0.35) {
               const upPct = progress / 0.35;
-              opp.jumpY = -upPct * height * 1.2;
-              oppTargetX = opp.baseX - (opp.baseX - p.baseX) * (upPct * 0.5);
+              opp.jumpY = -upPct * height * 1.25;
+              oppTargetX = opp.baseX - (opp.baseX - p.baseX) * (upPct * 0.55);
+              opp.scaleY = 1.35;
+              opp.scaleX = 0.78;
             } else if (progress < 0.65) {
               const downPct = (progress - 0.35) / 0.3;
-              opp.jumpY = -height * 1.2 * (1 - downPct);
-              oppTargetX = opp.baseX - (opp.baseX - p.baseX) * (0.5 + downPct * 0.5);
+              opp.jumpY = -height * 1.25 * (1 - downPct);
+              oppTargetX = opp.baseX - (opp.baseX - p.baseX) * (0.55 + downPct * 0.45);
+              opp.scaleY = 1.25;
+              opp.scaleX = 0.85;
 
               if (!s.hasDealtDamage && downPct > 0.9) {
                 s.hasDealtDamage = true;
-                p.flinchTimer = 0.55;
-                p.recoilX = -50;
-                s.cameraShake = 14;
+                p.flinchTimer = 0.6;
+                p.recoilX = -55;
+                s.cameraShake = 16;
+                s.hitStopTimer = 0.07;
+                s.chromaticFlash = 0.45;
                 sound.playImpact();
+
+                p.scaleX = 1.35;
+                p.scaleY = 0.68;
 
                 spawnParticle({
                   x: p.baseX,
                   y: p.baseY + 10,
                   type: 'shockwave',
                   color: '#EF4444',
-                  size: 15,
-                  life: 0.6,
+                  size: 20,
+                  life: 0.65,
                 });
 
                 if (s.action.damage) {
                   spawnParticle({
                     x: p.baseX,
-                    y: p.baseY - 45,
+                    y: p.baseY - 48,
                     type: 'text',
-                    text: `💥 SLAM -${s.action.damage}!`,
+                    text: `💥 OPPONENT SLAM -${s.action.damage}!`,
                     color: '#EF4444',
-                    size: 20,
-                    life: 1.1,
+                    size: 22,
+                    life: 1.15,
                   });
                 }
               }
             } else {
               const bouncePct = (progress - 0.65) / 0.35;
               oppTargetX = p.baseX + (opp.baseX - p.baseX) * bouncePct;
-              opp.jumpY = -Math.sin(bouncePct * Math.PI) * 30;
+              opp.jumpY = -Math.sin(bouncePct * Math.PI) * 32;
             }
           }
         }
@@ -545,23 +744,57 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
       opp.currentY = oppTargetY + opp.jumpY - opp.breathCycle * 2.5;
 
       // =======================================================================
-      // 1. DRAW DYNAMIC ARENA ENVIRONMENT & THEME
+      // 1. DRAW DYNAMIC ARENA ENVIRONMENT & AMBIENT WEATHER
       // =======================================================================
       drawArenaEnvironment(ctx, width, height, arenaTheme, s.time);
+      updateAndDrawWeather(ctx, width, height, arenaTheme, s.weatherParticles, dt, s.time);
 
       // =======================================================================
-      // 2. DRAW FIGHTER PEDESTALS & SHADOWS
+      // 2. DRAW FIGHTER PEDESTALS & DYNAMIC JUMP-SCALED SHADOWS
       // =======================================================================
-      drawFighterPedestal(ctx, p.baseX, p.baseY, 'player', arenaTheme);
-      drawFighterPedestal(ctx, opp.baseX, opp.baseY, 'opponent', arenaTheme);
+      drawFighterPedestal(ctx, p.baseX, p.baseY, 'player', arenaTheme, p.jumpY, height);
+      drawFighterPedestal(ctx, opp.baseX, opp.baseY, 'opponent', arenaTheme, opp.jumpY, height);
 
       if (battleMode === '2v2') {
-        drawFighterPedestal(ctx, p.baseX - 42, p.baseY - 26, 'player', arenaTheme);
-        drawFighterPedestal(ctx, opp.baseX + 42, opp.baseY - 26, 'opponent', arenaTheme);
+        drawFighterPedestal(ctx, p.baseX - 42, p.baseY - 26, 'player', arenaTheme, 0, height);
+        drawFighterPedestal(ctx, opp.baseX + 42, opp.baseY - 26, 'opponent', arenaTheme, 0, height);
       }
 
       // =======================================================================
-      // 3. DRAW OPPONENT FIGHTERS (2v2 Flanker + Frontline)
+      // 3. DRAW AFTERIMAGE GHOST TRAILS (Motion Blur Effect)
+      // =======================================================================
+      for (let i = s.afterimages.length - 1; i >= 0; i--) {
+        const ai = s.afterimages[i];
+        ai.alpha -= dt * 3.2;
+        if (ai.alpha <= 0) {
+          s.afterimages.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = ai.alpha;
+        drawCombatant(ctx, {
+          species: ai.species,
+          x: ai.x,
+          y: ai.y + ai.jumpY,
+          facingRight: ai.facingRight,
+          scaleX: ai.scaleX * 0.95,
+          scaleY: ai.scaleY * 0.95,
+          breathCycle: 0,
+          tailAngle: 0,
+          isFlinching: false,
+          isShielded: false,
+          isKO: false,
+          isBlinking: false,
+          time: s.time,
+          accentColor: ai.color,
+          silhouetteColor: ai.color,
+        });
+        ctx.restore();
+      }
+
+      // =======================================================================
+      // 4. DRAW OPPONENT FIGHTERS (2v2 Flanker + Frontline)
       // =======================================================================
       if (battleMode === '2v2' && opponentAllyPet) {
         const oppAllyX = opp.baseX + 42 + opp.recoilX * 0.7;
@@ -578,6 +811,7 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
           isFlinching: opp.flinchTimer > 0,
           isShielded: isOpponentShielded,
           isKO: opponentAllyHp <= 0,
+          isBlinking: opp.isBlinking,
           time: s.time,
           accentColor: '#F59E0B',
         });
@@ -595,12 +829,13 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
         isFlinching: opp.flinchTimer > 0,
         isShielded: isOpponentShielded,
         isKO: opponentHp <= 0,
+        isBlinking: opp.isBlinking,
         time: s.time,
         accentColor: '#EF4444',
       });
 
       // =======================================================================
-      // 4. DRAW PLAYER FIGHTERS (2v2 Flanker + Frontline)
+      // 5. DRAW PLAYER FIGHTERS (2v2 Flanker + Frontline)
       // =======================================================================
       if (battleMode === '2v2' && playerAllyPet) {
         const isSlam = s.action?.type === 'slam';
@@ -618,6 +853,7 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
           isFlinching: p.flinchTimer > 0,
           isShielded: isPlayerShielded,
           isKO: playerAllyHp <= 0,
+          isBlinking: p.isBlinking,
           time: s.time,
           accentColor: '#00E5FF',
         });
@@ -635,18 +871,23 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
         isFlinching: p.flinchTimer > 0,
         isShielded: isPlayerShielded,
         isKO: playerHp <= 0,
+        isBlinking: p.isBlinking,
         time: s.time,
         accentColor: '#CCFF00',
       });
 
       // =======================================================================
-      // 5. UPDATE & DRAW PARTICLE FX (Hit sparks, slashes, shockwaves, text)
+      // 6. UPDATE & DRAW PARTICLE FX (Additive Blended Hit Sparks & Rings)
       // =======================================================================
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter'; // Additive blending for electric arcade feel
+
       for (let i = s.particles.length - 1; i >= 0; i--) {
         const pt = s.particles[i];
         pt.x += pt.vx;
         pt.y += pt.vy;
         pt.life -= dt;
+        if (pt.spin) pt.angle = (pt.angle || 0) + pt.spin * dt;
 
         if (pt.type === 'spark') {
           pt.vy += 9.8 * dt * 4; // Gravity for sparks
@@ -673,32 +914,32 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
           ctx.moveTo(pt.x - pt.size * 0.6, pt.y - pt.size * 0.5);
           ctx.lineTo(pt.x + pt.size * 0.6, pt.y + pt.size * 0.5);
           ctx.stroke();
-          // Second claw mark
+          // Second claw slash
           ctx.beginPath();
           ctx.moveTo(pt.x - pt.size * 0.4, pt.y - pt.size * 0.7);
           ctx.lineTo(pt.x + pt.size * 0.8, pt.y + pt.size * 0.3);
           ctx.stroke();
         } else if (pt.type === 'shockwave') {
-          const radius = (1 - alpha) * 110 + pt.size;
+          const radius = (1 - alpha) * 125 + pt.size;
           ctx.strokeStyle = pt.color;
-          ctx.lineWidth = 3.5 * alpha;
+          ctx.lineWidth = 4 * alpha;
           ctx.beginPath();
           ctx.ellipse(pt.x, pt.y, radius, radius * 0.45, 0, 0, Math.PI * 2);
           ctx.stroke();
         } else if (pt.type === 'sonic') {
-          const ringR = (1 - alpha) * 80 + pt.size;
+          const ringR = (1 - alpha) * 85 + pt.size;
           ctx.strokeStyle = pt.color;
-          ctx.lineWidth = 3 * alpha;
+          ctx.lineWidth = 3.5 * alpha;
           ctx.beginPath();
-          ctx.arc(pt.x, pt.y, ringR, -Math.PI * 0.4, Math.PI * 0.4);
+          ctx.arc(pt.x, pt.y, ringR, -Math.PI * 0.42, Math.PI * 0.42);
           ctx.stroke();
         } else if (pt.type === 'text') {
           ctx.fillStyle = pt.color;
           ctx.font = `900 ${pt.size}px 'Barlow Condensed', sans-serif`;
           ctx.textAlign = 'center';
           ctx.shadowColor = '#000000';
-          ctx.shadowBlur = 8;
-          ctx.lineWidth = 3;
+          ctx.shadowBlur = 10;
+          ctx.lineWidth = 3.5;
           ctx.strokeText(pt.text || '', pt.x, pt.y);
           ctx.fillText(pt.text || '', pt.x, pt.y);
         }
@@ -706,7 +947,20 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
         ctx.restore();
       }
 
-      ctx.restore(); // Restore camera shake
+      ctx.restore(); // Restore globalCompositeOperation
+
+      // =======================================================================
+      // 7. CHROMATIC ABERRATION FLASH ON HEAVY IMPACTS
+      // =======================================================================
+      if (s.chromaticFlash > 0.05) {
+        ctx.save();
+        ctx.globalAlpha = s.chromaticFlash * 0.35;
+        ctx.fillStyle = '#FF0055';
+        ctx.fillRect(-20, -20, width + 40, height + 40);
+        ctx.restore();
+      }
+
+      ctx.restore(); // Restore Camera Transform
 
       animFrameRef.current = requestAnimationFrame(render);
     };
@@ -760,7 +1014,6 @@ function drawArenaEnvironment(
 
   if (theme === 'cyber') {
     // ⚡ CYBER COLOSSEUM THEME
-    // Sky
     const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
     skyGrad.addColorStop(0, '#040714');
     skyGrad.addColorStop(1, '#0C132B');
@@ -831,14 +1084,13 @@ function drawArenaEnvironment(
     ctx.restore();
   } else if (theme === 'dojo') {
     // 🏮 MIDNIGHT DOJO THEME
-    // Sky with Full Moon
     const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
     skyGrad.addColorStop(0, '#090514');
     skyGrad.addColorStop(1, '#1A0E2E');
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, width, horizonY);
 
-    // Glowing Moon
+    // Glowing Full Moon
     ctx.save();
     ctx.fillStyle = '#FEF3C7';
     ctx.shadowColor = '#FEF3C7';
@@ -870,7 +1122,6 @@ function drawArenaEnvironment(
     ctx.restore();
   } else {
     // 🏟️ CHAMPIONSHIP STADIUM THEME (Default)
-    // Dark Colosseum Stadium Sky
     const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
     skyGrad.addColorStop(0, '#060A14');
     skyGrad.addColorStop(1, '#0F1A30');
@@ -920,43 +1171,148 @@ function drawArenaEnvironment(
 }
 
 // ===========================================================================
-// FIGHTER PEDESTAL FLOOR SHADOW & GLOW
+// AMBIENT WEATHER PARTICLE ENGINE (Cherry Blossoms / Neon Embers / Stadium Dust)
+// ===========================================================================
+function updateAndDrawWeather(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  theme: ArenaTheme,
+  particles: WeatherParticle[],
+  dt: number,
+  time: number
+) {
+  // Ensure ~22 weather particles active
+  while (particles.length < 22) {
+    if (theme === 'dojo') {
+      // Pink cherry blossoms fluttering down
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height * 0.4,
+        vx: -15 - Math.random() * 20,
+        vy: 25 + Math.random() * 25,
+        size: 3 + Math.random() * 4,
+        color: Math.random() > 0.4 ? '#FDA4AF' : '#F43F5E',
+        alpha: 0.3 + Math.random() * 0.5,
+        angle: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 3,
+      });
+    } else if (theme === 'cyber') {
+      // Neon data embers floating upwards
+      particles.push({
+        x: Math.random() * width,
+        y: height * 0.4 + Math.random() * (height * 0.6),
+        vx: (Math.random() - 0.5) * 15,
+        vy: -20 - Math.random() * 35,
+        size: 1.5 + Math.random() * 2.5,
+        color: Math.random() > 0.5 ? '#00E5FF' : '#CCFF00',
+        alpha: 0.25 + Math.random() * 0.55,
+        angle: 0,
+        spin: 0,
+      });
+    } else {
+      // Stadium dust / confetti motes
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 10,
+        vy: -10 - Math.random() * 15,
+        size: 1.5 + Math.random() * 2,
+        color: '#CCFF00',
+        alpha: 0.15 + Math.random() * 0.3,
+        angle: 0,
+        spin: 0,
+      });
+    }
+  }
+
+  // Update & Draw
+  ctx.save();
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.angle += p.spin * dt;
+
+    if (theme === 'dojo') {
+      p.x += Math.sin(time * 2 + i) * 0.6;
+    }
+
+    // Wrap around screen bounds
+    if (p.y > height + 20 || p.y < -20 || p.x < -20 || p.x > width + 20) {
+      particles.splice(i, 1);
+      continue;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = p.color;
+
+    if (theme === 'dojo') {
+      // Cherry Blossom Petal (Elliptical curved shape)
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.size * 1.5, p.size * 0.7, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Glowing Dot Mote
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ===========================================================================
+// FIGHTER PEDESTAL FLOOR SHADOW (WITH INVERSE JUMP-HEIGHT SCALING)
 // ===========================================================================
 function drawFighterPedestal(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   type: 'player' | 'opponent',
-  theme: ArenaTheme
+  theme: ArenaTheme,
+  jumpY: number = 0,
+  stageHeight: number = 400
 ) {
   ctx.save();
-  const radiusX = 48;
-  const radiusY = 18;
+  const baseRadiusX = 48;
+  const baseRadiusY = 18;
 
-  // Base Drop Shadow
-  const shadowGrad = ctx.createRadialGradient(x, y + 4, 4, x, y + 4, radiusX);
-  shadowGrad.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
+  // Jump Height Shadow Scaling: Shadow shrinks and fades as pet leaps up
+  const jumpElevation = Math.max(0, -jumpY);
+  const heightRatio = Math.max(0, 1 - jumpElevation / (stageHeight * 0.65));
+  const radiusX = baseRadiusX * (0.35 + 0.65 * heightRatio);
+  const radiusY = baseRadiusY * (0.35 + 0.65 * heightRatio);
+  const shadowAlpha = 0.75 * Math.pow(heightRatio, 1.4);
+
+  // Base Dynamic Drop Shadow
+  const shadowGrad = ctx.createRadialGradient(x, y + 4, 3, x, y + 4, radiusX);
+  shadowGrad.addColorStop(0, `rgba(0, 0, 0, ${shadowAlpha})`);
   shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = shadowGrad;
   ctx.beginPath();
   ctx.ellipse(x, y + 4, radiusX, radiusY, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Neon Pedestal Ring Glow
+  // Neon Pedestal Ring Glow (Stays grounded on arena turf)
   const glowColor = type === 'player' ? '#CCFF00' : '#EF4444';
   ctx.strokeStyle = glowColor;
   ctx.lineWidth = 2;
   ctx.shadowColor = glowColor;
-  ctx.shadowBlur = 12;
+  ctx.shadowBlur = 10;
   ctx.beginPath();
-  ctx.ellipse(x, y + 2, radiusX * 0.9, radiusY * 0.9, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y + 2, baseRadiusX * 0.88, baseRadiusY * 0.88, 0, 0, Math.PI * 2);
   ctx.stroke();
 
   ctx.restore();
 }
 
 // ===========================================================================
-// PROCEDURAL COMBATANT RENDERER
+// PROCEDURAL SKELETAL COMBATANT RENDERER
 // ===========================================================================
 interface CombatantRenderProps {
   species: PetSpecies;
@@ -970,8 +1326,10 @@ interface CombatantRenderProps {
   isFlinching: boolean;
   isShielded: boolean;
   isKO: boolean;
+  isBlinking: boolean;
   time: number;
   accentColor: string;
+  silhouetteColor?: string;
 }
 
 function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
@@ -988,10 +1346,10 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
     ctx.shadowBlur = 16;
   }
 
-  // Knocked Out (KO) State: Tumbled down with spinning stars
+  // Knocked Out (KO) State: Tumbled down with dizzy tilt
   if (p.isKO) {
-    ctx.rotate(0.35);
-    ctx.translate(0, 15);
+    ctx.rotate(0.38);
+    ctx.translate(0, 16);
   }
 
   // COLOR PALETTES FOR SPECIES
@@ -1079,7 +1437,14 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
     noseColor = '#0F172A';
   }
 
-  // A. TAIL
+  // Silhouette override for motion afterimages
+  if (p.silhouetteColor) {
+    primaryColor = p.silhouetteColor;
+    secondaryColor = p.silhouetteColor;
+    bellyColor = p.silhouetteColor;
+  }
+
+  // A. PROCEDURAL TAIL WITH INERTIAL SWAY
   ctx.save();
   ctx.translate(-24, -12);
   ctx.rotate(-p.tailAngle);
@@ -1103,7 +1468,7 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
   ctx.ellipse(-18, 12, 11, 8, -0.2, 0, Math.PI * 2);
   ctx.fill();
 
-  // C. TORSO
+  // C. PROCEDURAL TORSO & BREATHING CHEST
   const bodyGrad = ctx.createLinearGradient(0, -35, 0, 15);
   bodyGrad.addColorStop(0, secondaryColor);
   bodyGrad.addColorStop(1, primaryColor);
@@ -1124,7 +1489,7 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
   ctx.ellipse(14, 12, 9, 7, 0.1, 0, Math.PI * 2);
   ctx.fill();
 
-  // D. HEAD
+  // D. HEAD WITH INERTIA & BREATHING BOB
   ctx.save();
   ctx.translate(14, -32 + p.breathCycle * 1.5);
 
@@ -1136,10 +1501,9 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
   ctx.ellipse(0, 0, 24, 20, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // EARS
+  // EARS (Cat Pointed / Scottish Folded / Dog Floppy / Corgi Big)
   if (isCat) {
     if (p.species === 'scottish') {
-      // Folded flat ears
       [-1, 1].forEach((dir) => {
         ctx.fillStyle = primaryColor;
         ctx.beginPath();
@@ -1147,7 +1511,6 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
         ctx.fill();
       });
     } else {
-      // Pointed cat ears
       [-1, 1].forEach((dir) => {
         ctx.fillStyle = primaryColor;
         ctx.beginPath();
@@ -1166,7 +1529,6 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
       });
     }
   } else if (p.species === 'corgi') {
-    // Big fox ears
     [-1, 1].forEach((dir) => {
       ctx.fillStyle = primaryColor;
       ctx.beginPath();
@@ -1178,7 +1540,6 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
       ctx.fill();
     });
   } else if (p.species === 'retriever' || p.species === 'rottweiler') {
-    // Floppy ears
     [-1, 1].forEach((dir) => {
       ctx.fillStyle = secondaryColor;
       ctx.beginPath();
@@ -1186,7 +1547,6 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
       ctx.fill();
     });
   } else {
-    // Alert perky dog ears
     [-1, 1].forEach((dir) => {
       ctx.fillStyle = primaryColor;
       ctx.beginPath();
@@ -1209,7 +1569,7 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
   ctx.ellipse(16, 2, 4.5, 3.5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // EYES
+  // EYES WITH BLINKING & SPECULAR GLINT HIGHLIGHTS
   if (p.isKO) {
     // Dizzy X eyes
     ctx.strokeStyle = '#0F172A';
@@ -1220,8 +1580,15 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
     ctx.moveTo(4 + 4, -4 - 4);
     ctx.lineTo(4 - 4, -4 + 4);
     ctx.stroke();
+  } else if (p.isBlinking) {
+    // Closed blinking eye arc
+    ctx.strokeStyle = '#0F172A';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(5.5, -3, 4.5, 0.1, Math.PI - 0.1);
+    ctx.stroke();
   } else {
-    // Fierce battle-ready eye
+    // Fierce battle-ready eye with specular glint
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
     ctx.arc(4, -4, 5.5, 0, Math.PI * 2);
@@ -1237,10 +1604,16 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
     ctx.arc(6, -4, 2.2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Glint highlight
+    // Primary Specular Glint
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
     ctx.arc(4.5, -5.5, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Secondary Micro Glint
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.beginPath();
+    ctx.arc(6.8, -3.2, 0.8, 0, Math.PI * 2);
     ctx.fill();
   }
 
