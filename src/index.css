@@ -141,6 +141,19 @@ h1, h2, h3, h4, .font-display {
   animation: fadeIn 0.18s ease-out forwards;
 }
 
+@keyframes hoverFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-hover-float {
+  animation: hoverFloat 3.2s ease-in-out infinite;
+}
+
 /* =========================================================================
    ANIMATED CLASH BATTLE ARENA KEYFRAMES & UTILITIES
    ========================================================================= */

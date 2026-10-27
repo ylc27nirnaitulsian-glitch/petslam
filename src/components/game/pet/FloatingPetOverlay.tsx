@@ -38,7 +38,15 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const { pet, isOverlayActive, toggleOverlay, feedPet, strokePet, availableBerries } =
     usePetCompanion();
 
-  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 20, y: 20 });
+  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
+    if (typeof window !== 'undefined') {
+      return {
+        x: Math.max(20, window.innerWidth - 240),
+        y: Math.max(30, window.innerHeight - 270),
+      };
+    }
+    return { x: 100, y: 100 };
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [animState, setAnimState] = useState<PetAnimationState>('idle');
   const [talkingVolume, setTalkingVolume] = useState<number>(0);
@@ -46,6 +54,22 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const [speechBubble, setSpeechBubble] = useState<string | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const [petScaleMode, setPetScaleMode] = useState<'normal' | 'large'>('normal');
+
+  // Keep pet inside screen bounds on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition((prev) => {
+        const petW = petScaleMode === 'large' ? 200 : 160;
+        const petH = petScaleMode === 'large' ? 200 : 160;
+        return {
+          x: Math.max(10, Math.min(window.innerWidth - petW - 10, prev.x)),
+          y: Math.max(10, Math.min(window.innerHeight - petH - 10, prev.y)),
+        };
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [petScaleMode]);
 
   // Laptop Battery & Charging Detector
   const [isCharging, setIsCharging] = useState(false);
@@ -141,7 +165,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     setTimeout(() => setAnimState('idle'), 2000);
   };
 
-  // 3. Autonomous Roaming AI
+  // 3. Autonomous Roaming AI: subtle drift around current hover coordinates
   useEffect(() => {
     if (!isOverlayActive || isMinimized || isDragging) return;
 
@@ -150,12 +174,16 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
 
       const roll = Math.random();
       if (roll < 0.35) {
-        // Walk along bottom edge
-        const moveDist = (Math.random() - 0.5) * 80;
+        // Subtle drift around current floating coordinate (±30px)
+        const moveDistX = (Math.random() - 0.5) * 40;
+        const moveDistY = (Math.random() - 0.5) * 30;
         setAnimState('walk');
         setPosition((prev) => {
-          const nextX = Math.max(10, Math.min(window.innerWidth - 150, prev.x + moveDist));
-          return { ...prev, x: nextX };
+          const petW = petScaleMode === 'large' ? 200 : 160;
+          const petH = petScaleMode === 'large' ? 200 : 160;
+          const nextX = Math.max(15, Math.min(window.innerWidth - petW - 15, prev.x + moveDistX));
+          const nextY = Math.max(15, Math.min(window.innerHeight - petH - 15, prev.y + moveDistY));
+          return { x: nextX, y: nextY };
         });
 
         setTimeout(() => {
@@ -169,14 +197,14 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
         setAnimState('idle');
         showSpeech(`I'm getting hungry! Feed me a berry! 🍓`, 3000);
       }
-    }, 10000);
+    }, 12000);
 
     return () => clearInterval(roamInterval);
-  }, [isOverlayActive, isMinimized, isDragging, showRadialMenu, pet.name, pet.hunger, showSpeech]);
+  }, [isOverlayActive, isMinimized, isDragging, showRadialMenu, pet.name, pet.hunger, showSpeech, petScaleMode]);
 
-  // Handle Dragging
+  // Handle Dragging anywhere on screen freely
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (showRadialMenu) return;
+    if ((e.target as HTMLElement).closest('button')) return;
     setIsDragging(true);
     setAnimState('drag');
     dragRef.current.startX = e.clientX - position.x;
@@ -184,17 +212,19 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     dragRef.current.lastTime = performance.now();
     dragRef.current.vx = 0;
     dragRef.current.vy = 0;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!isDragging) return;
+    const petW = petScaleMode === 'large' ? 200 : 160;
+    const petH = petScaleMode === 'large' ? 200 : 160;
+
+    const newX = Math.max(10, Math.min(window.innerWidth - petW - 10, e.clientX - dragRef.current.startX));
+    const newY = Math.max(10, Math.min(window.innerHeight - petH - 10, e.clientY - dragRef.current.startY));
+
     const now = performance.now();
     const dt = Math.max((now - dragRef.current.lastTime) / 1000, 0.001);
-
-    const newX = e.clientX - dragRef.current.startX;
-    const newY = e.clientY - dragRef.current.startY;
-
     dragRef.current.vx = (newX - position.x) / dt;
     dragRef.current.vy = (newY - position.y) / dt;
     dragRef.current.lastTime = now;
@@ -206,49 +236,22 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     if (!isDragging) return;
     setIsDragging(false);
     try {
-      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     } catch {}
 
     const moveDist = Math.hypot(dragRef.current.vx, dragRef.current.vy);
-    if (moveDist < 60) {
+    // If it was just a click (low movement), toggle radial menu
+    if (moveDist < 40) {
       sound.playClick();
       setShowRadialMenu((prev) => !prev);
       setAnimState('idle');
       return;
     }
 
-    // Fling physics
-    dragRef.current.isAirborne = true;
-    let currX = position.x;
-    let currY = position.y;
-    let vy = Math.min(dragRef.current.vy * 0.1, 400);
-    const gravity = 1200;
-    let lastT = performance.now();
-
-    const floorY = 20;
-
-    const physicsStep = (now: number) => {
-      const dt = Math.min((now - lastT) / 1000, 0.05);
-      lastT = now;
-
-      vy -= gravity * dt;
-      currY += vy * dt;
-
-      if (currY <= floorY) {
-        currY = floorY;
-        dragRef.current.isAirborne = false;
-        setPosition({ x: currX, y: currY });
-        sound.playPoke();
-        setAnimState('celebrate');
-        setTimeout(() => setAnimState('idle'), 1000);
-        return;
-      }
-
-      setPosition({ x: currX, y: currY });
-      requestAnimationFrame(physicsStep);
-    };
-
-    requestAnimationFrame(physicsStep);
+    // Free hover: pet remains gracefully hovering right where placed!
+    sound.playPoke();
+    setAnimState('celebrate');
+    setTimeout(() => setAnimState('idle'), 800);
   };
 
   // Talking Tom Reactions
@@ -306,12 +309,12 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     <div
       style={{
         position: 'fixed',
-        bottom: `${Math.max(10, position.y)}px`,
-        right: `${Math.max(10, position.x)}px`,
+        left: `${position.x}px`,
+        top: `${position.y}px`,
         zIndex: 9999,
         touchAction: 'none',
       }}
-      className="select-none font-sans"
+      className={`select-none font-sans ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
     >
       {/* Speech Bubble */}
       {speechBubble && !isMinimized && (
@@ -434,14 +437,14 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
           className="relative group cursor-grab active:cursor-grabbing flex flex-col items-center"
         >
           {/* Status Badge */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/85 backdrop-blur-sm text-[10px] font-mono px-2 py-0.5 rounded-full border border-white/10 text-neutral-300 flex items-center gap-1.5 mb-1 pointer-events-none">
-            <span className="text-[#CCFF00] font-bold">{activeBeast.name}</span>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/85 backdrop-blur-sm text-xs font-mono px-2.5 py-1 rounded-full border border-white/15 text-neutral-300 flex items-center gap-1.5 mb-1 pointer-events-none shadow-lg">
+            <span className="text-[#CCFF00] font-black">{activeBeast.name}</span>
             {isCharging && <span className="text-cyan-400 font-bold">⚡ CHARGING</span>}
-            <span className="text-pink-400">{'❤️'.repeat(pet.affectionHearts)}</span>
+            <span className="text-neutral-400">· Drag anywhere to hover 🐾</span>
           </div>
 
           {/* Cute Animated Screen Companion Buddy (Bigger Size: 160px or 200px) */}
-          <div className="relative group/canvas flex flex-col items-center">
+          <div className={`relative group/canvas flex flex-col items-center ${!isDragging ? 'animate-hover-float' : ''}`}>
             {/* Ambient Base Shadow */}
             <div className="absolute bottom-1 inset-x-3 h-5 bg-black/60 rounded-full blur-md pointer-events-none" />
 
