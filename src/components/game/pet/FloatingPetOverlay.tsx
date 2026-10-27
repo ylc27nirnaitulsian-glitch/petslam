@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { sound } from '../../../utils/audio';
 import { voiceMimic } from '../../../utils/voiceMimic';
+import { mapBeastToSpecies } from '../../../utils/petVisuals';
 
 interface FloatingPetOverlayProps {
   onOpenSanctuary?: () => void;
@@ -44,6 +45,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const [showRadialMenu, setShowRadialMenu] = useState(false);
   const [speechBubble, setSpeechBubble] = useState<string | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [petScaleMode, setPetScaleMode] = useState<'normal' | 'large'>('normal');
 
   // Laptop Battery & Charging Detector
   const [isCharging, setIsCharging] = useState(false);
@@ -438,28 +440,39 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
             <span className="text-pink-400">{'❤️'.repeat(pet.affectionHearts)}</span>
           </div>
 
-          {/* Living Realistic Pet Standee */}
-          <div className="relative w-24 h-28 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.35)] bg-black">
-            <img
-              src={activeBeast.image}
-              alt={activeBeast.name}
-              className={`w-full h-full object-cover object-center transition-transform ${
-                animState === 'eat' ? 'animate-bounce' : 'group-hover:scale-105'
-              }`}
+          {/* Cute Animated Screen Companion Buddy (Bigger Size: 160px or 200px) */}
+          <div className="relative group/canvas flex flex-col items-center">
+            {/* Ambient Base Shadow */}
+            <div className="absolute bottom-1 inset-x-3 h-5 bg-black/60 rounded-full blur-md pointer-events-none" />
+
+            <ProceduralPetCanvas
+              species={mapBeastToSpecies(activeBeast.breed || activeBeast.species)}
+              stage={pet.stage || 2}
+              animationState={animState}
+              talkingVolume={talkingVolume}
+              width={petScaleMode === 'large' ? 200 : 160}
+              height={petScaleMode === 'large' ? 200 : 160}
+              interactive={false}
+              renderMode="cute"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
-            <div className="absolute bottom-1 inset-x-1 text-center">
-              <span className="text-[10px] font-display font-black text-white uppercase truncate block">
-                {activeBeast.name}
-              </span>
-              <span className="text-[8px] font-mono text-[#CCFF00] font-bold block truncate">
-                {activeBeast.species}
-              </span>
-            </div>
           </div>
 
           {/* Mini Control Dock on hover */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-1 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/10">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-1 bg-black/85 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15 shadow-xl">
+            {/* Size Toggle Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                sound.playClick();
+                setPetScaleMode((prev) => (prev === 'normal' ? 'large' : 'normal'));
+                showSpeech(petScaleMode === 'normal' ? 'Grown to Giant Size! 🐾' : 'Back to Normal Size.');
+              }}
+              className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-white/10 hover:bg-[#CCFF00] hover:text-black text-neutral-300 transition-colors"
+              title="Toggle Pet Size (160px / 200px)"
+            >
+              {petScaleMode === 'large' ? '200px (XL)' : '160px'}
+            </button>
+
             <button
               onClick={(e) => {
                 e.stopPropagation();

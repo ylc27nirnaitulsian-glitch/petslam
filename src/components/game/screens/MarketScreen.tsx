@@ -18,6 +18,7 @@ import { useGame } from '../../../context/GameContext';
 import { Animal, ANIMALS_DATA } from '../../../data/animals';
 import { GEAR_ITEMS, GearItem } from '../../../data/armory';
 import { sound } from '../../../utils/audio';
+import { getRarityBadgeClasses } from '../../../utils/petVisuals';
 import { PetAuctionHouseModal } from '../pet/PetAuctionHouseModal';
 
 export const MarketScreen: React.FC = () => {
@@ -28,12 +29,12 @@ export const MarketScreen: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [purchaseToast, setPurchaseToast] = useState<{ title: string; subtitle: string } | null>(null);
 
-  const categories = ['All', 'Dogs (Canines)', 'Cats (Felines)'];
+  const categories = ['All Pets', 'Dogs', 'Cats'];
 
   const filteredAnimals = ANIMALS_DATA.filter((animal) => {
-    if (selectedCategory === 'All') return true;
-    if (selectedCategory.includes('Canines')) return animal.category === 'Canines';
-    if (selectedCategory.includes('Felines')) return animal.category === 'Felines';
+    if (selectedCategory === 'All Pets' || selectedCategory === 'All') return true;
+    if (selectedCategory === 'Dogs') return animal.category === 'Canines';
+    if (selectedCategory === 'Cats') return animal.category === 'Felines';
     return true;
   });
 
@@ -204,7 +205,7 @@ export const MarketScreen: React.FC = () => {
                         }}
                       />
                       <div className="absolute top-1 left-1 bg-black/85 backdrop-blur-sm px-1.5 py-0.5 rounded text-[9px] font-mono font-bold text-white border border-white/10">
-                        {animal.category}
+                        {animal.breed}
                       </div>
                     </div>
 
@@ -214,7 +215,7 @@ export const MarketScreen: React.FC = () => {
                         <h3 className="font-display font-black text-base text-white uppercase truncate">
                           {animal.name}
                         </h3>
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/60 text-[#CCFF00] font-bold border border-white/10">
+                        <span className={getRarityBadgeClasses(animal.rarity)}>
                           {animal.rarity}
                         </span>
                       </div>

@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { ProceduralPetCanvas } from './ProceduralPetCanvas';
 import { usePetCompanion } from '../../../context/PetCompanionContext';
+import { createDodoCheckout } from '../../../services/dodo';
+import { trackClarityEvent } from '../../../utils/clarity';
 import { useGame } from '../../../context/GameContext';
 import {
   CompanionPet,
@@ -968,14 +970,24 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
-                  onClick={() => {
-                    unlockPass('avatar', false);
-                    setShowPassModal(false);
-                    finalizeSave();
+                  onClick={async () => {
+                    try {
+                      trackClarityEvent('avatar_pass_dodo_click');
+                      const checkout = await createDodoCheckout({ passType: 'avatar' });
+                      if (checkout.simulated) {
+                        unlockPass('avatar', false);
+                        setShowPassModal(false);
+                        finalizeSave();
+                      } else if (checkout.checkoutUrl) {
+                        window.location.href = checkout.checkoutUrl;
+                      }
+                    } catch (e: any) {
+                      alert(e?.message || 'Failed to connect to Dodo Payments');
+                    }
                   }}
                   className="py-2.5 px-3 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold text-xs uppercase cursor-pointer"
                 >
-                  Pay $0.99
+                  Pay $0.99 (Dodo)
                 </button>
                 <button
                   onClick={() => {

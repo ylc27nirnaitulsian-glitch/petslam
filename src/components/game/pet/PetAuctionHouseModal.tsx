@@ -4,6 +4,8 @@ import { useGame } from '../../../context/GameContext';
 import { PetAuctionItem, CompanionPet } from '../../../types/pet';
 import { getPetPhoto, getPetBreedName } from '../../../utils/petVisuals';
 import { sound } from '../../../utils/audio';
+import { createDodoCheckout } from '../../../services/dodo';
+import { trackClarityEvent } from '../../../utils/clarity';
 import {
   Gavel,
   X,
@@ -536,14 +538,24 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
 
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
-                  onClick={() => {
-                    unlockPass('auction', false);
-                    setShowLicenseModal(false);
-                    showToast('🎉 VIP Auction License Activated permanently!');
+                  onClick={async () => {
+                    try {
+                      trackClarityEvent('auction_pass_dodo_click');
+                      const checkout = await createDodoCheckout({ passType: 'auction' });
+                      if (checkout.simulated) {
+                        unlockPass('auction', false);
+                        setShowLicenseModal(false);
+                        showToast('⚡ [Dodo Sandbox] VIP Auction License Activated!');
+                      } else if (checkout.checkoutUrl) {
+                        window.location.href = checkout.checkoutUrl;
+                      }
+                    } catch (e: any) {
+                      alert(e?.message || 'Failed to connect to Dodo Payments');
+                    }
                   }}
                   className="py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs uppercase cursor-pointer"
                 >
-                  Pay $1.99
+                  Pay $1.99 (Dodo)
                 </button>
                 <button
                   onClick={() => {

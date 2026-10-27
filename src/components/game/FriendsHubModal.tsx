@@ -14,6 +14,7 @@ import {
   Check,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
+import { FriendsVoiceRoomModal } from './FriendsVoiceRoomModal';
 
 interface Friend {
   id: string;
@@ -56,7 +57,7 @@ const INITIAL_FRIENDS: Friend[] = [
     id: 'f3',
     name: 'TitanBrawler',
     tag: '#TITAN-12',
-    beastName: 'Kodiak (Bear)',
+    beastName: 'Ghost (Husky)',
     trophies: 1520,
     status: 'Online in Arena',
     avatarColor: 'from-cyan-400 to-blue-600',
@@ -65,7 +66,7 @@ const INITIAL_FRIENDS: Friend[] = [
     id: 'f4',
     name: 'ShadowFang',
     tag: '#NIGHT-88',
-    beastName: 'Bagheera (Panther)',
+    beastName: 'Shadow (Black Cat)',
     trophies: 1410,
     status: 'Offline',
     avatarColor: 'from-purple-500 to-indigo-600',
@@ -82,6 +83,7 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<'friends' | 'chat' | 'add'>('friends');
+  const [showVoiceRoom, setShowVoiceRoom] = useState(false);
   const [friendsList, setFriendsList] = useState<Friend[]>(INITIAL_FRIENDS);
   const [newFriendTag, setNewFriendTag] = useState('');
   const [addSuccessToast, setAddSuccessToast] = useState<string | null>(null);
@@ -232,6 +234,26 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>Add Friend</span>
+          </button>
+        </div>
+
+        {/* Quick Voice Party Banner */}
+        <div className="mx-4 mt-2.5 p-2 rounded-2xl bg-gradient-to-r from-purple-950/60 to-cyan-950/60 border border-purple-500/30 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <div>
+              <div className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                <span>Multiplayer Voice Room</span>
+                <span className="text-[8px] font-mono bg-purple-500/40 text-purple-200 px-1 rounded">LIVE</span>
+              </div>
+              <div className="text-[9px] text-neutral-400 font-mono">Talk with friends while clashing</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowVoiceRoom(true)}
+            className="px-2.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-[10px] font-bold cursor-pointer transition-all active:scale-95 shadow"
+          >
+            🎙️ Join Voice
           </button>
         </div>
 
@@ -403,6 +425,25 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
               </button>
             </form>
           </div>
+        )}
+        {/* Voice Room Modal */}
+        {showVoiceRoom && (
+          <FriendsVoiceRoomModal
+            onClose={() => setShowVoiceRoom(false)}
+            onStartDuelWithFriend={(friendName) => {
+              setShowVoiceRoom(false);
+              onClose();
+              onChallengeFriend?.({
+                id: 'f_voice',
+                name: friendName,
+                tag: '#VOICE-1',
+                beastName: 'Ghost (Husky)',
+                trophies: 1500,
+                status: 'Online in Arena',
+                avatarColor: 'from-purple-500 to-cyan-500',
+              });
+            }}
+          />
         )}
       </div>
     </div>

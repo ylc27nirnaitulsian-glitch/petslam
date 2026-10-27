@@ -68,3 +68,112 @@ h1, h2, h3, h4, .font-display {
 .animate-fadeIn {
   animation: fadeIn 0.18s ease-out forwards;
 }
+
+/* =========================================================================
+   ANIMATED CLASH BATTLE ARENA KEYFRAMES & UTILITIES
+   ========================================================================= */
+
+@keyframes arenaShake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-4px, 3px) rotate(-0.5deg); }
+  40% { transform: translate(4px, -3px) rotate(0.5deg); }
+  60% { transform: translate(-3px, 2px) rotate(-0.3deg); }
+  80% { transform: translate(3px, -2px) rotate(0.3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes clawSlash {
+  0% { opacity: 0; transform: scale(0.6) rotate(-25deg); }
+  45% { opacity: 1; transform: scale(1.15) rotate(-15deg); }
+  100% { opacity: 0; transform: scale(1.35) rotate(-8deg); }
+}
+
+@keyframes shockwaveExpand {
+  0% { opacity: 1; transform: scale(0.2); }
+  70% { opacity: 0.85; transform: scale(1.6); }
+  100% { opacity: 0; transform: scale(2.5); }
+}
+
+@keyframes spotlightLeft {
+  0%, 100% { transform: rotate(-20deg); opacity: 0.25; }
+  50% { transform: rotate(18deg); opacity: 0.45; }
+}
+
+@keyframes spotlightRight {
+  0%, 100% { transform: rotate(20deg); opacity: 0.25; }
+  50% { transform: rotate(-18deg); opacity: 0.45; }
+}
+
+@keyframes lungeUpward {
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-42px) scale(1.16); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes lungeDownward {
+  0% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(42px) scale(1.16); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes slamHighJump {
+  0% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-68px) scale(1.35) rotate(6deg); }
+  60% { transform: translateY(-68px) scale(1.35) rotate(-6deg); }
+  85% { transform: translateY(-6px) scale(1.22); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes damageFlinch {
+  0% { transform: translate(0, 0); filter: brightness(1); }
+  20% { transform: translate(-5px, 5px); filter: brightness(2.2) drop-shadow(0 0 12px #ff3b30); }
+  40% { transform: translate(5px, -4px); filter: brightness(1.8) drop-shadow(0 0 10px #ff3b30); }
+  60% { transform: translate(-3px, 3px); filter: brightness(1.3); }
+  100% { transform: translate(0, 0); filter: brightness(1); }
+}
+
+@keyframes sonicPulse {
+  0% { opacity: 0.9; transform: scale(0.4); border-width: 4px; }
+  100% { opacity: 0; transform: scale(2.2); border-width: 1px; }
+}
+
+.animate-arenaShake {
+  animation: arenaShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.animate-clawSlash {
+  animation: clawSlash 0.45s ease-out forwards;
+}
+
+.animate-shockwaveExpand {
+  animation: shockwaveExpand 0.6s ease-out forwards;
+}
+
+.animate-spotlightLeft {
+  animation: spotlightLeft 6s ease-in-out infinite;
+}
+
+.animate-spotlightRight {
+  animation: spotlightRight 6s ease-in-out infinite;
+}
+
+.animate-lungeUpward {
+  animation: lungeUpward 0.38s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+.animate-lungeDownward {
+  animation: lungeDownward 0.38s cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+.animate-slamHighJump {
+  animation: slamHighJump 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-damageFlinch {
+  animation: damageFlinch 0.38s ease-out;
+}
+
+.animate-sonicPulse {
+  animation: sonicPulse 0.55s ease-out forwards;
+}
+

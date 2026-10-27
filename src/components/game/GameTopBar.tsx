@@ -9,12 +9,14 @@ import {
   Users,
   Shield,
   Crown,
+  Radio,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { GameGuideModal } from './GameGuideModal';
 import { AccountAuthModal } from './AccountAuthModal';
 import { FriendsHubModal } from './FriendsHubModal';
 import { VipPassesModal } from './VipPassesModal';
+import { FriendsVoiceRoomModal } from './FriendsVoiceRoomModal';
 
 interface GameTopBarProps {
   onOpenSystemDetails: () => void;
@@ -40,6 +42,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [friendsModalOpen, setFriendsModalOpen] = useState(false);
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [vipModalOpen, setVipModalOpen] = useState(false);
 
   return (
@@ -118,6 +121,17 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
             <span className="text-[10px] font-bold">VIP</span>
           </button>
 
+          {/* Voice Chat Room Button */}
+          <button
+            onClick={() => setVoiceModalOpen(true)}
+            className="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-300 transition-colors cursor-pointer shrink-0"
+            title="Multiplayer Voice Chat Room"
+          >
+            <Radio className="w-3.5 h-3.5" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+          </button>
+
           {/* Friends Button */}
           <button
             onClick={() => setFriendsModalOpen(true)}
@@ -170,6 +184,17 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
           onChallengeFriend={(friend) => {
             onChallengeFriend?.(friend);
             setFriendsModalOpen(false);
+          }}
+        />
+      )}
+
+      {/* Voice Chat Room */}
+      {voiceModalOpen && (
+        <FriendsVoiceRoomModal
+          onClose={() => setVoiceModalOpen(false)}
+          onStartDuelWithFriend={(friendName) => {
+            setVoiceModalOpen(false);
+            onChallengeFriend?.({ name: friendName });
           }}
         />
       )}

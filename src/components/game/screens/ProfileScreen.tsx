@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   User,
   Trophy,
@@ -13,6 +13,7 @@ import {
   Volume2,
   VolumeX,
   Lock,
+  Camera,
 } from 'lucide-react';
 import { useGame } from '../../../context/GameContext';
 import { sound } from '../../../utils/audio';
@@ -37,6 +38,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
     ownedBeasts,
     soundEnabled,
     toggleSound,
+    updateUserAvatar,
   } = useGame();
 
   const [isEditingName, setIsEditingName] = useState(false);
@@ -44,6 +46,24 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        updateUserAvatar(dataUrl);
+        sound.playLevelUp();
+        setSyncFeedback('Profile photo updated successfully!');
+        setTimeout(() => setSyncFeedback(null), 3000);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const totalMatches = wins + losses;
   const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
@@ -86,8 +106,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
       {/* TOP TRAINER CARD HERO */}
       <div className="p-4 bg-gradient-to-b from-[#141C2E] to-[#0D121F] border-b border-white/10">
         <div className="flex items-center gap-4">
-          {/* Avatar Profile Photo */}
-          <div className="relative w-18 h-18 rounded-3xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.35)] bg-[#121622] shrink-0 aspect-square">
+          {/* Avatar Profile Photo with 1-Click Upload */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="relative w-18 h-18 rounded-3xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.35)] bg-[#121622] shrink-0 aspect-square group cursor-pointer"
+            title="Tap to Upload Custom Profile Photo"
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="hidden"
+            />
             {connectedAccount.avatarUrl ? (
               <img
                 src={connectedAccount.avatarUrl}
@@ -99,6 +130,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
                 {trainerName.charAt(0)}
               </div>
             )}
+
+            {/* Hover Camera Overlay */}
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+              <Camera className="w-5 h-5 text-[#CCFF00]" />
+              <span className="text-[8px] font-mono font-bold mt-0.5">Upload</span>
+            </div>
+
             <div className="absolute -bottom-0.5 inset-x-0 bg-black/80 text-[#CCFF00] font-mono font-black text-[9px] text-center py-0.5 border-t border-white/10">
               LVL {playerLevel}
             </div>
@@ -144,7 +182,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs font-mono font-bold text-[#CCFF00]">{playerTag}</span>
               <span className="text-[10px] font-mono bg-white/10 text-neutral-300 px-2 py-0.5 rounded-full border border-white/15">
-                {connectedAccount.isLoggedIn ? `${connectedAccount.provider} ✓` : 'Guest'}
+                {connectedAccount.isLoggedIn
+                  ? `${connectedAccount.provider === 'Apple' ? 'Google' : connectedAccount.provider} ✓`
+                  : 'Guest'}
               </span>
             </div>
           </div>

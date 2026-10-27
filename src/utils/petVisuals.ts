@@ -118,3 +118,47 @@ export function getPetBreedName(
 
   return pet.species || 'Purebred';
 }
+
+/**
+ * Returns a visually distinct styling for each rarity tier so no two tiers look the same.
+ */
+export function getRarityBadgeClasses(rarity: string): string {
+  const r = (rarity || 'Common').toLowerCase();
+  switch (r) {
+    case 'apex':
+      return 'border-2 border-[#CCFF00] bg-black text-[#CCFF00] font-display font-black text-[10px] tracking-widest uppercase shadow-[0_0_14px_rgba(204,255,0,0.7)] px-2 py-0.5 rounded-md';
+    case 'legendary':
+      return 'border border-amber-400 bg-amber-950/90 text-amber-300 font-display font-black text-[9px] tracking-wider uppercase shadow-[0_0_10px_rgba(245,158,11,0.5)] px-2 py-0.5 rounded-md';
+    case 'epic':
+      return 'border border-purple-400 bg-purple-950/90 text-purple-200 font-mono text-[9px] font-bold uppercase shadow-[0_0_8px_rgba(168,85,247,0.4)] px-1.5 py-0.5 rounded-md';
+    case 'rare':
+      return 'border border-cyan-400 bg-cyan-950/90 text-cyan-300 font-mono text-[9px] font-bold uppercase shadow-[0_0_6px_rgba(0,229,255,0.3)] px-1.5 py-0.5 rounded-md';
+    case 'common':
+    default:
+      return 'border border-neutral-600 bg-neutral-900/80 text-neutral-300 font-mono text-[9px] font-medium uppercase px-1.5 py-0.5 rounded-md';
+  }
+}
+
+/**
+ * Maps any pet/beast or species string to a strongly-typed PetSpecies
+ */
+export function mapBeastToSpecies(speciesOrBreed?: string): PetSpecies {
+  const s = (speciesOrBreed || '').toLowerCase().replace(/[\s\-_]+/g, '');
+  if (s.includes('germanshepherd') || s.includes('shepherd')) return 'germanshepherd';
+  if (s.includes('rottweiler')) return 'rottweiler';
+  if (s.includes('retriever') || s.includes('golden')) return 'retriever';
+  if (s.includes('husky') || s.includes('siberian')) return 'husky';
+  if (s.includes('bulldog') || s.includes('french')) return 'bulldog';
+  if (s.includes('shiba') || s.includes('inu')) return 'shiba';
+  if (s.includes('doberman') || s.includes('pinscher')) return 'doberman';
+  if (s.includes('corgi')) return 'corgi';
+  if (s.includes('bengal')) return 'bengal';
+  if (s.includes('mainecoon') || s.includes('maine')) return 'mainecoon';
+  if (s.includes('siamese')) return 'siamese';
+  if (s.includes('tabby')) return 'tabby';
+  if (s.includes('british') || s.includes('shorthair')) return 'british';
+  if (s.includes('scottish') || s.includes('fold')) return 'scottish';
+  if (s.includes('calico')) return 'calico';
+  if (s.includes('black') || s.includes('bombay') || s.includes('bagheera')) return 'blackcat';
+  return 'shiba';
+}

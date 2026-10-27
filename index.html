@@ -5,31 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PET SLAM – Own Your Beast. Rule the Arena.</title>
     <meta name="description" content="PET SLAM is where virtual animal ownership meets competitive gaming. Acquire real beasts, train attributes, compete in esports battles, and rule the global arena." />
+    
+    <!-- Canonical & Robots for Google Search Console -->
+    <link rel="canonical" href="https://petslam.com/" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
+    <!-- Google Search Console Verification Meta Tag -->
+    <!-- Can be populated via VITE_GOOGLE_SITE_VERIFICATION in .env -->
+    <meta name="google-site-verification" content="%VITE_GOOGLE_SITE_VERIFICATION%" />
+
+    <!-- Open Graph Metadata -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://petslam.com/" />
     <meta property="og:title" content="PET SLAM – Own Your Beast. Rule the Arena." />
     <meta property="og:description" content="PET SLAM is where virtual animal ownership meets competitive gaming. Acquire real beasts, train attributes, compete in esports battles, and rule the global arena." />
     <meta property="og:site_name" content="PET SLAM" />
+    
+    <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="PET SLAM – Own Your Beast. Rule the Arena." />
     <meta name="twitter:description" content="PET SLAM is where virtual animal ownership meets competitive gaming. Acquire real beasts, train attributes, and compete for the top spot." />
+    
+    <!-- Preconnect Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Structured Data for Google Search Console & Schema.org -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "PET SLAM",
-      "applicationCategory": "GameApplication",
-      "operatingSystem": "All",
-      "description": "Virtual animal ownership meets competitive esports gaming. Acquire beasts, upgrade attributes, compete in the arena, and dominate leaderboards."
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://petslam.com/#webapp",
+          "name": "PET SLAM",
+          "url": "https://petslam.com/",
+          "applicationCategory": "GameApplication",
+          "operatingSystem": "All",
+          "description": "Virtual animal ownership meets competitive esports gaming. Acquire beasts, upgrade attributes, compete in the arena, and dominate leaderboards."
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://petslam.com/#organization",
+          "name": "PET SLAM",
+          "url": "https://petslam.com/",
+          "logo": "https://petslam.com/assets/hero_beast_arena.jpg"
+        }
+      ]
     }
     </script>
-    <!-- Pure Web Application Core -->
   </head>
   <body class="bg-[#0B0E14] text-neutral-100 antialiased selection:bg-[#CCFF00] selection:text-black min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

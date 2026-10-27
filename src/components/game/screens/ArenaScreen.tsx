@@ -22,8 +22,13 @@ import {
 } from 'lucide-react';
 import { useGame } from '../../../context/GameContext';
 import { Animal, ANIMALS_DATA } from '../../../data/animals';
+import { animalImages } from '../../../assets/images';
 import { sound } from '../../../utils/audio';
+import { getRarityBadgeClasses, mapBeastToSpecies, getPetPhoto } from '../../../utils/petVisuals';
 import { usePetCompanion } from '../../../context/PetCompanionContext';
+import { ProceduralPetCanvas } from '../pet/ProceduralPetCanvas';
+import { FriendsVoiceRoomModal } from '../FriendsVoiceRoomModal';
+import { PetBattleSceneCanvas, BattleAction, ArenaTheme } from '../arena/PetBattleSceneCanvas';
 
 interface DamagePopup {
   id: number;
@@ -56,6 +61,9 @@ export const ArenaScreen: React.FC = () => {
     eligibleChallengers[0] || ANIMALS_DATA[1]
   );
   const [opponentTrainer, setOpponentTrainer] = useState<string>('Trainer Axel');
+  const [voiceRoomOpen, setVoiceRoomOpen] = useState<boolean>(false);
+  const [arenaTheme, setArenaTheme] = useState<ArenaTheme>('stadium');
+  const [currentCanvasAction, setCurrentCanvasAction] = useState<BattleAction | null>(null);
 
   // Match State
   const [isMatchmaking, setIsMatchmaking] = useState<boolean>(false);
@@ -74,8 +82,10 @@ export const ArenaScreen: React.FC = () => {
   // Battle HP & Stats
   const [playerHp, setPlayerHp] = useState<number>(1000);
   const [maxPlayerHp, setMaxPlayerHp] = useState<number>(1000);
+  const [ghostPlayerHp, setGhostPlayerHp] = useState<number>(1000);
   const [opponentHp, setOpponentHp] = useState<number>(1000);
   const [maxOpponentHp, setMaxOpponentHp] = useState<number>(1000);
+  const [ghostOpponentHp, setGhostOpponentHp] = useState<number>(1000);
 
   // Clash Royale Elixir System (0 to 10 Elixir, regenerating over time)
   const [elixir, setElixir] = useState<number>(4);
@@ -91,6 +101,12 @@ export const ArenaScreen: React.FC = () => {
   const [screenShake, setScreenShake] = useState<boolean>(false);
   const [damagePopups, setDamagePopups] = useState<DamagePopup[]>([]);
   const [opponentIntent, setOpponentIntent] = useState<string>('Charging Elixir...');
+  const [lastCombatLog, setLastCombatLog] = useState<string>('⚔️ Clash Commenced!');
+  const [activeSlashFx, setActiveSlashFx] = useState<{
+    target: 'player' | 'opponent';
+    type: 'claw' | 'slam' | 'sonic';
+    id: number;
+  } | null>(null);
 
   // 4-Pet Battle Deck
   const playerDeck = battleDeckIds
@@ -98,6 +114,19 @@ export const ArenaScreen: React.FC = () => {
     .filter((b): b is Animal => !!b);
 
   const safeDeck = playerDeck.length > 0 ? playerDeck : ownedBeasts.slice(0, 4);
+
+  // 1v1 vs 2v2 Multiplayer Mode State
+  const [battleMode, setBattleMode] = useState<'1v1' | '2v2'>('1v1');
+  const [playerAlly, setPlayerAlly] = useState<Animal>(
+    safeDeck[1] || eligibleChallengers[1] || ANIMALS_DATA[2]
+  );
+  const [opponentAlly, setOpponentAlly] = useState<Animal>(
+    eligibleChallengers[1] || ANIMALS_DATA[3]
+  );
+  const [playerAllyHp, setPlayerAllyHp] = useState<number>(850);
+  const [maxPlayerAllyHp, setMaxPlayerAllyHp] = useState<number>(850);
+  const [opponentAllyHp, setOpponentAllyHp] = useState<number>(850);
+  const [maxOpponentAllyHp, setMaxOpponentAllyHp] = useState<number>(850);
 
   // Helper to spawn floating damage numbers
   const addPopup = (text: string, type: DamagePopup['type'], x: number, y: number) => {
@@ -108,14 +137,19 @@ export const ArenaScreen: React.FC = () => {
     }, 1200);
   };
 
-  // Start Ranked Matchmaking Queue
+  // Start Ranked Matchmaking Queue (Supports 1v1 and 2v2 Tag Team)
   const handleStartMatchmaking = () => {
     sound.playClick();
     setIsMatchmaking(true);
     setMatchCountdown(3);
 
-    // Pick a random opponent from dogs & cats
-    const randomOpp = eligibleChallengers[Math.floor(Math.random() * eligibleChallengers.length)];
+    // Pick opponents from dogs & cats
+    const randomOpp1 = eligibleChallengers[Math.floor(Math.random() * eligibleChallengers.length)];
+    const randomOpp2 =
+      eligibleChallengers.find((b) => b.id !== randomOpp1.id) || eligibleChallengers[0];
+    const allyFighter =
+      safeDeck.find((b) => b.id !== currentActiveFighter.id) || eligibleChallengers[2];
+
     const randomNames = [
       'Trainer Axel',
       'Champion Maya',
@@ -124,14 +158,16 @@ export const ArenaScreen: React.FC = () => {
       'Leo Apex',
       'Master Vance',
     ];
-    setSelectedOpponent(randomOpp);
+    setSelectedOpponent(randomOpp1);
+    setOpponentAlly(randomOpp2);
+    setPlayerAlly(allyFighter);
     setOpponentTrainer(randomNames[Math.floor(Math.random() * randomNames.length)]);
 
     const timer = setInterval(() => {
       setMatchCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          startClashMatch(randomOpp);
+          startSlamMatch(randomOpp1, randomOpp2, allyFighter);
           return 0;
         }
         sound.playBell();
@@ -141,7 +177,7 @@ export const ArenaScreen: React.FC = () => {
   };
 
   // Initialize and launch match
-  const startClashMatch = (opp: Animal) => {
+  const startSlamMatch = (opp: Animal, oppAlly?: Animal, ally?: Animal) => {
     setIsMatchmaking(false);
     setInBattle(true);
     setBattleOver(false);
@@ -152,14 +188,35 @@ export const ArenaScreen: React.FC = () => {
     const oHp = Math.round(opp.health || 1000);
     setPlayerHp(pHp);
     setMaxPlayerHp(pHp);
+    setGhostPlayerHp(pHp);
     setOpponentHp(oHp);
     setMaxOpponentHp(oHp);
+    setGhostOpponentHp(oHp);
+
+    if (battleMode === '2v2') {
+      const aPet = ally || playerAlly;
+      const oaPet = oppAlly || opponentAlly;
+      const aHp = Math.round(aPet.health || 850);
+      const oaHp = Math.round(oaPet.health || 850);
+      setPlayerAlly(aPet);
+      setOpponentAlly(oaPet);
+      setPlayerAllyHp(aHp);
+      setMaxPlayerAllyHp(aHp);
+      setOpponentAllyHp(oaHp);
+      setMaxOpponentAllyHp(oaHp);
+    }
 
     setElixir(5);
     setOpponentElixir(5);
     setIsPlayerShielded(false);
     setIsOpponentShielded(false);
-    setOpponentIntent('⚡ Preparing Pounce...');
+    setOpponentIntent(battleMode === '2v2' ? '👥 Tag Team Syncing...' : '⚡ Preparing Pounce...');
+    setLastCombatLog(
+      battleMode === '2v2'
+        ? `👥 2v2 Tag Team Commenced! ${currentActiveFighter.name} & ${(ally || playerAlly).name} vs ${opp.name} & ${(oppAlly || opponentAlly).name}!`
+        : `⚔️ Battle Commenced! ${currentActiveFighter.name} vs ${opp.name}`
+    );
+    setActiveSlashFx(null);
     sound.playBattleStart();
   };
 
@@ -243,12 +300,22 @@ export const ArenaScreen: React.FC = () => {
   // Execute Opponent Attack against Player
   const executeOpponentAttack = (rawDmg: number, moveName: string, isUlt = false) => {
     setOpponentAnim('clash');
+    setLastCombatLog(`⚠️ ${selectedOpponent.name} launches ${moveName}!`);
+
+    const finalDamage = Math.round(isPlayerShielded ? rawDmg * 0.4 : rawDmg);
+    setCurrentCanvasAction({
+      id: Date.now(),
+      attacker: 'opponent',
+      type: isUlt ? 'slam' : 'bite',
+      damage: finalDamage,
+      isCrit: isUlt,
+      isBlocked: isPlayerShielded,
+    });
+
     setTimeout(() => {
-      let finalDamage = rawDmg;
       if (isPlayerShielded) {
-        finalDamage = Math.round(rawDmg * 0.4); // 60% shield absorption
         setIsPlayerShielded(false);
-        addPopup('BLOCKED 60%!', 'block', 120, 240);
+        addPopup('BLOCKED 60%!', 'block', 140, 220);
         sound.playBlock();
       } else {
         sound.playImpact();
@@ -256,23 +323,18 @@ export const ArenaScreen: React.FC = () => {
 
       setPlayerHp((prev) => {
         const next = Math.max(0, prev - finalDamage);
+        setTimeout(() => setGhostPlayerHp(next), 350);
         if (next === 0) handleMatchConclusion(false);
         return next;
       });
 
-      addPopup(`-${finalDamage}`, 'player', 140, 260);
       setPlayerAnim('hit');
-
-      if (isUlt) {
-        setScreenShake(true);
-        setTimeout(() => setScreenShake(false), 500);
-      }
 
       setTimeout(() => {
         setOpponentAnim('idle');
         setPlayerAnim('idle');
       }, 400);
-    }, 350);
+    }, isUlt ? 550 : 320);
   };
 
   // Player Plays an Action Card
@@ -293,34 +355,60 @@ export const ArenaScreen: React.FC = () => {
       setIsPlayerShielded(true);
       sound.playCardPlay();
       addPopup('SHIELD READY!', 'block', 140, 220);
+      setLastCombatLog(`🛡️ ${currentActiveFighter.name} raised Iron Guard!`);
+      setCurrentCanvasAction({
+        id: Date.now(),
+        attacker: 'player',
+        type: 'shield',
+        damage: 0,
+        isCrit: false,
+        isBlocked: false,
+      });
       return;
     }
 
-    // Offensive moves clash forward
+    // Offensive moves
     setPlayerAnim(cardType === 'slam' ? 'slam' : 'clash');
+    const moveNames = {
+      pounce: 'Quick Pounce',
+      bark: 'Sonic Roar',
+      bite: 'Fierce Bite',
+      slam: '🌟 PET SLAM OVERDRIVE',
+    };
+    setLastCombatLog(`⚡ ${currentActiveFighter.name} used ${moveNames[cardType]}!`);
     sound.playAttack();
 
+    let baseDamage = currentActiveFighter.damage;
+    let multiplier = 1;
+    let isCrit = false;
+
+    if (cardType === 'pounce') multiplier = 0.8;
+    if (cardType === 'bark') multiplier = 0.95;
+    if (cardType === 'bite') multiplier = 1.35;
+    if (cardType === 'slam') {
+      multiplier = 2.1;
+      isCrit = true;
+    }
+
+    let totalDmg = Math.round(baseDamage * multiplier);
+    if (isOpponentShielded) {
+      totalDmg = Math.round(totalDmg * 0.4);
+    }
+
+    // Trigger Canvas 60 FPS Combat Action Sequence
+    setCurrentCanvasAction({
+      id: Date.now(),
+      attacker: 'player',
+      type: cardType,
+      damage: totalDmg,
+      isCrit,
+      isBlocked: isOpponentShielded,
+    });
+
     setTimeout(() => {
-      let baseDamage = currentActiveFighter.damage;
-      let multiplier = 1;
-      let isCrit = false;
-
-      if (cardType === 'pounce') multiplier = 0.8;
-      if (cardType === 'bark') multiplier = 0.95;
-      if (cardType === 'bite') multiplier = 1.35;
-      if (cardType === 'slam') {
-        multiplier = 2.1;
-        isCrit = true;
-        setScreenShake(true);
-        setTimeout(() => setScreenShake(false), 600);
-      }
-
-      let totalDmg = Math.round(baseDamage * multiplier);
-
       if (isOpponentShielded) {
-        totalDmg = Math.round(totalDmg * 0.4);
         setIsOpponentShielded(false);
-        addPopup('SHIELD DEFLECTED!', 'block', 180, 120);
+        addPopup('SHIELD DEFLECTED!', 'block', 170, 80);
         sound.playBlock();
       } else {
         sound.playImpact();
@@ -328,16 +416,10 @@ export const ArenaScreen: React.FC = () => {
 
       setOpponentHp((prev) => {
         const next = Math.max(0, prev - totalDmg);
+        setTimeout(() => setGhostOpponentHp(next), 350);
         if (next === 0) handleMatchConclusion(true);
         return next;
       });
-
-      addPopup(
-        isCrit ? `💥 CRIT -${totalDmg}` : `-${totalDmg}`,
-        isCrit ? 'crit' : 'opponent',
-        180,
-        110
-      );
 
       setOpponentAnim('hit');
 
@@ -345,7 +427,7 @@ export const ArenaScreen: React.FC = () => {
         setPlayerAnim('idle');
         setOpponentAnim('idle');
       }, 400);
-    }, 300);
+    }, cardType === 'slam' ? 550 : 320);
   };
 
   // Tag-In Swap to another Dog/Cat from 4-Pet Squad
@@ -355,17 +437,28 @@ export const ArenaScreen: React.FC = () => {
     sound.playCardPlay();
     setCurrentActiveFighter(beast);
     selectActiveBeast(beast.id);
+    setLastCombatLog(`🔁 Tag-in! ${beast.name} enters with 75 DMG slam!`);
+
+    setCurrentCanvasAction({
+      id: Date.now(),
+      attacker: 'player',
+      type: 'slam',
+      damage: 75,
+      isCrit: true,
+      isBlocked: false,
+    });
 
     // Tag-In landing impact (deals instant 75 damage)
-    setPlayerAnim('clash');
+    setPlayerAnim('slam');
     setTimeout(() => {
       sound.playImpact();
       setOpponentHp((prev) => {
         const next = Math.max(0, prev - 75);
+        setTimeout(() => setGhostOpponentHp(next), 350);
         if (next === 0) handleMatchConclusion(true);
         return next;
       });
-      addPopup('TAG IMPACT -75!', 'crit', 180, 120);
+      addPopup('TAG IMPACT -75!', 'crit', 170, 80);
       setOpponentAnim('hit');
       setTimeout(() => {
         setPlayerAnim('idle');
@@ -411,7 +504,7 @@ export const ArenaScreen: React.FC = () => {
       }`}
     >
       {/* =========================================================================
-          VIEW 1: ARENA LOBBY (Clash Royale Style Deck & Queue)
+          VIEW 1: ARENA LOBBY (Pet Slam 1v1 Queue)
          ========================================================================= */}
       {!inBattle && (
         <div className="flex-1 flex flex-col p-3 sm:p-5 overflow-y-auto space-y-3 max-w-lg mx-auto w-full pb-28 overscroll-contain">
@@ -428,42 +521,127 @@ export const ArenaScreen: React.FC = () => {
             </div>
 
             <h2 className="font-display font-black text-xl sm:text-2xl uppercase tracking-wider text-white">
-              Pet Clash Arena
+              Pet Slam Arena
             </h2>
             <p className="text-[10px] sm:text-[11px] text-neutral-300 font-mono mt-0.5">
-              Real 1v1 Pet Duels · Real Dog & Cat Breeds · Skill-Based Clash
+              Real-Time 1v1 Pet Duels · Purebred Canines & Felines · 60 FPS Animated Combat
             </p>
           </div>
 
-          {/* Active Champion Showcase */}
+          {/* 1v1 vs 2v2 Mode Switcher */}
+          <div className="flex items-center p-1 bg-black/60 border border-white/10 rounded-2xl max-w-xs mx-auto w-full shadow-md">
+            <button
+              onClick={() => {
+                sound.playClick();
+                setBattleMode('1v1');
+              }}
+              className={`flex-1 py-1.5 px-2.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                battleMode === '1v1'
+                  ? 'bg-[#CCFF00] text-black shadow-md'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              ⚔️ 1v1 Ranked
+            </button>
+            <button
+              onClick={() => {
+                sound.playClick();
+                setBattleMode('2v2');
+              }}
+              className={`flex-1 py-1.5 px-2.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                battleMode === '2v2'
+                  ? 'bg-[#CCFF00] text-black shadow-md'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              👥 2v2 Tag Team
+            </button>
+          </div>
+
+          {/* Active Champion or 2v2 Tag Team Showcase */}
           <div className="py-2 flex flex-col items-center">
-            <div className="relative group">
-              <div className="w-40 h-48 sm:w-48 sm:h-56 rounded-3xl overflow-hidden border-3 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.25)] bg-black relative">
-                <img
-                  src={currentActiveFighter.image}
-                  alt={currentActiveFighter.name}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-
-                <div className="absolute top-2.5 left-2.5 bg-black/80 px-2 py-0.5 rounded-full border border-white/20 text-[10px] font-mono font-bold text-[#CCFF00]">
-                  LVL {currentActiveFighter.level || 10}
+            {battleMode === '2v2' ? (
+              <div className="flex items-center justify-center gap-3">
+                {/* Lead Fighter Card */}
+                <div className="relative group flex flex-col items-center">
+                  <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.25)] bg-black relative">
+                    <img
+                      src={currentActiveFighter.image}
+                      alt={currentActiveFighter.name}
+                      className="w-full h-full object-cover object-center"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+                    <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-white/20 text-[9px] font-mono font-bold text-[#CCFF00]">
+                      LEAD
+                    </div>
+                    <div className="absolute bottom-1.5 inset-x-1.5 text-center">
+                      <div className="font-display font-black text-xs text-white uppercase truncate">
+                        {currentActiveFighter.name}
+                      </div>
+                      <div className="text-[8px] text-[#CCFF00] font-mono truncate">
+                        {currentActiveFighter.breed}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="absolute top-2.5 right-2.5 bg-purple-500/80 px-2 py-0.5 rounded-full text-[9px] font-mono font-black uppercase text-white">
-                  {currentActiveFighter.category}
+                <div className="font-display font-black text-lg text-amber-400 tracking-wider">
+                  +
                 </div>
 
-                <div className="absolute bottom-2.5 inset-x-3 text-center">
-                  <h3 className="font-display font-black text-base sm:text-lg text-white uppercase tracking-wider truncate">
-                    {currentActiveFighter.name}
-                  </h3>
-                  <div className="text-[10px] text-[#CCFF00] font-mono font-bold">
-                    {currentActiveFighter.breed} · {currentActiveFighter.combatArchetype}
+                {/* Ally Partner Card */}
+                <div className="relative group flex flex-col items-center">
+                  <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,229,255,0.25)] bg-black relative">
+                    <img
+                      src={playerAlly.image}
+                      alt={playerAlly.name}
+                      className="w-full h-full object-cover object-center"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+                    <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-white/20 text-[9px] font-mono font-bold text-cyan-300">
+                      PARTNER
+                    </div>
+                    <div className="absolute bottom-1.5 inset-x-1.5 text-center">
+                      <div className="font-display font-black text-xs text-white uppercase truncate">
+                        {playerAlly.name}
+                      </div>
+                      <div className="text-[8px] text-cyan-300 font-mono truncate">
+                        {playerAlly.breed}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* Single 1v1 Champion Card */
+              <div className="relative group">
+                <div className="w-40 h-48 sm:w-48 sm:h-56 rounded-3xl overflow-hidden border-3 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.25)] bg-black relative">
+                  <img
+                    src={currentActiveFighter.image}
+                    alt={currentActiveFighter.name}
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+
+                  <div className="absolute top-2.5 left-2.5 bg-black/80 px-2 py-0.5 rounded-full border border-white/20 text-[10px] font-mono font-bold text-[#CCFF00]">
+                    LVL {currentActiveFighter.level || 10}
+                  </div>
+
+                  <div className={`absolute top-2.5 right-2.5 ${getRarityBadgeClasses(currentActiveFighter.rarity)}`}>
+                    {currentActiveFighter.rarity}
+                  </div>
+
+                  <div className="absolute bottom-2.5 inset-x-3 text-center">
+                    <h3 className="font-display font-black text-base sm:text-lg text-white uppercase tracking-wider truncate">
+                      {currentActiveFighter.name}
+                    </h3>
+                    <div className="text-[10px] text-[#CCFF00] font-mono font-bold">
+                      {currentActiveFighter.breed} · {currentActiveFighter.combatArchetype}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Combat Specs Pills */}
             <div className="flex items-center gap-2.5 mt-2.5 text-xs font-mono">
@@ -538,7 +716,11 @@ export const ArenaScreen: React.FC = () => {
               ) : (
                 <>
                   <Swords className="w-5 h-5 text-black" />
-                  <span>Battle Clash (Ranked 1v1)</span>
+                  <span>
+                    {battleMode === '2v2'
+                      ? 'Enter Arena (2v2 Tag Team)'
+                      : 'Enter Arena (Ranked 1v1 Slam)'}
+                  </span>
                 </>
               )}
             </button>
@@ -547,17 +729,21 @@ export const ArenaScreen: React.FC = () => {
       )}
 
       {/* =========================================================================
-          VIEW 2: LIVE CLASH ROYALE COMBAT FIELD (FITS SCREEN PERFECTLY)
+          VIEW 2: LIVE 60 FPS PET SLAM BATTLE ARENA (ANIMATED & IMMERSIVE)
          ========================================================================= */}
       {inBattle && (
-        <div className="flex-1 flex flex-col justify-between p-2 sm:p-3 relative max-w-lg mx-auto w-full h-full overflow-y-auto sm:overflow-hidden">
+        <div
+          className={`flex-1 flex flex-col justify-between p-2 sm:p-2.5 relative max-w-lg mx-auto w-full h-full overflow-hidden select-none ${
+            screenShake ? 'animate-arenaShake' : ''
+          }`}
+        >
           {/* Floating Damage Numbers */}
           {damagePopups.map((p) => (
             <div
               key={p.id}
               className={`absolute pointer-events-none font-display font-black text-sm sm:text-base z-50 animate-out fade-out slide-out-to-top-8 duration-1000 ${
                 p.type === 'crit'
-                  ? 'text-[#CCFF00] text-lg sm:text-xl drop-shadow-[0_2px_8px_rgba(204,255,0,0.8)]'
+                  ? 'text-[#CCFF00] text-lg sm:text-xl drop-shadow-[0_2px_10px_rgba(204,255,0,0.9)]'
                   : p.type === 'block'
                   ? 'text-cyan-300 drop-shadow-[0_2px_8px_rgba(0,229,255,0.8)]'
                   : p.type === 'player'
@@ -570,192 +756,273 @@ export const ArenaScreen: React.FC = () => {
             </div>
           ))}
 
-          {/* 1. MATCH STATUS BAR: TIMER, LEAGUE, & FORFEIT */}
-          <div className="flex items-center justify-between bg-[#121624] border border-white/10 rounded-xl px-2.5 py-1.5 shrink-0 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-black text-white bg-red-500/20 text-red-300 border border-red-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">
+          {/* 1. MATCH STATUS & ARENA THEME SELECTOR BAR */}
+          <div className="flex items-center justify-between bg-[#101524] border border-white/10 rounded-xl px-2.5 py-1 shrink-0 shadow-sm gap-1">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[10px] font-mono font-black bg-red-500/20 text-red-300 border border-red-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
-                <span>CLASH LIVE 1v1</span>
-              </span>
-              <span className="text-[10px] font-mono text-neutral-400 hidden sm:inline">
-                Colosseum League
+                <span>{battleMode === '2v2' ? '2v2 TAG TEAM' : 'SLAM 1v1'}</span>
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 font-mono text-xs font-black">
+            {/* Switchable Arena Aesthetic Themes */}
+            <div className="flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded-lg border border-white/10 shrink-0">
+              {(
+                [
+                  { id: 'stadium', label: 'Stadium', icon: '🏟️' },
+                  { id: 'cyber', label: 'Cyber', icon: '⚡' },
+                  { id: 'dojo', label: 'Dojo', icon: '🏮' },
+                ] as const
+              ).map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    sound.playClick();
+                    setArenaTheme(t.id);
+                  }}
+                  title={`Switch to ${t.label} Arena`}
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                    arenaTheme === t.id
+                      ? 'bg-[#CCFF00] text-black shadow-xs font-black'
+                      : 'text-neutral-400 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <span>{t.icon}</span>
+                  <span className="hidden sm:inline">{t.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1.5 font-mono text-xs font-black shrink-0">
               <Timer className={`w-3.5 h-3.5 ${battleTimerSec <= 60 ? 'text-red-400 animate-pulse' : 'text-amber-400'}`} />
               <span className={battleTimerSec <= 60 ? 'text-red-400 animate-pulse' : 'text-amber-300'}>
                 {formatTimer(battleTimerSec)}
               </span>
               {battleTimerSec <= 60 && (
-                <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded uppercase font-bold animate-bounce">
-                  2X ELIXIR
+                <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1 rounded uppercase font-bold animate-bounce hidden sm:inline">
+                  2X
                 </span>
               )}
             </div>
 
-            <button
-              onClick={handleForfeit}
-              className="flex items-center gap-1 text-[10px] font-mono font-bold text-neutral-400 hover:text-red-400 hover:bg-red-500/10 px-2 py-0.5 rounded transition-colors cursor-pointer"
-              title="Surrender Match"
-            >
-              <Flag className="w-3 h-3" />
-              <span>Forfeit</span>
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => setVoiceRoomOpen(true)}
+                className="flex items-center gap-1 text-[10px] font-mono font-bold bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-400/40 px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer"
+                title="Party Voice Chat"
+              >
+                <Radio className="w-3 h-3 text-purple-300" />
+                <span className="hidden sm:inline">Voice</span>
+              </button>
+
+              <button
+                onClick={handleForfeit}
+                className="flex items-center gap-1 text-[10px] font-mono font-bold text-neutral-400 hover:text-red-400 hover:bg-red-500/10 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                title="Surrender Match"
+              >
+                <Flag className="w-3 h-3" />
+                <span className="hidden sm:inline">Forfeit</span>
+              </button>
+            </div>
           </div>
 
-          {/* 2. TOP ARENA: OPPONENT FIELD */}
-          <div className="bg-[#121624]/90 border border-red-500/30 rounded-2xl p-2 sm:p-2.5 shadow-md shrink-0 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div
-                className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border-2 border-red-500 shadow-md bg-black transition-transform duration-200 shrink-0 ${
-                  opponentAnim === 'clash'
-                    ? 'scale-110 translate-y-3'
-                    : opponentAnim === 'hit'
-                    ? 'opacity-60 -translate-y-2'
-                    : ''
-                }`}
-              >
+          {/* 2. OPPONENT HUD BAR (Dual-layer HP Bar with 2v2 Tag Partner support) */}
+          <div className="bg-[#121828]/95 border border-red-500/30 rounded-xl px-2.5 py-1.5 shadow shrink-0 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-lg overflow-hidden border border-red-500 bg-black shrink-0 shadow-xs">
                 <img
-                  src={selectedOpponent.image}
+                  src={getPetPhoto(selectedOpponent)}
                   alt={selectedOpponent.name}
-                  className="w-full h-full object-cover object-center aspect-square"
+                  className="w-full h-full object-cover"
                 />
-                {isOpponentShielded && (
-                  <div className="absolute inset-0 bg-cyan-500/30 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-cyan-300 animate-pulse" />
-                  </div>
-                )}
               </div>
-
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-display font-black text-xs sm:text-sm text-white uppercase truncate max-w-[110px] sm:max-w-[150px]">
+              <div className="leading-tight min-w-0">
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="font-display font-black text-xs text-white uppercase truncate">
                     {selectedOpponent.name}
                   </span>
-                  <span className="text-[8px] sm:text-[9px] bg-red-500/20 text-red-300 font-mono px-1 rounded uppercase">
+                  <span className="text-[8px] bg-red-500/20 text-red-300 font-mono px-1 rounded uppercase">
                     {selectedOpponent.breed}
                   </span>
                 </div>
-                <div className="text-[9px] font-mono text-neutral-400">{opponentTrainer}</div>
-
-                {/* Opponent HP Bar */}
-                <div className="w-32 sm:w-44 h-2.5 sm:h-3 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-1 relative">
+                {/* Dual Layer HP Bar with Ghost Drain */}
+                <div className="w-24 sm:w-36 h-2 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-0.5 relative">
                   <div
-                    className="h-full bg-gradient-to-r from-red-600 to-amber-500 transition-all duration-300 rounded-full"
-                    style={{ width: `${oppHpPct}%` }}
+                    className="absolute inset-y-0 left-0 bg-amber-400 transition-all duration-700 ease-out rounded-full opacity-70"
+                    style={{ width: `${(ghostOpponentHp / maxOpponentHp) * 100}%` }}
                   />
-                  <span className="absolute inset-0 flex items-center justify-center text-[7px] sm:text-[8px] font-mono font-bold text-white drop-shadow">
-                    {opponentHp} / {maxOpponentHp} HP
-                  </span>
+                  <div
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-600 to-amber-500 transition-all duration-200 rounded-full"
+                    style={{ width: `${(opponentHp / maxOpponentHp) * 100}%` }}
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Opponent Live Intent */}
-            <div className="text-right">
-              <span className="text-[8px] font-mono text-neutral-400 block uppercase">Opponent</span>
-              <span className="text-[9px] sm:text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 inline-block truncate max-w-[100px] sm:max-w-none">
+            {/* 2v2 Opponent Partner Mini HUD */}
+            {battleMode === '2v2' && (
+              <div className="flex items-center gap-1.5 border-l border-white/10 pl-2 shrink-0">
+                <div className="w-7 h-7 rounded-lg overflow-hidden border border-amber-400 bg-black shrink-0 shadow-xs">
+                  <img
+                    src={getPetPhoto(opponentAlly)}
+                    alt={opponentAlly.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="leading-tight">
+                  <div className="text-[9px] font-bold text-amber-300 truncate max-w-[65px]">
+                    {opponentAlly.name}
+                  </div>
+                  <div className="w-14 sm:w-20 h-1.5 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-0.5">
+                    <div
+                      className="h-full bg-amber-500 rounded-full transition-all"
+                      style={{ width: `${(opponentAllyHp / maxOpponentAllyHp) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="text-right shrink-0">
+              <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 block truncate max-w-[110px]">
                 {opponentIntent}
+              </span>
+              <span className="text-[8px] font-mono text-neutral-400 tabular-nums">
+                {opponentHp} / {maxOpponentHp} HP
               </span>
             </div>
           </div>
 
-          {/* 3. CENTRAL CLASH RIVER / IMPACT ZONE */}
-          <div className="py-1.5 relative flex flex-col items-center justify-center shrink-0">
-            {/* Energy River line */}
-            <div className="w-full h-0.5 sm:h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#00e5ff]" />
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black border-2 border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.5)] flex items-center justify-center text-[10px] sm:text-xs font-black text-[#CCFF00] my-[-18px] sm:my-[-20px] z-10">
-              VS
+          {/* 3. 60 FPS HTML5 CANVAS BATTLE ARENA STAGE (Supports 1v1 and 2v2) */}
+          <div className="flex-1 relative rounded-2xl overflow-hidden border-2 border-white/15 shadow-[0_0_35px_rgba(0,0,0,0.9)] my-1 min-h-[240px] max-h-[350px] flex items-center justify-center bg-black">
+            {/* The 60 FPS Pet Canvas Game Engine */}
+            <PetBattleSceneCanvas
+              playerPet={currentActiveFighter}
+              opponentPet={selectedOpponent}
+              playerHp={playerHp}
+              maxPlayerHp={maxPlayerHp}
+              opponentHp={opponentHp}
+              maxOpponentHp={maxOpponentHp}
+              isPlayerShielded={isPlayerShielded}
+              isOpponentShielded={isOpponentShielded}
+              arenaTheme={arenaTheme}
+              currentAction={currentCanvasAction}
+              onActionComplete={() => setCurrentCanvasAction(null)}
+              battleMode={battleMode}
+              playerAllyPet={playerAlly}
+              opponentAllyPet={opponentAlly}
+              playerAllyHp={playerAllyHp}
+              maxPlayerAllyHp={maxPlayerAllyHp}
+              opponentAllyHp={opponentAllyHp}
+              maxOpponentAllyHp={maxOpponentAllyHp}
+              className="w-full h-full absolute inset-0"
+            />
+
+            {/* Live Combat Announcement Ticker Banner */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/85 backdrop-blur-md border border-[#CCFF00]/40 shadow-[0_0_15px_rgba(204,255,0,0.25)] flex items-center gap-1.5 z-20 pointer-events-none max-w-[85%]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#CCFF00] animate-ping shrink-0" />
+              <span className="font-display font-black text-[10px] sm:text-[11px] text-[#CCFF00] tracking-wider uppercase truncate">
+                {lastCombatLog || 'PET SLAM LIVE ARENA'}
+              </span>
+            </div>
+
+            {/* Theme Overlay Watermark Pill */}
+            <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-[9px] font-mono text-neutral-400 pointer-events-none uppercase">
+              {arenaTheme} ARENA · {battleMode === '2v2' ? '2v2 TAG TEAM' : '60 FPS'}
             </div>
           </div>
 
-          {/* 4. BOTTOM ARENA: PLAYER CHAMPION FIELD */}
-          <div className="bg-[#121624]/90 border border-cyan-500/30 rounded-2xl p-2 sm:p-2.5 shadow-md shrink-0 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div
-                className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden border-2 border-cyan-400 shadow-md bg-black transition-transform duration-200 shrink-0 ${
-                  playerAnim === 'clash'
-                    ? 'scale-110 -translate-y-3'
-                    : playerAnim === 'slam'
-                    ? 'scale-120 -translate-y-4'
-                    : playerAnim === 'hit'
-                    ? 'opacity-60 translate-y-2'
-                    : ''
-                }`}
-              >
+          {/* 4. PLAYER HUD & SQUAD SWITCHER BAR (with 2v2 Co-op Ally support) */}
+          <div className="bg-[#121828]/95 border border-cyan-500/30 rounded-xl px-2.5 py-1.5 shadow shrink-0 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-lg overflow-hidden border border-cyan-400 bg-black shrink-0 shadow-xs">
                 <img
-                  src={currentActiveFighter.image}
+                  src={getPetPhoto(currentActiveFighter)}
                   alt={currentActiveFighter.name}
-                  className="w-full h-full object-cover object-center aspect-square"
+                  className="w-full h-full object-cover"
                 />
-                {isPlayerShielded && (
-                  <div className="absolute inset-0 bg-cyan-500/30 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-cyan-300 animate-pulse" />
-                  </div>
-                )}
               </div>
-
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-display font-black text-xs sm:text-sm text-white uppercase truncate max-w-[110px] sm:max-w-[150px]">
+              <div className="leading-tight min-w-0">
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="font-display font-black text-xs text-white uppercase truncate">
                     {currentActiveFighter.name}
                   </span>
-                  <span className="text-[8px] sm:text-[9px] bg-cyan-500/20 text-cyan-300 font-mono px-1 rounded uppercase">
+                  <span className="text-[8px] bg-cyan-500/20 text-cyan-300 font-mono px-1 rounded uppercase">
                     {currentActiveFighter.breed}
                   </span>
                 </div>
-                <div className="text-[9px] font-mono text-neutral-400">
-                  {trainerName} · Lead
-                </div>
-
-                {/* Player HP Bar */}
-                <div className="w-32 sm:w-44 h-2.5 sm:h-3 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-1 relative">
+                {/* Dual Layer HP Bar with Ghost Drain */}
+                <div className="w-24 sm:w-36 h-2 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-0.5 relative">
                   <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-300 rounded-full"
-                    style={{ width: `${playerHpPct}%` }}
+                    className="absolute inset-y-0 left-0 bg-amber-400 transition-all duration-700 ease-out rounded-full opacity-70"
+                    style={{ width: `${(ghostPlayerHp / maxPlayerHp) * 100}%` }}
                   />
-                  <span className="absolute inset-0 flex items-center justify-center text-[7px] sm:text-[8px] font-mono font-bold text-white drop-shadow">
-                    {playerHp} / {maxPlayerHp} HP
-                  </span>
+                  <div
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-200 rounded-full"
+                    style={{ width: `${(playerHp / maxPlayerHp) * 100}%` }}
+                  />
                 </div>
               </div>
             </div>
 
+            {/* 2v2 Player Ally Mini HUD */}
+            {battleMode === '2v2' && (
+              <div className="flex items-center gap-1.5 border-l border-white/10 pl-2 shrink-0">
+                <div className="w-7 h-7 rounded-lg overflow-hidden border border-cyan-400 bg-black shrink-0 shadow-xs">
+                  <img
+                    src={getPetPhoto(playerAlly)}
+                    alt={playerAlly.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="leading-tight">
+                  <div className="text-[9px] font-bold text-cyan-300 truncate max-w-[65px]">
+                    {playerAlly.name}
+                  </div>
+                  <div className="w-14 sm:w-20 h-1.5 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-0.5">
+                    <div
+                      className="h-full bg-cyan-400 rounded-full transition-all"
+                      style={{ width: `${(playerAllyHp / maxPlayerAllyHp) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Squad Tag-In Drawer */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               {safeDeck.map((b) => (
-                <div
+                <button
                   key={b.id}
                   onClick={() => handleTagIn(b)}
-                  title={`Tag in ${b.name} (Impact: 75 DMG)`}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg overflow-hidden border cursor-pointer transition-all ${
+                  title={`Tag in ${b.name} (Instant 75 DMG slam)`}
+                  className={`w-7 h-7 rounded-lg overflow-hidden border cursor-pointer transition-all active:scale-95 ${
                     b.id === currentActiveFighter.id
                       ? 'border-[#CCFF00] ring-1 ring-[#CCFF00]'
                       : 'border-white/20 hover:border-white/50 opacity-60'
                   }`}
                 >
                   <img
-                    src={b.image}
+                    src={getPetPhoto(b)}
                     alt={b.name}
-                    className="w-full h-full object-cover object-center aspect-square"
+                    className="w-full h-full object-cover aspect-square"
                   />
-                </div>
+                </button>
               ))}
             </div>
           </div>
 
-          {/* 5. ELIXIR GAUGE BAR (1 TO 10 ELIXIR) */}
+          {/* 5. SLAM ENERGY GAUGE BAR (1 TO 10 ENERGY) */}
           <div className="space-y-0.5 shrink-0">
-            <div className="flex items-center justify-between text-[10px] sm:text-xs font-mono">
+            <div className="flex items-center justify-between text-[10px] font-mono leading-none">
               <span className="text-cyan-400 font-bold flex items-center gap-1">
                 <Zap className="w-3 h-3 text-cyan-400 animate-pulse" />
-                <span>CLASH ELIXIR</span>
+                <span>SLAM ENERGY</span>
               </span>
               <span className="font-black text-[#CCFF00]">{Math.floor(elixir)} / 10 ⚡</span>
             </div>
 
-            <div className="h-2 sm:h-2.5 bg-neutral-900 rounded-full overflow-hidden border border-white/10 p-0.5 flex gap-1">
+            <div className="h-2 bg-neutral-900 rounded-full overflow-hidden border border-white/10 p-0.5 flex gap-0.5">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div
                   key={i}
@@ -769,81 +1036,85 @@ export const ArenaScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* 6. CLASH ACTION CARDS HAND (Clash Royale Style Dock) */}
-          <div className="grid grid-cols-5 gap-1 sm:gap-1.5 shrink-0 pt-0.5">
-            {/* Card 1: Quick Pounce (2 Elixir) */}
+          {/* 6. SLAM ACTION MOVES DOCK */}
+          <div className="grid grid-cols-5 gap-1 shrink-0">
+            {/* Card 1: Quick Pounce (2 Energy) */}
             <button
               onClick={() => handlePlayCard('pounce')}
               disabled={elixir < 2}
-              className={`p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 ${
+              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
                 elixir >= 2
-                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-cyan-400 text-white shadow-md active:scale-95'
-                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-50 cursor-not-allowed'
+                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-cyan-400 text-white shadow active:scale-95'
+                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[9px] font-mono font-black text-cyan-400">2 ⚡</span>
-              <span className="text-xs sm:text-sm">🐾</span>
-              <span className="text-[8px] sm:text-[9px] font-bold uppercase truncate">Pounce</span>
+              <span className="text-[8px] font-mono font-black text-cyan-400">2 ⚡</span>
+              <span className="text-xs">🐾</span>
+              <span className="text-[8px] font-bold uppercase truncate">Pounce</span>
             </button>
 
-            {/* Card 2: Sonic Bark / Hiss (3 Elixir) */}
+            {/* Card 2: Sonic Bark / Hiss (3 Energy) */}
             <button
               onClick={() => handlePlayCard('bark')}
               disabled={elixir < 3}
-              className={`p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 ${
+              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
                 elixir >= 3
-                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-amber-400 text-white shadow-md active:scale-95'
-                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-50 cursor-not-allowed'
+                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-amber-400 text-white shadow active:scale-95'
+                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[9px] font-mono font-black text-amber-400">3 ⚡</span>
-              <span className="text-xs sm:text-sm">📢</span>
-              <span className="text-[8px] sm:text-[9px] font-bold uppercase truncate">Bark</span>
+              <span className="text-[8px] font-mono font-black text-amber-400">3 ⚡</span>
+              <span className="text-xs">📢</span>
+              <span className="text-[8px] font-bold uppercase truncate">Bark</span>
             </button>
 
-            {/* Card 3: Iron Guard (2 Elixir) */}
+            {/* Card 3: Iron Guard (2 Energy) */}
             <button
               onClick={() => handlePlayCard('shield')}
               disabled={elixir < 2}
-              className={`p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 ${
+              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
                 elixir >= 2
-                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-blue-400 text-white shadow-md active:scale-95'
-                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-50 cursor-not-allowed'
+                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-blue-400 text-white shadow active:scale-95'
+                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[9px] font-mono font-black text-blue-400">2 ⚡</span>
-              <span className="text-xs sm:text-sm">🛡️</span>
-              <span className="text-[8px] sm:text-[9px] font-bold uppercase truncate">Guard</span>
+              <span className="text-[8px] font-mono font-black text-blue-400">2 ⚡</span>
+              <span className="text-xs">🛡️</span>
+              <span className="text-[8px] font-bold uppercase truncate">
+                {battleMode === '2v2' ? 'Team Guard' : 'Guard'}
+              </span>
             </button>
 
-            {/* Card 4: Fierce Bite / Claw (4 Elixir) */}
+            {/* Card 4: Fierce Bite (4 Energy) */}
             <button
               onClick={() => handlePlayCard('bite')}
               disabled={elixir < 4}
-              className={`p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 ${
+              className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
                 elixir >= 4
-                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-red-400 text-white shadow-md active:scale-95'
-                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-50 cursor-not-allowed'
+                  ? 'bg-[#151D30] hover:bg-[#1C2640] border-red-400 text-white shadow active:scale-95'
+                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[9px] font-mono font-black text-red-400">4 ⚡</span>
-              <span className="text-xs sm:text-sm">💥</span>
-              <span className="text-[8px] sm:text-[9px] font-bold uppercase truncate">Bite</span>
+              <span className="text-[8px] font-mono font-black text-red-400">4 ⚡</span>
+              <span className="text-xs">💥</span>
+              <span className="text-[8px] font-bold uppercase truncate">Bite</span>
             </button>
 
-            {/* Card 5: PET SLAM OVERDRIVE (6 Elixir) */}
+            {/* Card 5: PET SLAM / DUO SLAM OVERDRIVE (6 Energy) */}
             <button
               onClick={() => handlePlayCard('slam')}
               disabled={elixir < 6}
-              className={`p-1.5 sm:p-2 rounded-xl sm:rounded-2xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 ${
+              className={`p-1 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 ${
                 elixir >= 6
-                  ? 'bg-gradient-to-b from-[#CCFF00] to-amber-500 border-white text-black shadow-[0_0_15px_rgba(204,255,0,0.6)] active:scale-95'
-                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-50 cursor-not-allowed'
+                  ? 'bg-gradient-to-b from-[#CCFF00] to-amber-500 border-white text-black shadow-[0_0_12px_rgba(204,255,0,0.6)] active:scale-95'
+                  : 'bg-neutral-900 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
               }`}
             >
-              <span className="text-[9px] font-mono font-black text-black">6 ⚡</span>
-              <span className="text-xs sm:text-sm">⚡</span>
-              <span className="text-[8px] sm:text-[9px] font-black uppercase truncate">SLAM</span>
+              <span className="text-[8px] font-mono font-black text-black">6 ⚡</span>
+              <span className="text-xs">⚡</span>
+              <span className="text-[8px] font-black uppercase truncate">
+                {battleMode === '2v2' ? 'DUO SLAM' : 'SLAM'}
+              </span>
             </button>
           </div>
 
@@ -877,7 +1148,7 @@ export const ArenaScreen: React.FC = () => {
                   </h2>
                   <p className="text-[11px] text-neutral-300 font-mono mt-1">
                     {battleResult === 'victory'
-                      ? 'Flawless clash victory! Ranking trophies awarded.'
+                      ? 'Flawless arena victory! Ranking trophies awarded.'
                       : 'Close battle! Train your dog or cat and strike back.'}
                   </p>
                 </div>
@@ -893,7 +1164,7 @@ export const ArenaScreen: React.FC = () => {
                   <button
                     onClick={() => {
                       sound.playClick();
-                      startClashMatch(selectedOpponent);
+                      startSlamMatch(selectedOpponent);
                     }}
                     className="w-full py-3 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer shadow-lg active:scale-98 transition-transform"
                   >
@@ -913,6 +1184,13 @@ export const ArenaScreen: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* Multiplayer Voice Room Modal */}
+      {voiceRoomOpen && (
+        <FriendsVoiceRoomModal
+          onClose={() => setVoiceRoomOpen(false)}
+        />
       )}
     </div>
   );

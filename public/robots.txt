@@ -1,0 +1,6 @@
+# PET SLAM Robots.txt for Google Search Console and Search Engines
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://petslam.com/sitemap.xml

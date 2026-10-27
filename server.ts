@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
+import DodoPayments from 'dodopayments';
 
 dotenv.config();
 
@@ -31,16 +32,115 @@ function resolvePort(): number {
 const PORT = resolvePort();
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Body parser with 15MB limit for pet photo analysis
-app.use(express.json({ limit: '15mb' }));
+// Body parser with 15MB limit for pet photo analysis & raw buffer preservation for Dodo webhooks
+app.use(
+  express.json({
+    limit: '15mb',
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 
-// Persistent database file
+// Persistent database files
 const DATA_DIR = path.resolve(__dirname, 'data');
 const WAITLIST_FILE = path.resolve(DATA_DIR, 'waitlist.json');
+const PAYMENTS_FILE = path.resolve(DATA_DIR, 'payments.json');
 
-// Ensure data folder and file exist
+// Ensure data folder and files exist
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// ---------------------------------------------------------------------------
+// Dodo Payments Configuration & Client
+// ---------------------------------------------------------------------------
+const dodoApiKey = process.env.DODO_PAYMENTS_API_KEY;
+const dodoWebhookSecret = process.env.DODO_PAYMENTS_WEBHOOK_SECRET;
+const dodoEnv =
+  (process.env.DODO_PAYMENTS_ENVIRONMENT as 'test_mode' | 'live_mode') || 'test_mode';
+
+let dodoClient: DodoPayments | null = null;
+if (dodoApiKey && dodoApiKey !== 'your_dodo_api_key_here' && dodoApiKey.trim().length > 0) {
+  try {
+    dodoClient = new DodoPayments({
+      bearerToken: dodoApiKey.trim(),
+      environment: dodoEnv,
+    });
+    console.log(`[DodoPayments] Initialized official SDK in ${dodoEnv}`);
+  } catch (err: any) {
+    console.warn('[DodoPayments] Client initialization warning:', err?.message || err);
+  }
+}
+
+// Product Catalog definition for PET SLAM Monetization
+const DODO_PRODUCTS = {
+  auction: {
+    id: process.env.DODO_PRODUCT_AUCTION_PASS || 'pdt_auction_pass',
+    title: 'Auction House VIP License',
+    price: '$1.99',
+    amountCents: 199,
+    description: 'Permanent unlock for high-stakes live player pet auctions and bidding.',
+  },
+  avatar: {
+    id: process.env.DODO_PRODUCT_AVATAR_PASS || 'pdt_avatar_pass',
+    title: 'Custom Pet DNA Avatar Pass',
+    price: '$0.99',
+    amountCents: 99,
+    description: 'Upload your pet photos to generate high-res stylized fighting avatars.',
+  },
+  extension: {
+    id: process.env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_extension_pass',
+    title: 'Browser Extension Lifetime Pass',
+    price: '$1.99',
+    amountCents: 199,
+    description: 'Lifetime interactive browser companion overlay with real-time feeding & voice mimicry.',
+  },
+  bundle: {
+    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_genesis_bundle',
+    title: 'All-Access Genesis VIP Bundle',
+    price: '$4.99',
+    amountCents: 499,
+    description: 'Unlocks Auction Pass, Avatar Studio Pass, Extension Pass + 5,000 Bonus Credits.',
+  },
+  credits_5000: {
+    id: process.env.DODO_PRODUCT_CREDITS_5K || 'pdt_credits_5k',
+    title: '5,000 Slam Credits Pack',
+    price: '$4.99',
+    amountCents: 499,
+    description: 'In-game credits for animal training, dietary boosters, and market purchases.',
+  },
+};
+
+export interface PaymentRecord {
+  id: string;
+  sessionId: string;
+  passType: string;
+  amountCents: number;
+  currency: string;
+  status: 'succeeded' | 'pending' | 'failed';
+  customerEmail?: string;
+  createdAt: string;
+  isSimulated: boolean;
+}
+
+function getPayments(): PaymentRecord[] {
+  try {
+    if (!fs.existsSync(PAYMENTS_FILE)) return [];
+    return JSON.parse(fs.readFileSync(PAYMENTS_FILE, 'utf-8'));
+  } catch {
+    return [];
+  }
+}
+
+function recordPayment(payment: PaymentRecord): void {
+  try {
+    const payments = getPayments();
+    payments.unshift(payment);
+    fs.writeFileSync(PAYMENTS_FILE, JSON.stringify(payments.slice(0, 500), null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[DodoPayments] Failed to record payment:', err);
+  }
 }
 
 interface WaitlistEntry {
@@ -208,6 +308,160 @@ https://petslam.gg`;
     };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Google Search Console Automated HTML File Verification
+// Supports any verification file requested by Google: /google[hash].html
+// ---------------------------------------------------------------------------
+app.get('/google:code.html', (req, res) => {
+  const code = req.params.code;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`google-site-verification: google${code}.html`);
+});
+
+// ---------------------------------------------------------------------------
+// Dodo Payments API Endpoints
+// ---------------------------------------------------------------------------
+
+// 1. Get Dodo Gateway Configuration & Products
+app.get('/api/dodo/config', (_req, res) => {
+  res.json({
+    enabled: true,
+    configured: Boolean(dodoClient && dodoApiKey),
+    environment: dodoEnv,
+    products: DODO_PRODUCTS,
+  });
+});
+
+// 2. Create Checkout Session
+app.post('/api/dodo/create-checkout', async (req, res) => {
+  try {
+    const { passType, customerEmail, customerName, returnUrl } = req.body;
+    const product = DODO_PRODUCTS[passType as keyof typeof DODO_PRODUCTS];
+
+    if (!product) {
+      return res.status(400).json({ error: `Unknown passType: ${passType}` });
+    }
+
+    const origin = req.headers.origin || `http://localhost:${PORT}`;
+    const finalReturnUrl = returnUrl || `${origin}/?dodo_payment=success&pass=${passType}`;
+
+    if (dodoClient && dodoApiKey && dodoApiKey !== 'your_dodo_api_key_here') {
+      const checkoutSession = await dodoClient.checkoutSessions.create({
+        product_cart: [
+          {
+            product_id: product.id,
+            quantity: 1,
+          },
+        ],
+        customer: customerEmail
+          ? {
+              email: customerEmail,
+              name: customerName || 'Pet Slam Challenger',
+            }
+          : undefined,
+        return_url: finalReturnUrl,
+        metadata: {
+          passType,
+          customerEmail: customerEmail || 'anonymous',
+          source: 'pet_slam_app',
+        },
+      });
+
+      return res.json({
+        checkoutUrl: checkoutSession.checkout_url,
+        sessionId: checkoutSession.session_id,
+        mode: dodoEnv,
+        simulated: false,
+      });
+    }
+
+    // Developer Sandbox Simulation for instant testing without live keys
+    const simulatedSessionId = 'dodo_sim_' + crypto.randomBytes(8).toString('hex');
+    const simulatedUrl = `${finalReturnUrl}&session_id=${simulatedSessionId}&simulated=true`;
+
+    recordPayment({
+      id: 'pay_' + crypto.randomBytes(6).toString('hex'),
+      sessionId: simulatedSessionId,
+      passType,
+      amountCents: product.amountCents,
+      currency: 'USD',
+      status: 'succeeded',
+      customerEmail: customerEmail || 'trainer@petslam.gg',
+      createdAt: new Date().toISOString(),
+      isSimulated: true,
+    });
+
+    return res.json({
+      checkoutUrl: simulatedUrl,
+      sessionId: simulatedSessionId,
+      mode: 'test_sandbox',
+      simulated: true,
+      message:
+        'Dodo Payments test simulation active. Set DODO_PAYMENTS_API_KEY in .env for official gateway checkout.',
+    });
+  } catch (err: any) {
+    console.error('[DodoPayments] Checkout creation error:', err);
+    return res.status(500).json({ error: err?.message || 'Failed to initialize Dodo checkout' });
+  }
+});
+
+// 3. Webhook Listener
+app.post('/api/dodo/webhook', async (req: any, res) => {
+  try {
+    const rawBody = req.rawBody ? req.rawBody.toString('utf-8') : JSON.stringify(req.body);
+    let event: any = req.body;
+
+    // Verify cryptographic signature if webhook key is present
+    if (dodoClient && dodoWebhookSecret && dodoWebhookSecret !== 'your_webhook_secret_here') {
+      try {
+        event = dodoClient.webhooks.unwrap(rawBody, {
+          headers: {
+            'webhook-id': req.headers['webhook-id'] as string,
+            'webhook-signature': req.headers['webhook-signature'] as string,
+            'webhook-timestamp': req.headers['webhook-timestamp'] as string,
+          },
+        });
+        console.log('[DodoPayments Webhook] Verified event signature:', event.type);
+      } catch (sigErr: any) {
+        console.error('[DodoPayments Webhook] Signature verification failed:', sigErr.message);
+        return res.status(401).json({ error: 'Invalid webhook signature' });
+      }
+    }
+
+    const eventType = event?.type || event?.event_type;
+    if (eventType === 'payment.succeeded' || eventType === 'checkout.session.completed') {
+      const payloadData = event.data || event;
+      const passType = payloadData?.metadata?.passType || 'bundle';
+      const customerEmail = payloadData?.customer?.email || payloadData?.metadata?.customerEmail;
+      const amountCents = payloadData?.amount || 199;
+
+      recordPayment({
+        id: 'pay_' + crypto.randomBytes(6).toString('hex'),
+        sessionId: payloadData?.payment_id || payloadData?.id || 'dodo_pay_' + Date.now(),
+        passType,
+        amountCents,
+        currency: 'USD',
+        status: 'succeeded',
+        customerEmail,
+        createdAt: new Date().toISOString(),
+        isSimulated: false,
+      });
+
+      console.log(`[DodoPayments] Fulfilled pass purchase: ${passType} for ${customerEmail || 'customer'}`);
+    }
+
+    return res.json({ received: true });
+  } catch (err: any) {
+    console.error('[DodoPayments Webhook] Processing error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Payment History (Audit Log)
+app.get('/api/dodo/payments', (_req, res) => {
+  res.json(getPayments());
+});
 
 // API Routes
 app.get('/api/waitlist/status', (_req, res) => {

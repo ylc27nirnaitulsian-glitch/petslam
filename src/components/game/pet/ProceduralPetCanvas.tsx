@@ -20,6 +20,7 @@ interface ProceduralPetCanvasProps {
   customPalette?: PetCustomPalette;
   customFeatures?: PetCustomFeatures;
   avatarImageUrl?: string;
+  renderMode?: 'cute' | 'photo';
 }
 
 interface Particle {
@@ -53,14 +54,15 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
   customPalette,
   customFeatures,
   avatarImageUrl,
+  renderMode = 'cute',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  // Determine photo URL: either custom avatar photo or realistic breed photo
-  const effectiveImageUrl = avatarImageUrl || PET_SPECIES_PHOTOS[species] || '';
+  // Determine photo URL: ONLY used when renderMode is explicitly 'photo'
+  const effectiveImageUrl = renderMode === 'photo' ? (avatarImageUrl || PET_SPECIES_PHOTOS[species] || '') : '';
 
   useEffect(() => {
     if (!effectiveImageUrl) {
@@ -301,8 +303,28 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       let mouthHeight = 0;
 
       // Species category check
-      const isCat = ['tabby', 'calico', 'siamese', 'blackcat', 'bagheera'].includes(species);
-      const isDog = ['shiba', 'retriever', 'husky', 'bulldog', 'ignis'].includes(species);
+      const isCat = [
+        'tabby',
+        'calico',
+        'siamese',
+        'blackcat',
+        'bagheera',
+        'bengal',
+        'mainecoon',
+        'british',
+        'scottish',
+      ].includes(species);
+      const isDog = [
+        'shiba',
+        'retriever',
+        'husky',
+        'bulldog',
+        'ignis',
+        'germanshepherd',
+        'rottweiler',
+        'doberman',
+        'corgi',
+      ].includes(species);
 
       if (anim === 'idle') {
         squashX = 1 + breathCycle * 0.02;
@@ -457,7 +479,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       ctx.scale(totalScaleX, totalScaleY);
       ctx.rotate(headTilt);
 
-      if (imgRef.current && imgLoaded) {
+      if (renderMode === 'photo' && imgRef.current && imgLoaded) {
         // --- REALISTIC HIGH-FIDELITY PHOTO AVATAR ---
         const petRadius = 52;
 
@@ -608,6 +630,38 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         earColor = '#FDA4AF';
         eyeColor = '#15803D'; // Emerald cat eyes
         noseColor = '#FB7185'; // Pink cat nose
+      } else if (species === 'bengal') {
+        // Bengal Leopard Cat
+        primaryColor = '#D97706';
+        secondaryColor = '#78350F';
+        bellyColor = '#FEF3C7';
+        earColor = '#FDA4AF';
+        eyeColor = '#16A34A'; // Emerald green
+        noseColor = '#FB7185';
+      } else if (species === 'mainecoon') {
+        // Maine Coon Giant Cat
+        primaryColor = '#64748B';
+        secondaryColor = '#334155';
+        bellyColor = '#F1F5F9';
+        earColor = '#FDA4AF';
+        eyeColor = '#F59E0B'; // Rich gold
+        noseColor = '#FB7185';
+      } else if (species === 'british') {
+        // British Shorthair
+        primaryColor = '#64748B';
+        secondaryColor = '#475569';
+        bellyColor = '#94A3B8';
+        earColor = '#FDA4AF';
+        eyeColor = '#EA580C'; // Vivid copper
+        noseColor = '#475569';
+      } else if (species === 'scottish') {
+        // Scottish Fold
+        primaryColor = '#E2E8F0';
+        secondaryColor = '#CBD5E1';
+        bellyColor = '#FFFFFF';
+        earColor = '#FDA4AF';
+        eyeColor = '#FBBF24'; // Bright amber
+        noseColor = '#FB7185';
       } else if (species === 'calico') {
         // Calico Cat
         primaryColor = '#F8FAFC'; // White body
@@ -634,7 +688,39 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         noseColor = '#0F172A';
       }
       // --- DOGS ---
-      else if (species === 'shiba') {
+      else if (species === 'germanshepherd') {
+        // German Shepherd
+        primaryColor = '#C27803';
+        secondaryColor = '#1E293B';
+        bellyColor = '#FEF3C7';
+        earColor = '#92400E';
+        eyeColor = '#78350F';
+        noseColor = '#0F172A';
+      } else if (species === 'rottweiler') {
+        // Rottweiler
+        primaryColor = '#0F172A';
+        secondaryColor = '#B45309';
+        bellyColor = '#1E293B';
+        earColor = '#78350F';
+        eyeColor = '#451A03';
+        noseColor = '#020617';
+      } else if (species === 'doberman') {
+        // Doberman Pinscher
+        primaryColor = '#0A0F1D';
+        secondaryColor = '#B45309';
+        bellyColor = '#1E293B';
+        earColor = '#78350F';
+        eyeColor = '#451A03';
+        noseColor = '#020617';
+      } else if (species === 'corgi') {
+        // Welsh Corgi
+        primaryColor = '#EA580C';
+        secondaryColor = '#C2410C';
+        bellyColor = '#FFFFFF';
+        earColor = '#FDBA74';
+        eyeColor = '#451A03';
+        noseColor = '#1C1917';
+      } else if (species === 'shiba') {
         // Shiba Inu
         primaryColor = '#D97706';
         secondaryColor = '#B45309';
@@ -811,31 +897,97 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       const earTwitch = Math.sin(s.time * 8) * (s.pettingIntensity > 0 ? 0.2 : 0.05);
 
       if (isCat) {
-        // Pointed Cat Ears with Pink Inner Ear
+        if (species === 'scottish') {
+          // Scottish Fold flat-folded rounded ears
+          [-1, 1].forEach((side) => {
+            ctx.save();
+            ctx.translate(side * 28, -52);
+            ctx.rotate(side * 0.65);
+            ctx.fillStyle = primaryColor;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 13, 11, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = earColor;
+            ctx.beginPath();
+            ctx.ellipse(0, 2, 7, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+        } else if (species === 'mainecoon') {
+          // Pointed Maine Coon lynx ears with top fur tufts
+          [-1, 1].forEach((side) => {
+            ctx.save();
+            ctx.translate(side * 28, -60);
+            ctx.rotate(side * (0.22 - earTwitch));
+            ctx.fillStyle = primaryColor;
+            ctx.beginPath();
+            ctx.moveTo(-16, 14);
+            ctx.lineTo(0, -32);
+            ctx.lineTo(16, 14);
+            ctx.closePath();
+            ctx.fill();
+
+            // Fur tuft at ear tip
+            ctx.strokeStyle = '#F1F5F9';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.moveTo(0, -32);
+            ctx.lineTo(side * 5, -40);
+            ctx.stroke();
+
+            // Pink inner
+            ctx.fillStyle = earColor;
+            ctx.beginPath();
+            ctx.moveTo(-9, 10);
+            ctx.lineTo(0, -22);
+            ctx.lineTo(9, 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          });
+        } else {
+          // Pointed Cat Ears with Pink Inner Ear (Tabby, Bengal, British, Siamese, Blackcat)
+          [-1, 1].forEach((side) => {
+            ctx.save();
+            ctx.translate(side * 28, -58);
+            ctx.rotate(side * (0.25 - earTwitch));
+            ctx.fillStyle = primaryColor;
+            ctx.beginPath();
+            ctx.moveTo(-14, 14);
+            ctx.lineTo(0, -26);
+            ctx.lineTo(14, 14);
+            ctx.closePath();
+            ctx.fill();
+
+            // Pink inside
+            ctx.fillStyle = earColor;
+            ctx.beginPath();
+            ctx.moveTo(-8, 10);
+            ctx.lineTo(0, -18);
+            ctx.lineTo(8, 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          });
+        }
+      } else if (species === 'corgi') {
+        // Big perky Corgi fox ears!
         [-1, 1].forEach((side) => {
           ctx.save();
-          ctx.translate(side * 28, -58);
-          ctx.rotate(side * (0.25 - earTwitch));
+          ctx.translate(side * 30, -56);
+          ctx.rotate(side * (0.22 - earTwitch));
           ctx.fillStyle = primaryColor;
           ctx.beginPath();
-          ctx.moveTo(-14, 14);
-          ctx.lineTo(0, -26);
-          ctx.lineTo(14, 14);
-          ctx.closePath();
+          ctx.ellipse(0, -12, 16, 26, side * 0.1, 0, Math.PI * 2);
           ctx.fill();
-
-          // Pink inside
           ctx.fillStyle = earColor;
           ctx.beginPath();
-          ctx.moveTo(-8, 10);
-          ctx.lineTo(0, -18);
-          ctx.lineTo(8, 10);
-          ctx.closePath();
+          ctx.ellipse(0, -10, 10, 18, side * 0.1, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         });
-      } else if (species === 'retriever') {
-        // Floppy Golden Retriever Ears
+      } else if (species === 'retriever' || species === 'rottweiler') {
+        // Floppy Ears
         [-1, 1].forEach((side) => {
           ctx.save();
           ctx.translate(side * 36, -42);
@@ -859,6 +1011,28 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
           ctx.fillStyle = earColor;
           ctx.beginPath();
           ctx.ellipse(0, 2, 10, 15, side * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      } else if (species === 'germanshepherd' || species === 'doberman') {
+        // High alert tall perky ears
+        [-1, 1].forEach((side) => {
+          ctx.save();
+          ctx.translate(side * 28, -62);
+          ctx.rotate(side * (0.16 - earTwitch));
+          ctx.fillStyle = primaryColor;
+          ctx.beginPath();
+          ctx.moveTo(-16, 16);
+          ctx.lineTo(0, -32);
+          ctx.lineTo(16, 16);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = earColor;
+          ctx.beginPath();
+          ctx.moveTo(-9, 10);
+          ctx.lineTo(0, -22);
+          ctx.lineTo(9, 10);
+          ctx.closePath();
           ctx.fill();
           ctx.restore();
         });
@@ -899,7 +1073,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         });
       }
 
-      // Husky Mask / Siamese Mask
+      // DISTINCT BREED MASKS & FACIAL MARKINGS
       if (species === 'husky') {
         ctx.fillStyle = '#F8FAFC';
         ctx.beginPath();
@@ -910,6 +1084,40 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         ctx.beginPath();
         ctx.ellipse(0, -28, 26, 20, 0, 0, Math.PI * 2);
         ctx.fill();
+      } else if (species === 'germanshepherd') {
+        // German Shepherd black muzzle mask
+        ctx.fillStyle = '#1E293B';
+        ctx.beginPath();
+        ctx.ellipse(0, -24, 25, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (species === 'corgi') {
+        // Corgi white blaze between eyes
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.moveTo(-6, -14);
+        ctx.lineTo(0, -42);
+        ctx.lineTo(6, -14);
+        ctx.closePath();
+        ctx.fill();
+      } else if (species === 'rottweiler' || species === 'doberman') {
+        // Distinct tan eyebrow dots above eyes
+        ctx.fillStyle = '#B45309';
+        ctx.beginPath();
+        ctx.ellipse(-20, -50, 4.5, 3.2, -0.2, 0, Math.PI * 2);
+        ctx.ellipse(20, -50, 4.5, 3.2, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (species === 'bengal') {
+        // Leopard rosettes on cheeks
+        ctx.strokeStyle = '#78350F';
+        ctx.lineWidth = 2;
+        [-1, 1].forEach((side) => {
+          ctx.beginPath();
+          ctx.arc(side * 25, -24, 4, 0, Math.PI * 1.5);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(side * 28, -34, 3.5, 0.5, Math.PI * 2);
+          ctx.stroke();
+        });
       }
 
       // G. MUZZLE & SNOUT

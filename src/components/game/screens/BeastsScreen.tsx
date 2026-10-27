@@ -21,6 +21,7 @@ import {
 import { useGame } from '../../../context/GameContext';
 import { Animal, ANIMALS_DATA } from '../../../data/animals';
 import { sound } from '../../../utils/audio';
+import { getRarityBadgeClasses } from '../../../utils/petVisuals';
 
 export const BeastsScreen: React.FC = () => {
   const {
@@ -52,17 +53,19 @@ export const BeastsScreen: React.FC = () => {
   const isActiveFighter = currentBeast.id === activeBeastId;
 
   // Categories
-  const categories = ['All', 'Dogs (Canines)', 'Cats (Felines)'];
+  const categories = ['All Pets', 'Dogs', 'Cats'];
 
   // All animals from game roster, marking owned vs available
   const filteredAnimals = ANIMALS_DATA.filter((animal) => {
     const matchesCat =
+      selectedCategory === 'All Pets' ||
       selectedCategory === 'All' ||
-      (selectedCategory.includes('Canines') && animal.category === 'Canines') ||
-      (selectedCategory.includes('Felines') && animal.category === 'Felines');
+      (selectedCategory === 'Dogs' && animal.category === 'Canines') ||
+      (selectedCategory === 'Cats' && animal.category === 'Felines');
     const matchesQuery =
       animal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      animal.species.toLowerCase().includes(searchQuery.toLowerCase());
+      animal.species.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      animal.breed.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCat && matchesQuery;
   });
 
@@ -259,7 +262,7 @@ export const BeastsScreen: React.FC = () => {
                 LVL {currentBeast.level}
               </div>
 
-              <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-purple-500/80 font-mono font-bold text-[9px] text-white uppercase">
+              <div className={`absolute top-2 right-2 ${getRarityBadgeClasses(currentBeast.rarity)}`}>
                 {currentBeast.rarity}
               </div>
 
@@ -268,7 +271,7 @@ export const BeastsScreen: React.FC = () => {
                   {currentBeast.name}
                 </span>
                 <span className="text-[10px] text-[#CCFF00] font-mono block truncate">
-                  {currentBeast.species}
+                  {currentBeast.breed}
                 </span>
               </div>
             </div>
@@ -281,7 +284,7 @@ export const BeastsScreen: React.FC = () => {
                     {currentBeast.name}
                   </h2>
                   <p className="text-xs font-mono text-neutral-400">
-                    {currentBeast.category} · {currentBeast.combatArchetype}
+                    {currentBeast.breed} · {currentBeast.combatArchetype}
                   </p>
                 </div>
 
@@ -517,7 +520,7 @@ export const BeastsScreen: React.FC = () => {
 
                 {/* Elixir & Status Bar */}
                 <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
-                  <span className="text-cyan-400 font-bold">{animal.category}</span>
+                  <span className={getRarityBadgeClasses(animal.rarity)}>{animal.rarity}</span>
                   <span className="text-[#CCFF00] font-bold">{animal.elixirCost} Elixir</span>
                 </div>
               </button>

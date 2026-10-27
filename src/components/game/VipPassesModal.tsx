@@ -15,9 +15,12 @@ import {
   BatteryCharging,
   ArrowRight,
   CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { sound } from '../../utils/audio';
+import { createDodoCheckout } from '../../services/dodo';
+import { trackClarityEvent } from '../../utils/clarity';
 
 interface VipPassesModalProps {
   isOpen: boolean;
@@ -118,17 +121,45 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
     },
   ];
 
-  const handlePurchase = (passId: 'auction' | 'avatar' | 'extension' | 'bundle') => {
+  const handlePurchase = async (passId: 'auction' | 'avatar' | 'extension' | 'bundle') => {
     setIsProcessing(true);
     sound.playClick();
+    trackClarityEvent(`pass_unlock_attempt_${passId}_${paymentMethod}`);
 
+    if (paymentMethod === 'usd') {
+      try {
+        const checkout = await createDodoCheckout({ passType: passId });
+        setIsProcessing(false);
+
+        if (checkout.simulated) {
+          // In test/sandbox simulation mode, immediately fulfill pass
+          const res = unlockPass(passId, false);
+          sound.playVictory();
+          setSuccessToast(`[Dodo Sandbox] ${res.message}`);
+          trackClarityEvent(`dodo_checkout_simulated_success_${passId}`);
+          setTimeout(() => setSuccessToast(null), 3500);
+        } else if (checkout.checkoutUrl) {
+          // In official live/test mode, redirect to Dodo Payments hosted checkout
+          trackClarityEvent(`dodo_redirect_hosted_${passId}`);
+          window.location.href = checkout.checkoutUrl;
+        }
+      } catch (err: any) {
+        setIsProcessing(false);
+        sound.playClick();
+        alert(err?.message || 'Failed to connect to Dodo Payments checkout.');
+      }
+      return;
+    }
+
+    // Credits Flow
     setTimeout(() => {
-      const res = unlockPass(passId, paymentMethod === 'credits');
+      const res = unlockPass(passId, true);
       setIsProcessing(false);
 
       if (res.success) {
         sound.playVictory();
         setSuccessToast(res.message);
+        trackClarityEvent(`credits_pass_unlocked_${passId}`);
         setTimeout(() => {
           setSuccessToast(null);
         }, 3000);
@@ -136,7 +167,7 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
         sound.playClick();
         alert(res.message);
       }
-    }, 700);
+    }, 500);
   };
 
   return (
@@ -296,9 +327,12 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
           </div>
         )}
 
-        <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-neutral-400">
-          <span>🔒 Simulated Instant Settlement</span>
-          <span>Google Pay · Cards · In-Game</span>
+        <div className="mt-4 pt-3 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-[11px] font-mono text-neutral-400 gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Powered by <strong className="text-white">Dodo Payments</strong> (MoR)</span>
+          </div>
+          <span className="text-[10px] text-neutral-400">Cards · Apple Pay · Google Pay · Instant Fulfillment</span>
         </div>
       </div>
     </div>

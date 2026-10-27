@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Animal, ANIMALS_DATA } from '../data/animals';
 import { GearItem, GEAR_ITEMS } from '../data/armory';
 import { sound } from '../utils/audio';
+import { trackClarityEvent, setClarityTag } from '../utils/clarity';
 
 export interface MatchHistoryEntry {
   id: string;
@@ -49,6 +50,7 @@ interface GameContextType {
   connectedAccount: ConnectedAccountData;
   loginAccount: (provider: string, email?: string, name?: string, avatarUrl?: string, sub?: string) => void;
   logoutAccount: () => void;
+  updateUserAvatar: (avatarUrl: string) => void;
   credits: number;
   addCredits: (amount: number) => void;
   energy: number;
@@ -178,10 +180,32 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [connectedAccount, setConnectedAccount] = useState<ConnectedAccountData>(() => {
     try {
       const savedAuth = localStorage.getItem('petslam_auth_account');
-      if (savedAuth) return JSON.parse(savedAuth);
+      if (savedAuth) {
+        const parsed = JSON.parse(savedAuth);
+        if (parsed.provider === 'Apple') {
+          parsed.provider = 'Google';
+          try { localStorage.setItem('petslam_auth_account', JSON.stringify(parsed)); } catch {}
+        }
+        return parsed;
+      }
     } catch {}
     return { isLoggedIn: false, provider: 'Guest', email: '' };
   });
+
+  const updateUserAvatar = (avatarUrl: string) => {
+    setConnectedAccount((prev) => {
+      const next: ConnectedAccountData = {
+        ...prev,
+        isLoggedIn: true,
+        avatarUrl,
+        provider: prev.provider === 'Apple' ? 'Google' : prev.provider,
+      };
+      try {
+        localStorage.setItem('petslam_auth_account', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const loginAccount = (
     provider: string,
@@ -308,6 +332,28 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   };
 
+  // Listen for Dodo Payments success redirects: /?dodo_payment=success&pass=[type]
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymentStatus = urlParams.get('dodo_payment');
+      const pass = urlParams.get('pass');
+
+      if (paymentStatus === 'success' && pass) {
+        unlockPass(pass as any, false);
+        trackClarityEvent(`dodo_payment_success_${pass}`);
+        setClarityTag('vip_pass_' + pass, 'active');
+
+        // Clean query params from address bar without reloading
+        const cleanUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    } catch (e) {
+      console.warn('[GameContext] Error parsing payment redirect params:', e);
+    }
+  }, []);
+
   const registerCustomFighter = (fighter: Animal) => {
     setOwnedBeasts((prev) => {
       const idx = prev.findIndex((b) => b.id === fighter.id);
@@ -390,10 +436,21 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (parsed.wins !== undefined) setWins(parsed.wins);
         if (parsed.losses !== undefined) setLosses(parsed.losses);
         if (parsed.activeBeastId) setActiveBeastId(parsed.activeBeastId);
+        const validAnimalIds = new Set(ANIMALS_DATA.map((a) => a.id));
         if (parsed.battleDeckIds && Array.isArray(parsed.battleDeckIds) && parsed.battleDeckIds.length === 4) {
-          setBattleDeckIds(parsed.battleDeckIds);
+          const cleanDeck = parsed.battleDeckIds.map((id: string, i: number) =>
+            validAnimalIds.has(id) ? id : ['dog_01', 'cat_01', 'dog_04', 'cat_03'][i] || 'dog_01'
+          );
+          setBattleDeckIds(cleanDeck);
         }
-        if (parsed.ownedBeasts && parsed.ownedBeasts.length > 0) setOwnedBeasts(parsed.ownedBeasts);
+        if (parsed.ownedBeasts && parsed.ownedBeasts.length > 0) {
+          const cleanOwned = parsed.ownedBeasts.map((b: Animal, i: number) => {
+            const matched = ANIMALS_DATA.find((a) => a.id === b.id);
+            if (matched) return { ...matched, level: b.level || matched.level };
+            return { ...ANIMALS_DATA[i % ANIMALS_DATA.length], level: b.level || 10 };
+          });
+          setOwnedBeasts(cleanOwned);
+        }
         if (parsed.equippedGear) setEquippedGear(parsed.equippedGear);
         if (parsed.inventoryGear) setInventoryGear(parsed.inventoryGear);
         if (parsed.achievements) setAchievements(parsed.achievements);
@@ -688,6 +745,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         connectedAccount,
         loginAccount,
         logoutAccount,
+        updateUserAvatar,
         credits,
         addCredits,
         energy,

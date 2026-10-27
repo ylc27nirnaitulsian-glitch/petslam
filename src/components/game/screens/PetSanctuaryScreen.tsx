@@ -4,14 +4,12 @@ import { usePetCompanion, SPECIES_CONFIG } from '../../../context/PetCompanionCo
 import {
   PetAnimationState,
   BERRIES,
-  BerryItem,
   WildPetEncounter,
 } from '../../../types/pet';
 import {
   Heart,
   Utensils,
   Sparkles,
-  Zap,
   RotateCcw,
   Camera,
   Mic,
@@ -23,13 +21,13 @@ import {
   Coffee,
   Bath,
   Tv,
-  Check,
-  Edit2,
-  Swords,
   Layers,
+  Sparkle,
 } from 'lucide-react';
 import { sound } from '../../../utils/audio';
 import { voiceMimic } from '../../../utils/voiceMimic';
+import { ProceduralPetCanvas } from '../pet/ProceduralPetCanvas';
+import { mapBeastToSpecies, getPetPhoto, getRarityBadgeClasses } from '../../../utils/petVisuals';
 import { ExtensionExporterModal } from '../pet/ExtensionExporterModal';
 import { WildPetCatchModal } from '../pet/WildPetCatchModal';
 import { PetAuctionHouseModal } from '../pet/PetAuctionHouseModal';
@@ -51,6 +49,9 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     refreshWildSpawns,
   } = usePetCompanion();
 
+  // Avatar Display Mode: 'cute' (Animated Talking Tom Buddy) vs 'card' (Realistic Photo Card)
+  const [displayMode, setDisplayMode] = useState<'cute' | 'card'>('cute');
+
   // Animation & Visual State
   const [animState, setAnimState] = useState<PetAnimationState>('idle');
   const [talkingVolume, setTalkingVolume] = useState<number>(0);
@@ -66,22 +67,18 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
   const [showAuctionModal, setShowAuctionModal] = useState(false);
   const [showPhotoStudioModal, setShowPhotoStudioModal] = useState(false);
   const [showWorldMap, setShowWorldMap] = useState(false);
-  const [activeWildCatch, setActiveWildCatch] = useState<WildPetEncounter | null>(null);
 
   // Status & Speech
   const [speechBubbleText, setSpeechBubbleText] = useState<string | null>(
     `Hi Trainer! I'm ${activeBeast.name}! Tap me to pet or use the buttons below!`
   );
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [nameInput, setNameInput] = useState(activeBeast.name);
 
-  // Keep name input synced with activeBeast
+  // Keep speech in sync when pet changes
   useEffect(() => {
-    setNameInput(activeBeast.name);
-    setSpeechBubbleText(`Ready to train, Trainer! I'm ${activeBeast.name} (${activeBeast.species})!`);
-  }, [activeBeast.id, activeBeast.name, activeBeast.species]);
+    setSpeechBubbleText(`Ready to train, Trainer! I'm ${activeBeast.name} (${activeBeast.breed || activeBeast.species})!`);
+  }, [activeBeast.id, activeBeast.name, activeBeast.breed, activeBeast.species]);
 
-  const showSpeech = (text: string, duration = 3500) => {
+  const showSpeech = (text: string, duration = 3000) => {
     setSpeechBubbleText(text);
     setTimeout(() => setSpeechBubbleText(null), duration);
   };
@@ -94,21 +91,21 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     setPettingHearts((prev) => [...prev, { id, x, y }]);
     setTimeout(() => {
       setPettingHearts((prev) => prev.filter((h) => h.id !== id));
-    }, 1500);
+    }, 1400);
   };
 
   // Trigger floating bubble particles for bath
   const spawnBubbles = () => {
-    const newBubbles = Array.from({ length: 12 }).map((_, i) => ({
+    const newBubbles = Array.from({ length: 8 }).map((_, i) => ({
       id: Date.now() + i,
-      x: 20 + Math.random() * 60,
-      y: 30 + Math.random() * 50,
-      size: 14 + Math.random() * 22,
+      x: 30 + Math.random() * 40,
+      y: 35 + Math.random() * 35,
+      size: 14 + Math.random() * 18,
     }));
     setBubbleParticles((prev) => [...prev, ...newBubbles]);
     setTimeout(() => {
       setBubbleParticles([]);
-    }, 2800);
+    }, 2400);
   };
 
   // Interactive Care: Petting (Stroke)
@@ -119,7 +116,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     strokePet();
     setHeartsCount((prev) => Math.min(5, prev + 1));
     showSpeech(`*Purrrrr!* You give the best pets! ❤️`);
-    setTimeout(() => setAnimState('idle'), 1800);
+    setTimeout(() => setAnimState('idle'), 1600);
   };
 
   // Interactive Care: Feeding
@@ -129,7 +126,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     setHungerLevel((prev) => Math.min(100, prev + 20));
     feedPet(BERRIES[0]);
     showSpeech(`*Munch munch* Delicious gourmet kibble! Energy +20! 🥣`);
-    setTimeout(() => setAnimState('idle'), 2200);
+    setTimeout(() => setAnimState('idle'), 2000);
   };
 
   // Interactive Care: Bubble Bath
@@ -138,7 +135,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     setAnimState('bath');
     spawnBubbles();
     showSpeech(`Splish splash! Squeaky clean bubble bath! 🧼✨`);
-    setTimeout(() => setAnimState('idle'), 2600);
+    setTimeout(() => setAnimState('idle'), 2400);
   };
 
   // Interactive Care: Milk / Water Bowl
@@ -146,7 +143,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     sound.playMilkSlurp();
     setAnimState('drink_milk');
     showSpeech(`*Slurp slurp* Fresh milk bowl! Satiety +15! 🥛`);
-    setTimeout(() => setAnimState('idle'), 2400);
+    setTimeout(() => setAnimState('idle'), 2200);
   };
 
   // Interactive Care: Prank / Playful Sound
@@ -154,7 +151,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     sound.playToot();
     setAnimState('fart');
     showSpeech(`Oops! Excuse me! Hehehe! 💨😹`);
-    setTimeout(() => setAnimState('idle'), 2000);
+    setTimeout(() => setAnimState('idle'), 1800);
   };
 
   // Talking Tom Voice Mimic (Repeater)
@@ -181,7 +178,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
         showSpeech(`Mic unavailable, speaking preset!`);
         setAnimState('talk');
         voiceMimic.speakPresetPhrase(
-          `Hello Trainer Nirnai! I am ${activeBeast.name}! Let's clash in the arena!`,
+          `Hello Trainer! I am ${activeBeast.name}! Ready to clash in the arena!`,
           (amp) => setTalkingVolume(amp),
           () => {
             setTalkingVolume(0);
@@ -205,18 +202,20 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     }
   };
 
+  const speciesKey = mapBeastToSpecies(activeBeast.breed || activeBeast.species);
+
   return (
     <div
-      className={`flex-1 flex flex-col h-full overflow-y-auto selection:bg-[#CCFF00] selection:text-black transition-colors duration-500 pb-28 ${
+      className={`h-full w-full flex flex-col justify-between overflow-hidden p-2 sm:p-2.5 transition-colors duration-500 select-none ${
         roomLighting === 'night' ? 'bg-[#05070D]' : 'bg-[#080B12]'
-      } text-white select-none`}
+      } text-white`}
     >
       {/* Floating Petting Hearts Animation */}
       {pettingHearts.map((h) => (
         <div
           key={h.id}
-          className="fixed pointer-events-none z-50 text-2xl animate-bounce"
-          style={{ left: `${h.x}px`, top: `${h.y - 40}px` }}
+          className="fixed pointer-events-none z-50 text-xl animate-bounce"
+          style={{ left: `${h.x}px`, top: `${h.y - 30}px` }}
         >
           ❤️
         </div>
@@ -236,264 +235,286 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
         />
       ))}
 
-      {/* TOP HEADER: Active Pet Specs & Quick Tools */}
-      <div className="bg-gradient-to-b from-[#141C2E] to-[#0D121F] border-b border-white/10 px-3.5 sm:px-5 py-3">
-        <div className="flex items-center justify-between">
-          {/* Active Pet Title */}
-          <div className="flex items-center gap-3">
-            <div className="relative w-12 h-12 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.3)] shrink-0 bg-black">
-              <img
-                src={activeBeast.image}
-                alt={activeBeast.name}
-                className="w-full h-full object-cover object-center"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-display font-black text-base uppercase text-white tracking-wide">
-                  {activeBeast.name}
-                </h1>
-                <span className="text-[9px] font-mono font-bold bg-[#CCFF00]/15 border border-[#CCFF00]/40 text-[#CCFF00] px-1.5 py-0.2 rounded-full uppercase">
-                  {activeBeast.category}
-                </span>
-                <span className="text-[9px] font-mono bg-white/10 text-neutral-300 px-1.5 py-0.2 rounded-full">
-                  LVL {activeBeast.level}
-                </span>
-              </div>
-              <p className="text-[11px] font-mono text-[#CCFF00] font-bold">
-                {activeBeast.species} · {activeBeast.combatArchetype}
-              </p>
-            </div>
+      {/* SECTION 1: COMPACT TOP BAR (Single row, no wrapping, zero vertical bloat) */}
+      <div className="shrink-0 bg-gradient-to-b from-[#141C2E] to-[#0D121F] border border-white/10 rounded-2xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-sm">
+        {/* Active Pet Identity */}
+        <div className="flex items-center gap-2 min-w-0 shrink">
+          <div className="w-8 h-8 rounded-xl overflow-hidden border border-[#CCFF00] shrink-0 bg-black shadow-xs">
+            <img
+              src={getPetPhoto(activeBeast)}
+              alt={activeBeast.name}
+              className="w-full h-full object-cover"
+            />
           </div>
-
-          {/* Quick Hub Actions */}
-          <div className="flex items-center gap-1.5">
-            {/* Clone / Photo Studio Button */}
-            <button
-              onClick={() => setShowPhotoStudioModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400/40 text-purple-200 text-[10px] font-mono font-bold cursor-pointer transition-all shadow-xs"
-              title="Upload your personal pet photo to clone as avatar"
-            >
-              <Camera className="w-3.5 h-3.5 text-purple-300" />
-              <span className="hidden sm:inline">Upload Photo</span>
-            </button>
-
-            {/* Auction House */}
-            <button
-              onClick={() => setShowAuctionModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 text-[10px] font-mono font-bold cursor-pointer transition-all shadow-xs"
-              title="VIP Auction House"
-            >
-              <Gavel className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Auctions</span>
-            </button>
-
-            {/* Browser Extension Exporter */}
-            <button
-              onClick={() => setShowExtensionModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 text-[10px] font-mono font-bold cursor-pointer transition-all shadow-xs"
-              title="Browser Screen Buddy Extension"
-            >
-              <Tv className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Extension</span>
-            </button>
+          <div className="leading-tight min-w-0">
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="font-display font-black text-xs text-white uppercase truncate">
+                {activeBeast.name}
+              </span>
+              <span className="text-[9px] font-mono font-bold bg-[#CCFF00]/15 border border-[#CCFF00]/40 text-[#CCFF00] px-1 py-0.2 rounded">
+                LVL {activeBeast.level}
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-[#CCFF00] truncate block">
+              {activeBeast.breed || activeBeast.species}
+            </span>
           </div>
         </div>
 
-        {/* Pokemon GO Wild Radar Pill */}
-        <div className="mt-2.5 flex items-center justify-between p-2 rounded-xl bg-[#0B0E17] border border-white/10">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-[11px] font-mono font-bold text-neutral-200">
-              Pokémon GO Radar: {wildEncounters.length} Wild Dogs & Cats Nearby
-            </span>
-          </div>
+        {/* Center: Cute Buddy vs Photo Card Switcher */}
+        <div className="flex items-center bg-black/60 border border-white/15 rounded-xl p-0.5 shrink-0">
+          <button
+            onClick={() => setDisplayMode('cute')}
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer ${
+              displayMode === 'cute'
+                ? 'bg-[#CCFF00] text-black shadow'
+                : 'text-neutral-400 hover:text-white'
+            }`}
+            title="Interactive Animated Talking Tom Buddy"
+          >
+            🐾 Buddy
+          </button>
+          <button
+            onClick={() => setDisplayMode('card')}
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer ${
+              displayMode === 'card'
+                ? 'bg-[#CCFF00] text-black shadow'
+                : 'text-neutral-400 hover:text-white'
+            }`}
+            title="Authentic Champion Breed Card"
+          >
+            📷 Card
+          </button>
+        </div>
 
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => {
-                sound.playClick();
-                setShowWorldMap(true);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-mono font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer shadow-md active:scale-95 transition-all"
-            >
-              <Compass className="w-3.5 h-3.5" />
-              <span>Open World Map</span>
-            </button>
-            <button
-              onClick={refreshWildSpawns}
-              className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 text-[10px] cursor-pointer"
-              title="Scan nearby area"
-            >
-              <RotateCcw className="w-3 h-3" />
-            </button>
-          </div>
+        {/* Right Tools (Photo Studio, Auction, Map Radar, Day/Night) */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => setShowPhotoStudioModal(true)}
+            className="p-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-300 transition-colors cursor-pointer"
+            title="Upload Photo to Create Custom Avatar"
+          >
+            <Camera className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setShowAuctionModal(true)}
+            className="p-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 transition-colors cursor-pointer"
+            title="VIP Auction House ($1.99)"
+          >
+            <Gavel className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setShowWorldMap(true)}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 transition-colors cursor-pointer text-xs font-mono font-bold shadow-xs"
+            title="Real-Time GPS Pet Radar"
+          >
+            <Compass className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline">Pet Radar</span>
+          </button>
+          <button
+            onClick={handleToggleRoomLights}
+            className={`p-1.5 rounded-xl border transition-colors cursor-pointer ${
+              roomLighting === 'night'
+                ? 'bg-neutral-800 text-yellow-300 border-yellow-500/30'
+                : 'bg-yellow-400 text-black border-yellow-300'
+            }`}
+            title="Toggle Day / Night"
+          >
+            {roomLighting === 'night' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+          </button>
         </div>
       </div>
 
-      {/* LIVING PET SANCTUARY STAGE */}
-      <div className="relative flex-1 flex flex-col items-center justify-center min-h-[360px] px-4 py-4 overflow-hidden">
-        {/* Ambient Stage Lighting (Day / Night switchable) */}
+      {/* SECTION 2: LIVING STAGE (Fits gracefully in remaining space, ZERO scrollbar) */}
+      <div className="flex-1 flex flex-col items-center justify-center relative min-h-0 my-1 overflow-hidden">
+        {/* Ambient Stage Lighting Background */}
         <div
-          className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${
             roomLighting === 'night'
-              ? 'bg-[radial-gradient(ellipse_at_top,#1e1b4b_0%,#05070D_75%)] opacity-100'
-              : 'bg-[radial-gradient(ellipse_at_top,#1e293b_0%,#080B12_75%)] opacity-90'
+              ? 'bg-[radial-gradient(ellipse_at_center,#1e1b4b_0%,#05070D_80%)] opacity-80'
+              : 'bg-[radial-gradient(ellipse_at_center,#1e293b_0%,#080B12_80%)] opacity-70'
           }`}
         />
 
-        {/* Ceiling Lamp Toggle */}
-        <button
-          onClick={handleToggleRoomLights}
-          className="absolute top-3 right-4 z-20 flex flex-col items-center cursor-pointer group"
-          title="Toggle Day / Night Lamp"
-        >
-          <div className="w-0.5 h-5 bg-neutral-500" />
-          <div
-            className={`p-1.5 rounded-full border shadow-lg transition-colors ${
-              roomLighting === 'night'
-                ? 'bg-neutral-800 text-yellow-300 border-yellow-500/30'
-                : 'bg-yellow-400 text-black border-yellow-300 shadow-yellow-400/50'
-            }`}
-          >
-            {roomLighting === 'night' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
-          </div>
-        </button>
-
-        {/* Interactive Speech Bubble */}
+        {/* Speech Bubble (Floating above pet) */}
         {speechBubbleText && (
-          <div className="relative z-20 mb-3 px-4 py-2 rounded-2xl bg-white text-black text-xs font-bold shadow-2xl animate-in fade-in zoom-in-95 max-w-[320px] text-center border-2 border-[#CCFF00]">
+          <div className="relative z-20 mb-1 px-3 py-1 rounded-xl bg-black/90 backdrop-blur-md text-[#CCFF00] text-[11px] font-mono font-bold shadow-lg animate-in fade-in zoom-in-95 max-w-[280px] text-center border border-[#CCFF00]/50">
             {speechBubbleText}
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white rotate-45 border-r-2 border-b-2 border-[#CCFF00]" />
+            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-black/90 rotate-45 border-r border-b border-[#CCFF00]/50" />
           </div>
         )}
 
-        {/* THE LIVING PET STANDEE / HOLOGRAPHIC SANCTUARY MODEL */}
-        <div className="relative z-10 flex flex-col items-center">
-          {/* Plush Sanctuary Pedestal Floor with Lighting Shadow */}
-          <div className="relative group cursor-pointer" onClick={handlePetTheBeast}>
-            {/* Ambient Base Shadow */}
-            <div className="absolute -bottom-4 inset-x-4 h-8 bg-black/70 rounded-full blur-md" />
+        {/* THE LIVING PET AVATAR DISPLAY */}
+        <div className="relative z-10 flex flex-col items-center justify-center">
+          {displayMode === 'cute' ? (
+            /* 🐾 CUTE PROCEDURAL ANIMATED BUDDY (Talking Tom physics, blinking, tail wagging, ear twitches) */
+            <div
+              className="relative cursor-pointer flex flex-col items-center group"
+              onClick={handlePetTheBeast}
+              title="Tap to pet & purr!"
+            >
+              {/* Pedestal Glow Shadow */}
+              <div className="absolute -bottom-2 inset-x-2 h-6 bg-[#CCFF00]/15 rounded-full blur-md" />
 
-            {/* Main Pet Portrait Card */}
-            <div className="relative w-52 h-64 sm:w-60 sm:h-72 rounded-3xl overflow-hidden border-3 border-[#CCFF00] shadow-[0_0_35px_rgba(204,255,0,0.3)] bg-black transition-transform duration-300 group-hover:scale-102 group-active:scale-98">
-              <img
-                src={activeBeast.image}
-                alt={activeBeast.name}
-                className={`w-full h-full object-cover object-center transition-transform duration-300 ${
-                  animState === 'eat'
-                    ? 'animate-bounce'
-                    : animState === 'pet'
-                    ? 'scale-105'
-                    : 'group-hover:scale-105'
-                }`}
+              <ProceduralPetCanvas
+                species={speciesKey}
+                stage={2}
+                animationState={animState}
+                talkingVolume={talkingVolume}
+                width={190}
+                height={175}
+                interactive={true}
+                onStroke={() => {
+                  sound.playGiggle();
+                  showSpeech(`*Purrrrr!* Keep petting! ❤️`);
+                }}
+                onPokeHead={() => {
+                  sound.playToot();
+                  showSpeech(`Ouch! Dizzy stars! ⭐😵`);
+                }}
+                onTickleBelly={() => {
+                  sound.playGiggle();
+                  showSpeech(`*Tee-hee-hee!* That tickles! 😸`);
+                }}
+                renderMode="cute"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
 
-              {/* Rarity & Level Badges */}
-              <div className="absolute top-2.5 left-2.5 bg-black/80 px-2 py-0.5 rounded-full border border-white/20 text-[10px] font-mono font-bold text-[#CCFF00]">
-                LVL {activeBeast.level}
-              </div>
-
-              <div className="absolute top-2.5 right-2.5 bg-purple-500/80 px-2 py-0.5 rounded-full text-[9px] font-mono font-black uppercase text-white">
-                {activeBeast.category}
-              </div>
-
-              {/* Bottom Pet Identification */}
-              <div className="absolute bottom-3 inset-x-3 text-center">
-                <span className="font-display font-black text-lg text-white uppercase tracking-wider block truncate">
-                  {activeBeast.name}
+              <div className="flex items-center gap-1 text-[10px] mt-0.5 text-pink-400 font-bold">
+                {'❤️'.repeat(heartsCount)}
+                <span className="text-neutral-400 text-[9px] font-mono ml-1">
+                  (Tap to pet · Rub belly)
                 </span>
-                <span className="text-[11px] text-[#CCFF00] font-mono font-bold block truncate">
-                  {activeBeast.species}
-                </span>
+              </div>
+            </div>
+          ) : (
+            /* 📷 REALISTIC HIGH-RES BREED CARD */
+            <div
+              className="relative cursor-pointer group"
+              onClick={handlePetTheBeast}
+              title="Tap to inspect"
+            >
+              <div className="relative w-40 h-48 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.25)] bg-black transition-transform group-hover:scale-102">
+                <img
+                  src={getPetPhoto(activeBeast)}
+                  alt={activeBeast.name}
+                  className="w-full h-full object-cover object-center"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
 
-                {/* Affection Hearts */}
-                <div className="flex items-center justify-center gap-1 mt-1 text-xs">
-                  {'❤️'.repeat(heartsCount)}
+                {/* Level Pill */}
+                <div className="absolute top-2 left-2 bg-black/80 px-1.5 py-0.5 rounded border border-white/20 text-[9px] font-mono font-bold text-[#CCFF00]">
+                  LVL {activeBeast.level}
+                </div>
+
+                {/* Rarity Pill */}
+                <div className="absolute top-2 right-2">
+                  <span className={getRarityBadgeClasses(activeBeast.rarity)}>
+                    {activeBeast.rarity}
+                  </span>
+                </div>
+
+                {/* Bottom Title */}
+                <div className="absolute bottom-2 inset-x-2 text-center">
+                  <span className="font-display font-black text-sm text-white uppercase truncate block">
+                    {activeBeast.name}
+                  </span>
+                  <span className="text-[10px] text-[#CCFF00] font-mono font-bold truncate block">
+                    {activeBeast.breed || activeBeast.species}
+                  </span>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="text-[10px] font-mono text-neutral-400 mt-2 text-center">
-            Tap pet to stroke & purr · Use action buttons below to feed & wash
-          </div>
-        </div>
-
-        {/* TALKING TOM INTERACTION DOCK */}
-        <div className="relative z-20 mt-4 w-full max-w-md grid grid-cols-5 gap-1.5 sm:gap-2 px-2">
-          {/* 1. Feed Kibble */}
-          <button
-            onClick={handleFeedKibble}
-            className="py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer active:scale-95 transition-all"
-            title="Feed Bowl of Kibble"
-          >
-            <Utensils className="w-4 h-4" />
-            <span>Feed</span>
-          </button>
-
-          {/* 2. Bubble Bath */}
-          <button
-            onClick={handleBubbleBath}
-            className="py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer active:scale-95 transition-all"
-            title="Soap Bubble Bath"
-          >
-            <Bath className="w-4 h-4" />
-            <span>Shower</span>
-          </button>
-
-          {/* 3. Milk Bowl */}
-          <button
-            onClick={handlePourMilk}
-            className="py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer active:scale-95 transition-all"
-            title="Pour Fresh Milk"
-          >
-            <Coffee className="w-4 h-4" />
-            <span>Milk</span>
-          </button>
-
-          {/* 4. Funny Prank */}
-          <button
-            onClick={handlePlayfulToot}
-            className="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer active:scale-95 transition-all"
-            title="Playful Cartoon Prank"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>Prank</span>
-          </button>
-
-          {/* 5. Talking Tom Voice Mimic */}
-          <button
-            onClick={handleToggleVoiceRecord}
-            className={`py-2.5 rounded-xl font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-1 shadow-md cursor-pointer active:scale-95 transition-all ${
-              isRecordingVoice
-                ? 'bg-red-500 text-white animate-pulse'
-                : 'bg-purple-600 hover:bg-purple-500 text-white'
-            }`}
-            title="Record speech to repeat in chipmunk voice"
-          >
-            {isRecordingVoice ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-            <span>{isRecordingVoice ? 'Echoing' : 'Talk'}</span>
-          </button>
+          )}
         </div>
       </div>
 
-      {/* MULTI-PET CAROUSEL: Switch between any owned Dogs & Cats */}
-      <div className="px-3.5 sm:px-5 mt-2 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-display font-black uppercase text-white">
-            <Layers className="w-4 h-4 text-[#CCFF00]" />
-            <span>Your Pets & Companion Kennel ({ownedBeasts.length})</span>
+      {/* SECTION 3: TALKING TOM INTERACTION DOCK (5 buttons, 1 row, h-11, zero overlapping text) */}
+      <div className="shrink-0 w-full grid grid-cols-5 gap-1 sm:gap-1.5 my-1">
+        {/* 1. Feed Kibble */}
+        <button
+          onClick={handleFeedKibble}
+          className="h-11 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-black font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all"
+          title="Feed gourmet bowl of kibble"
+        >
+          <Utensils className="w-3.5 h-3.5 shrink-0" />
+          <span className="leading-none">Feed</span>
+        </button>
+
+        {/* 2. Bubble Bath */}
+        <button
+          onClick={handleBubbleBath}
+          className="h-11 rounded-xl bg-blue-500 hover:bg-blue-400 active:scale-95 text-white font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all"
+          title="Wash with soap and bubbles"
+        >
+          <Bath className="w-3.5 h-3.5 shrink-0" />
+          <span className="leading-none">Shower</span>
+        </button>
+
+        {/* 3. Milk Bowl */}
+        <button
+          onClick={handlePourMilk}
+          className="h-11 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-95 text-white font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all"
+          title="Pour fresh bowl of milk"
+        >
+          <Coffee className="w-3.5 h-3.5 shrink-0" />
+          <span className="leading-none">Milk</span>
+        </button>
+
+        {/* 4. Funny Cartoon Prank */}
+        <button
+          onClick={handlePlayfulToot}
+          className="h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all"
+          title="Playful cartoon sound prank"
+        >
+          <Sparkles className="w-3.5 h-3.5 shrink-0" />
+          <span className="leading-none">Prank</span>
+        </button>
+
+        {/* 5. Talking Tom Voice Mimic */}
+        <button
+          onClick={handleToggleVoiceRecord}
+          className={`h-11 rounded-xl active:scale-95 font-display font-black text-[10px] uppercase flex flex-col items-center justify-center gap-0.5 shadow cursor-pointer transition-all ${
+            isRecordingVoice
+              ? 'bg-red-500 text-white animate-pulse'
+              : 'bg-purple-600 hover:bg-purple-500 text-white'
+          }`}
+          title="Record speech to repeat in chipmunk voice"
+        >
+          {isRecordingVoice ? (
+            <MicOff className="w-3.5 h-3.5 shrink-0" />
+          ) : (
+            <Mic className="w-3.5 h-3.5 shrink-0" />
+          )}
+          <span className="leading-none">{isRecordingVoice ? 'Echoing' : 'Talk'}</span>
+        </button>
+      </div>
+
+      {/* SECTION 4: COMPACT COMPANION KENNEL & BROWSER BUDDY STRIP (Slim, perfectly proportioned) */}
+      <div className="shrink-0 bg-[#0E131F] border border-white/10 rounded-2xl p-1.5 space-y-1">
+        {/* Header row */}
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1.5 text-[11px] font-display font-black uppercase text-white">
+            <Layers className="w-3 h-3 text-[#CCFF00]" />
+            <span>Companion Kennel ({ownedBeasts.length})</span>
           </div>
-          <span className="text-[10px] font-mono text-neutral-400">
-            Tap any pet to make Active Buddy
-          </span>
+
+          {/* Desktop Screen Buddy Extension Toggle */}
+          <button
+            onClick={toggleOverlay}
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold transition-all cursor-pointer ${
+              isOverlayActive
+                ? 'bg-[#CCFF00] text-black shadow'
+                : 'bg-white/10 text-neutral-300 hover:text-white'
+            }`}
+            title="Toggle Desktop Screen Buddy"
+          >
+            <Tv className="w-3 h-3" />
+            <span>{isOverlayActive ? 'Buddy ON ✓' : 'Buddy OFF'}</span>
+          </button>
         </div>
 
-        {/* Horizontal Carousel of Owned Pets */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+        {/* Horizontal Mini Cards Strip */}
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-none py-0.5">
           {ownedBeasts.map((beast) => {
             const isActive = beast.id === activeBeast.id;
             return (
@@ -502,30 +523,27 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
                 onClick={() => {
                   sound.playVictory();
                   selectActiveBeast(beast.id);
-                  showSpeech(`Switched active buddy to ${beast.name} (${beast.species})!`);
+                  showSpeech(`Switched active buddy to ${beast.name}!`);
                 }}
-                className={`flex items-center gap-2.5 p-2 rounded-2xl border cursor-pointer transition-all shrink-0 min-w-[150px] ${
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-xl border cursor-pointer transition-all shrink-0 ${
                   isActive
-                    ? 'bg-[#182030] border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.3)]'
-                    : 'bg-[#121622] border-white/10 hover:border-white/25 opacity-80 hover:opacity-100'
+                    ? 'bg-[#182030] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.25)]'
+                    : 'bg-[#121622] border-white/10 hover:border-white/20 opacity-75 hover:opacity-100'
                 }`}
               >
-                <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/20 bg-black shrink-0">
+                <div className="w-7 h-7 rounded-lg overflow-hidden border border-white/20 bg-black shrink-0">
                   <img
-                    src={beast.image}
+                    src={getPetPhoto(beast)}
                     alt={beast.name}
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="min-w-0 pr-1">
-                  <div className="font-display font-black text-xs text-white uppercase truncate">
+                <div className="leading-tight pr-1">
+                  <div className="font-display font-black text-[10px] text-white uppercase truncate max-w-[80px]">
                     {beast.name}
                   </div>
-                  <div className="text-[9px] font-mono text-[#CCFF00] truncate">
-                    {beast.species}
-                  </div>
-                  <div className="text-[8px] font-mono text-neutral-400">
-                    LVL {beast.level} {isActive ? '· ACTIVE' : ''}
+                  <div className="text-[8px] font-mono text-[#CCFF00] truncate max-w-[80px]">
+                    {beast.breed || beast.species}
                   </div>
                 </div>
               </div>
@@ -534,33 +552,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
         </div>
       </div>
 
-      {/* Floating Web Companion Toggle Banner */}
-      <div className="mx-3.5 sm:mx-5 mt-3 p-3 rounded-2xl bg-[#121824] border border-cyan-400/30 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold">
-            <Tv className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-white">Screen Buddy Overlay</div>
-            <div className="text-[10px] text-neutral-400 font-mono">
-              Roam across your desktop screen with live battery detection
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={toggleOverlay}
-          className={`px-3 py-1.5 rounded-xl font-mono text-xs font-bold transition-all cursor-pointer ${
-            isOverlayActive
-              ? 'bg-[#CCFF00] text-black shadow'
-              : 'bg-white/10 text-neutral-300 hover:text-white'
-          }`}
-        >
-          {isOverlayActive ? 'Active ON ✓' : 'Turn ON'}
-        </button>
-      </div>
-
-      {/* MODALS */}
+      {/* POPUP MODALS */}
       {showPhotoStudioModal && <PetAvatarPhotoStudioModal onClose={() => setShowPhotoStudioModal(false)} />}
       {showAuctionModal && <PetAuctionHouseModal onClose={() => setShowAuctionModal(false)} />}
       {showExtensionModal && <ExtensionExporterModal onClose={() => setShowExtensionModal(false)} />}

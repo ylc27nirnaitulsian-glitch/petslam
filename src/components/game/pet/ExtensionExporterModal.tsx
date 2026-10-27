@@ -23,6 +23,8 @@ import {
   Crown,
 } from 'lucide-react';
 import { sound } from '../../../utils/audio';
+import { createDodoCheckout } from '../../../services/dodo';
+import { trackClarityEvent } from '../../../utils/clarity';
 
 interface ExtensionExporterModalProps {
   onClose: () => void;
@@ -1863,7 +1865,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     nameBadge.textContent = activePetData.name + " · Lv." + (activePetData.level || 1);
     wrapper.appendChild(nameBadge);
 
-    petInstance = createPetCanvas(activePetData.species || activePetData.id || 'shiba', 1, 120, 120);
+    petInstance = createPetCanvas(activePetData.species || activePetData.id || 'shiba', 1, 160, 160);
     wrapper.appendChild(petInstance.element);
 
     const toolbar = document.createElement('div');
@@ -2279,13 +2281,13 @@ Includes:
                   Hi! I'm {pet.name}! 🐾
                 </div>
 
-                {/* Animated Pet */}
-                <div className="relative h-36 bg-[radial-gradient(circle,#1e293b_0%,#07090e_80%)] rounded-xl border border-white/10 flex items-center justify-center mb-2">
+                {/* Animated Pet (Bigger Size) */}
+                <div className="relative h-44 bg-[radial-gradient(circle,#1e293b_0%,#07090e_80%)] rounded-xl border border-white/10 flex items-center justify-center mb-2">
                   <ProceduralPetCanvas
                     species={previewSpecies}
                     stage={pet.stage}
-                    width={115}
-                    height={115}
+                    width={150}
+                    height={150}
                     interactive={true}
                   />
                 </div>
@@ -2537,14 +2539,24 @@ Includes:
 
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
-                  onClick={() => {
-                    unlockPass('extension', false);
-                    setShowPassModal(false);
-                    handleDownloadZip();
+                  onClick={async () => {
+                    try {
+                      trackClarityEvent('extension_pass_dodo_click');
+                      const checkout = await createDodoCheckout({ passType: 'extension' });
+                      if (checkout.simulated) {
+                        unlockPass('extension', false);
+                        setShowPassModal(false);
+                        handleDownloadZip();
+                      } else if (checkout.checkoutUrl) {
+                        window.location.href = checkout.checkoutUrl;
+                      }
+                    } catch (e: any) {
+                      alert(e?.message || 'Failed to connect to Dodo Payments');
+                    }
                   }}
                   className="py-2.5 px-3 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold text-xs uppercase cursor-pointer"
                 >
-                  Pay $1.99
+                  Pay $1.99 (Dodo)
                 </button>
                 <button
                   onClick={() => {
