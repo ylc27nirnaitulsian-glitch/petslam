@@ -26,6 +26,7 @@ import { RankedMatchmakingModal } from '../game/RankedMatchmakingModal';
 import { BreedingLabModal } from '../game/pet/BreedingLabModal';
 import { SlamBattlePassModal } from '../game/liveops/SlamBattlePassModal';
 import { DailyQuestsDrawer } from '../game/liveops/DailyQuestsDrawer';
+import { LeaderboardModal } from '../Leaderboards/LeaderboardModal';
 import { RotateCw, Smartphone, Sparkles } from 'lucide-react';
 
 interface DualOrientationShellProps {
@@ -54,6 +55,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   const [breedingModalOpen, setBreedingModalOpen] = useState<boolean>(false);
   const [passModalOpen, setPassModalOpen] = useState<boolean>(false);
   const [questsDrawerOpen, setQuestsDrawerOpen] = useState<boolean>(false);
+  const [leaderboardModalOpen, setLeaderboardModalOpen] = useState<boolean>(false);
 
   // Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -173,11 +175,15 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       setQuestsDrawerOpen(true);
       return;
     }
+    if (tab === 'leaderboard') {
+      setLeaderboardModalOpen(true);
+      return;
+    }
     setCurrentTab(tab);
   };
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#07090E] text-white flex overflow-hidden select-none">
+    <div className="relative w-full h-[100dvh] bg-slate-100 dark:bg-[#07090E] text-slate-900 dark:text-white flex overflow-hidden select-none transition-colors duration-300">
       {/* Floating Extension Companion Linked Toast */}
       {companionToast && (
         <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 duration-300 pointer-events-none">
@@ -201,13 +207,14 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       />
 
       {/* 2. Center Primary Viewport (Zero Page Scroll on Desktop, Safe Area on Mobile) */}
-      <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-[#0B0E17]">
+      <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-slate-50 dark:bg-[#0B0E17] transition-colors duration-300">
         {/* Universal Top Bar */}
         <GameTopBar
           onOpenSystemDetails={onOpenSystemDetails || (() => setShowInfoDrawer(true))}
           onReturnToTitle={onReturnToTitle}
           onStartPracticeDrill={() => setCurrentTab('arena')}
           onOpenQuests={() => setQuestsDrawerOpen(true)}
+          onOpenLeaderboard={() => setLeaderboardModalOpen(true)}
         />
 
         {/* Mobile Orientation Suggestion Banner in Arena */}
@@ -301,6 +308,13 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
           isOpen={questsDrawerOpen}
           onClose={() => setQuestsDrawerOpen(false)}
           onOpenPass={() => setPassModalOpen(true)}
+        />
+      )}
+      {leaderboardModalOpen && (
+        <LeaderboardModal
+          isOpen={leaderboardModalOpen}
+          onClose={() => setLeaderboardModalOpen(false)}
+          onOpenUpload={() => setStudioModalOpen(true)}
         />
       )}
 

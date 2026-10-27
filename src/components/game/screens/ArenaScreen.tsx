@@ -712,7 +712,7 @@ export const ArenaScreen: React.FC = () => {
 
   return (
     <div
-      className={`flex flex-col h-full bg-[#080B12] text-white select-none overflow-hidden ${
+      className={`flex flex-col h-full bg-slate-50 text-slate-900 dark:bg-[#080B12] dark:text-white select-none overflow-hidden transition-colors duration-300 ${
         screenShake ? 'animate-bounce' : ''
       }`}
     >
@@ -722,28 +722,28 @@ export const ArenaScreen: React.FC = () => {
       {!inBattle && (
         <div className="flex-1 flex flex-col p-3 sm:p-5 overflow-y-auto space-y-3 max-w-lg mx-auto w-full pb-28 overscroll-contain">
           {/* Header Stadium Banner */}
-          <div className="bg-gradient-to-r from-[#131B2D] via-[#1A2640] to-[#131B2D] border border-white/10 rounded-2xl p-3.5 shadow-xl text-center relative overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-100 via-white to-slate-100 dark:from-[#131B2D] dark:via-[#1A2640] dark:to-[#131B2D] border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-md dark:shadow-xl text-center relative overflow-hidden transition-colors">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#CCFF00]/10 rounded-full blur-2xl pointer-events-none" />
 
-            <div className="flex items-center justify-between text-xs font-mono text-neutral-400 mb-1.5">
-              <span className="flex items-center gap-1.5 text-white font-bold">
-                <Crown className="w-4 h-4 text-amber-400" />
+            <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-slate-600 dark:text-neutral-400 mb-1.5">
+              <span className="flex items-center gap-1.5 text-slate-900 dark:text-white font-bold">
+                <Crown className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                 <span>Colosseum League</span>
               </span>
-              <span className="text-[#CCFF00] font-black">{trophies} 🏆 Trophies</span>
+              <span className="text-emerald-700 dark:text-[#CCFF00] font-black">{trophies} 🏆 Trophies</span>
             </div>
 
-            <h2 className="font-display font-black text-xl sm:text-2xl uppercase tracking-wider text-white">
+            <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-wider text-slate-900 dark:text-white">
               Pet Slam Arena
             </h2>
-            <p className="text-[10px] sm:text-[11px] text-neutral-300 font-mono mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-neutral-300 font-mono mt-0.5">
               Real-Time 1v1 Pet Duels · Purebred Canines & Felines · 60 FPS Animated Combat
             </p>
           </div>
 
           {/* Interactive Combat Practice Drill Banner (Auto-prompted for 1st-time visitors, replayable anytime) */}
           {showTutorialPrompt ? (
-            <div className="bg-gradient-to-r from-amber-950/70 via-[#151F35] to-amber-950/70 border-2 border-[#CCFF00]/60 rounded-2xl p-3.5 shadow-[0_0_20px_rgba(204,255,0,0.2)] relative overflow-hidden animate-in fade-in">
+            <div className="bg-amber-50/90 dark:bg-gradient-to-r dark:from-amber-950/70 dark:via-[#151F35] dark:to-amber-950/70 border-2 border-amber-400 dark:border-[#CCFF00]/60 rounded-2xl p-3.5 shadow-md dark:shadow-[0_0_20px_rgba(204,255,0,0.2)] relative overflow-hidden animate-in fade-in transition-colors">
               <div className="flex items-start justify-between gap-2.5">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-[#CCFF00] text-black font-black flex items-center justify-center text-lg shadow shrink-0">
@@ -751,14 +751,14 @@ export const ArenaScreen: React.FC = () => {
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-display font-black text-xs uppercase text-white tracking-wider">
+                      <span className="font-display font-black text-sm uppercase text-slate-900 dark:text-white tracking-wider">
                         Interactive Combat Practice Drill
                       </span>
-                      <span className="text-[8px] font-mono bg-[#CCFF00] text-black px-1.5 py-0.2 rounded font-bold">
+                      <span className="text-xs font-mono bg-[#CCFF00] text-black px-1.5 py-0.5 rounded font-bold">
                         +250 CR
                       </span>
                     </div>
-                    <p className="text-[10px] sm:text-[11px] text-neutral-300 font-mono mt-0.5 leading-snug">
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-neutral-300 font-mono mt-0.5 leading-snug">
                       Master Pounce [1], Iron Guard [3], Overdrive [SPACE], and Tag-Ins in 30 seconds!
                     </p>
                   </div>
@@ -766,31 +766,31 @@ export const ArenaScreen: React.FC = () => {
 
                 <button
                   onClick={handleSkipTutorial}
-                  className="text-neutral-400 hover:text-white text-[10px] font-mono underline cursor-pointer shrink-0"
+                  className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white text-xs font-mono underline cursor-pointer shrink-0"
                   title="Skip practice tutorial"
                 >
                   Skip
                 </button>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center gap-2">
+              <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-white/10 flex items-center gap-2">
                 <button
                   onClick={startPracticeDrill}
-                  className="flex-1 py-2 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer shadow active:scale-95 transition-transform"
+                  className="flex-1 py-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-sm uppercase tracking-wider cursor-pointer shadow active:scale-95 transition-transform"
                 >
                   Start 30s Practice Drill 🥋
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono">
-              <span className="text-neutral-300 flex items-center gap-1.5">
+            <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-mono">
+              <span className="text-slate-700 dark:text-neutral-300 flex items-center gap-1.5 font-bold">
                 <span>🥋</span>
                 <span>Dojo Practice Complete</span>
               </span>
               <button
                 onClick={startPracticeDrill}
-                className="text-[#CCFF00] hover:underline font-bold text-[11px] cursor-pointer"
+                className="text-emerald-700 dark:text-[#CCFF00] hover:underline font-black text-xs cursor-pointer"
               >
                 Replay 30s Drill ↺
               </button>
@@ -798,16 +798,16 @@ export const ArenaScreen: React.FC = () => {
           )}
 
           {/* 1v1 vs 2v2 Mode Switcher */}
-          <div className="flex items-center p-1 bg-black/60 border border-white/10 rounded-2xl max-w-xs mx-auto w-full shadow-md">
+          <div className="flex items-center p-1 bg-slate-200/80 dark:bg-black/60 border border-slate-300 dark:border-white/10 rounded-2xl max-w-xs mx-auto w-full shadow-md">
             <button
               onClick={() => {
                 sound.playClick();
                 setBattleMode('1v1');
               }}
-              className={`flex-1 py-1.5 px-2.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
+              className={`flex-1 py-2 px-3 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
                 battleMode === '1v1'
                   ? 'bg-[#CCFF00] text-black shadow-md'
-                  : 'text-neutral-400 hover:text-white'
+                  : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white'
               }`}
             >
               ⚔️ 1v1 Ranked
@@ -817,10 +817,10 @@ export const ArenaScreen: React.FC = () => {
                 sound.playClick();
                 setBattleMode('2v2');
               }}
-              className={`flex-1 py-1.5 px-2.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
+              className={`flex-1 py-2 px-3 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
                 battleMode === '2v2'
                   ? 'bg-[#CCFF00] text-black shadow-md'
-                  : 'text-neutral-400 hover:text-white'
+                  : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white'
               }`}
             >
               👥 2v2 Tag Team
@@ -931,8 +931,8 @@ export const ArenaScreen: React.FC = () => {
 
           {/* 4-Pet Battle Squad Drawer */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono text-neutral-400">
-              <span className="font-bold text-white uppercase">Your 4-Pet Battle Squad</span>
+            <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-neutral-400">
+              <span className="font-bold text-slate-900 dark:text-white uppercase">Your 4-Pet Battle Squad</span>
               <span>Tap pet to set Lead</span>
             </div>
 
@@ -947,23 +947,23 @@ export const ArenaScreen: React.FC = () => {
                       setCurrentActiveFighter(petFighter);
                       selectActiveBeast(petFighter.id);
                     }}
-                    className={`p-1.5 rounded-2xl border transition-all cursor-pointer flex flex-col items-center text-center relative ${
+                    className={`p-2 rounded-2xl border transition-all cursor-pointer flex flex-col items-center text-center relative ${
                       isSelected
-                        ? 'bg-[#CCFF00]/15 border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.3)] scale-102'
-                        : 'bg-[#121622] border-white/10 hover:border-white/30 opacity-75 hover:opacity-100'
+                        ? 'bg-[#CCFF00]/25 border-2 border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.3)] scale-102'
+                        : 'bg-slate-100 dark:bg-[#121622] border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/30'
                     }`}
                   >
-                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-black border border-white/15 aspect-square mb-1">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-black border border-slate-300 dark:border-white/15 aspect-square mb-1">
                       <img
                         src={petFighter.image}
                         alt={petFighter.name}
                         className="w-full h-full object-cover object-center aspect-square"
                       />
                     </div>
-                    <span className="text-[10px] font-bold text-white truncate w-full">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate w-full">
                       {petFighter.name}
                     </span>
-                    <span className="text-[9px] font-mono text-[#CCFF00]">
+                    <span className="text-xs font-mono text-emerald-700 dark:text-[#CCFF00] font-black">
                       LV.{petFighter.level || 10}
                     </span>
                   </div>
@@ -1385,7 +1385,7 @@ export const ArenaScreen: React.FC = () => {
             <button
               onClick={() => handlePlayCard('pounce')}
               disabled={elixir < 2}
-              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 relative shadow-md ${
+              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative shadow-md ${
                 isPracticeDrill && practiceStep === 1
                   ? 'bg-cyan-500/40 border-[#CCFF00] ring-4 ring-[#CCFF00] shadow-[0_0_25px_#CCFF00] scale-105 animate-pulse text-white'
                   : elixir >= 2
@@ -1396,20 +1396,20 @@ export const ArenaScreen: React.FC = () => {
               }`}
             >
               <div className="flex items-center justify-between w-full px-1">
-                <span className="text-xs font-mono font-black text-cyan-300">2 ⚡</span>
-                <span className="text-[10px] font-mono px-1 rounded bg-black/80 border border-cyan-400/60 text-cyan-300 font-black hidden sm:inline">
+                <span className="text-xs sm:text-sm font-mono font-black text-cyan-300">2 ⚡</span>
+                <span className="text-xs font-mono px-1 rounded bg-black/80 border border-cyan-400/60 text-cyan-300 font-black hidden sm:inline">
                   [1]
                 </span>
               </div>
-              <span className="text-base">🐾</span>
-              <span className="text-xs font-black uppercase tracking-wider truncate text-white">Pounce</span>
+              <span className="text-lg">🐾</span>
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider truncate text-white">Pounce</span>
             </button>
 
             {/* Card 2: Sonic Bark / Hiss (3 Energy / Hotkey [2]) */}
             <button
               onClick={() => handlePlayCard('bark')}
               disabled={elixir < 3}
-              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 relative shadow-md ${
+              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative shadow-md ${
                 elixir >= 3
                   ? pressedHotkey === '2'
                     ? 'bg-amber-500/40 border-amber-300 ring-2 ring-amber-400 scale-95 text-white'
@@ -1418,20 +1418,20 @@ export const ArenaScreen: React.FC = () => {
               }`}
             >
               <div className="flex items-center justify-between w-full px-1">
-                <span className="text-xs font-mono font-black text-amber-300">3 ⚡</span>
-                <span className="text-[10px] font-mono px-1 rounded bg-black/80 border border-amber-400/60 text-amber-300 font-black hidden sm:inline">
+                <span className="text-xs sm:text-sm font-mono font-black text-amber-300">3 ⚡</span>
+                <span className="text-xs font-mono px-1 rounded bg-black/80 border border-amber-400/60 text-amber-300 font-black hidden sm:inline">
                   [2]
                 </span>
               </div>
-              <span className="text-base">📢</span>
-              <span className="text-xs font-black uppercase tracking-wider truncate text-white">Bark</span>
+              <span className="text-lg">📢</span>
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider truncate text-white">Bark</span>
             </button>
 
             {/* Card 3: Iron Guard (2 Energy / Hotkey [3]) */}
             <button
               onClick={() => handlePlayCard('shield')}
               disabled={elixir < 2}
-              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 relative shadow-md ${
+              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative shadow-md ${
                 isPracticeDrill && practiceStep === 2
                   ? 'bg-blue-600/50 border-blue-300 ring-4 ring-blue-400 shadow-[0_0_25px_#38BDF8] scale-105 animate-pulse text-white'
                   : elixir >= 2
@@ -1442,20 +1442,20 @@ export const ArenaScreen: React.FC = () => {
               }`}
             >
               <div className="flex items-center justify-between w-full px-1">
-                <span className="text-xs font-mono font-black text-blue-300">2 ⚡</span>
-                <span className="text-[10px] font-mono px-1 rounded bg-black/80 border border-blue-400/60 text-blue-300 font-black hidden sm:inline">
+                <span className="text-xs sm:text-sm font-mono font-black text-blue-300">2 ⚡</span>
+                <span className="text-xs font-mono px-1 rounded bg-black/80 border border-blue-400/60 text-blue-300 font-black hidden sm:inline">
                   [3]
                 </span>
               </div>
-              <span className="text-base">🛡️</span>
-              <span className="text-xs font-black uppercase tracking-wider truncate text-white">Guard</span>
+              <span className="text-lg">🛡️</span>
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider truncate text-white">Guard</span>
             </button>
 
             {/* Card 4: Fierce Bite (4 Energy / Hotkey [4]) */}
             <button
               onClick={() => handlePlayCard('bite')}
               disabled={elixir < 4}
-              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 relative shadow-md ${
+              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative shadow-md ${
                 elixir >= 4
                   ? pressedHotkey === '4'
                     ? 'bg-red-500/40 border-red-300 ring-2 ring-red-400 scale-95 text-white'
@@ -1464,20 +1464,20 @@ export const ArenaScreen: React.FC = () => {
               }`}
             >
               <div className="flex items-center justify-between w-full px-1">
-                <span className="text-xs font-mono font-black text-rose-300">4 ⚡</span>
-                <span className="text-[10px] font-mono px-1 rounded bg-black/80 border border-red-400/60 text-rose-300 font-black hidden sm:inline">
+                <span className="text-xs sm:text-sm font-mono font-black text-rose-300">4 ⚡</span>
+                <span className="text-xs font-mono px-1 rounded bg-black/80 border border-red-400/60 text-rose-300 font-black hidden sm:inline">
                   [4]
                 </span>
               </div>
-              <span className="text-base">💥</span>
-              <span className="text-xs font-black uppercase tracking-wider truncate text-white">Bite</span>
+              <span className="text-lg">💥</span>
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider truncate text-white">Bite</span>
             </button>
 
             {/* Card 5: PET SLAM / DUO SLAM OVERDRIVE (6 Energy / Hotkey [SPACE]) */}
             <button
               onClick={() => handlePlayCard('slam')}
               disabled={elixir < 6}
-              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-16 relative shadow-xl ${
+              className={`p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative shadow-xl ${
                 isPracticeDrill && practiceStep === 3
                   ? 'bg-[#CCFF00] border-white ring-4 ring-[#CCFF00] shadow-[0_0_30px_#CCFF00] scale-105 animate-bounce text-black'
                   : elixir >= 6
@@ -1488,13 +1488,13 @@ export const ArenaScreen: React.FC = () => {
               }`}
             >
               <div className="flex items-center justify-between w-full px-1">
-                <span className="text-xs font-mono font-black text-black">6 ⚡</span>
-                <span className="text-[10px] font-mono px-1 rounded bg-black text-[#CCFF00] font-black hidden sm:inline">
+                <span className="text-xs sm:text-sm font-mono font-black text-black">6 ⚡</span>
+                <span className="text-xs font-mono px-1 rounded bg-black text-[#CCFF00] font-black hidden sm:inline">
                   [SPC]
                 </span>
               </div>
-              <span className="text-base">⚡</span>
-              <span className="text-xs font-black uppercase tracking-wider truncate text-black drop-shadow-xs">
+              <span className="text-lg">⚡</span>
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider truncate text-black drop-shadow-xs">
                 {battleMode === '2v2' ? 'DUO SLAM' : 'SLAM'}
               </span>
             </button>
