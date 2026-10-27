@@ -195,6 +195,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
     eye: '#2A9D8F',
     nose: '#1E1E24',
   });
+  const [activeColorSlot, setActiveColorSlot] = useState<keyof PetCustomPalette>('primary');
 
   // Handle Photo Select
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -920,30 +921,56 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       <button
                         type="button"
                         onClick={() => {
+                          sound.playClick();
                           setBuilderCategory('dog');
                           setBuilderSpecies('shiba');
+                          setBuilderBreed('Shiba Champion');
+                          setBuilderEarType('pointed');
+                          setBuilderHasWhiskers(false);
+                          setBuilderPalette({
+                            primary: '#D97706',
+                            secondary: '#B45309',
+                            belly: '#FEF3C7',
+                            ear: '#FEF3C7',
+                            eye: '#292524',
+                            nose: '#0F172A',
+                          });
                         }}
-                        className={`p-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        className={`p-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                           builderCategory === 'dog'
-                            ? 'bg-[#CCFF00] text-black border-[#CCFF00]'
-                            : 'bg-[#121824] text-neutral-400 border-white/10'
+                            ? 'bg-[#CCFF00] text-black border-[#CCFF00] font-black shadow-md'
+                            : 'bg-[#121824] text-neutral-400 border-white/10 hover:text-white'
                         }`}
                       >
-                        <span>🐶 Dog</span>
+                        <span className="text-base">🐶</span>
+                        <span>Canine Dog</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => {
+                          sound.playClick();
                           setBuilderCategory('cat');
                           setBuilderSpecies('tabby');
+                          setBuilderBreed('Tabby Sovereign');
+                          setBuilderEarType('pointed');
+                          setBuilderHasWhiskers(true);
+                          setBuilderPalette({
+                            primary: '#F59E0B',
+                            secondary: '#9A3412',
+                            belly: '#FEF3C7',
+                            ear: '#F472B6',
+                            eye: '#10B981',
+                            nose: '#F472B6',
+                          });
                         }}
-                        className={`p-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        className={`p-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                           builderCategory === 'cat'
-                            ? 'bg-[#CCFF00] text-black border-[#CCFF00]'
-                            : 'bg-[#121824] text-neutral-400 border-white/10'
+                            ? 'bg-[#CCFF00] text-black border-[#CCFF00] font-black shadow-md'
+                            : 'bg-[#121824] text-neutral-400 border-white/10 hover:text-white'
                         }`}
                       >
-                        <span>🐱 Cat</span>
+                        <span className="text-base">🐱</span>
+                        <span>Feline Cat</span>
                       </button>
                     </div>
                   </div>
@@ -1061,6 +1088,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       interactive={true}
                       customPalette={builderPalette}
                       customFeatures={{
+                        isCat: builderCategory === 'cat',
                         earType: builderEarType,
                         hasWhiskers: builderHasWhiskers,
                         eyePatch: builderEyePatch,
@@ -1142,36 +1170,102 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                   ))}
                 </div>
 
+                {/* 6 Color Feature Slots */}
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-[10px] font-mono">
                   {[
-                    { key: 'primary', label: 'Main Fur', color: builderPalette.primary },
-                    { key: 'secondary', label: 'Accent', color: builderPalette.secondary },
-                    { key: 'belly', label: 'Belly', color: builderPalette.belly },
-                    { key: 'ear', label: 'Inner Ear', color: builderPalette.ear },
-                    { key: 'eye', label: 'Eyes', color: builderPalette.eye },
-                    { key: 'nose', label: 'Nose', color: builderPalette.nose },
-                  ].map((item) => (
-                    <label
-                      key={item.key}
-                      className="bg-[#090C14] border border-white/10 p-1.5 rounded-lg flex flex-col items-center gap-1 cursor-pointer hover:border-white/30"
-                    >
-                      <div
-                        className="w-7 h-7 rounded-full border border-white/30 shadow-inner relative overflow-hidden"
-                        style={{ backgroundColor: item.color }}
+                    { key: 'primary' as const, label: 'Main Fur', color: builderPalette.primary },
+                    { key: 'secondary' as const, label: 'Accent', color: builderPalette.secondary },
+                    { key: 'belly' as const, label: 'Belly', color: builderPalette.belly },
+                    { key: 'ear' as const, label: 'Inner Ear', color: builderPalette.ear },
+                    { key: 'eye' as const, label: 'Eyes', color: builderPalette.eye },
+                    { key: 'nose' as const, label: 'Nose', color: builderPalette.nose },
+                  ].map((item) => {
+                    const isSelected = activeColorSlot === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          sound.playClick();
+                          setActiveColorSlot(item.key);
+                        }}
+                        className={`p-2 rounded-xl flex flex-col items-center gap-1.5 cursor-pointer transition-all border ${
+                          isSelected
+                            ? 'bg-[#1A2234] border-[#CCFF00] shadow-[0_0_12px_rgba(204,255,0,0.35)] scale-102'
+                            : 'bg-[#090C14] border-white/10 hover:border-white/30 text-neutral-400'
+                        }`}
                       >
-                        <input
-                          type="color"
-                          value={item.color}
-                          onChange={(e) => {
-                            const newColor = e.target.value;
-                            setBuilderPalette((prev) => ({ ...prev, [item.key]: newColor }));
-                          }}
-                          className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
-                        />
-                      </div>
-                      <span className="text-neutral-400 text-[9px]">{item.label}</span>
+                        <div
+                          className="w-8 h-8 rounded-full border-2 border-white/40 shadow-inner relative flex items-center justify-center"
+                          style={{ backgroundColor: item.color }}
+                        >
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-white shadow-xs" />}
+                        </div>
+                        <span className={`text-[10px] font-bold ${isSelected ? 'text-[#CCFF00]' : 'text-neutral-300'}`}>
+                          {item.label}
+                        </span>
+                        <span className="text-[9px] font-mono text-neutral-500 uppercase">
+                          {item.color}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* 1-Click Interactive Color Palette Swatches */}
+                <div className="p-3 bg-[#0A0E18] rounded-xl border border-white/10 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-neutral-300">
+                      Tap Swatch to Paint <strong className="text-[#CCFF00] uppercase font-bold">{activeColorSlot}</strong>:
+                    </span>
+                    <label className="flex items-center gap-1 text-[11px] text-cyan-300 hover:underline cursor-pointer">
+                      <span>Custom 🎨</span>
+                      <input
+                        type="color"
+                        value={builderPalette[activeColorSlot]}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setBuilderPalette((prev) => ({ ...prev, [activeColorSlot]: val }));
+                        }}
+                        className="w-5 h-5 rounded cursor-pointer border border-white/20 bg-transparent p-0"
+                      />
                     </label>
-                  ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { hex: '#D97706', name: 'Golden Tan' },
+                      { hex: '#F59E0B', name: 'Honey Amber' },
+                      { hex: '#EA580C', name: 'Ginger Orange' },
+                      { hex: '#78350F', name: 'Chocolate Brown' },
+                      { hex: '#1E293B', name: 'Charcoal Slate' },
+                      { hex: '#0F172A', name: 'Midnight Black' },
+                      { hex: '#F8FAFC', name: 'Snow White' },
+                      { hex: '#FEF3C7', name: 'Siamese Cream' },
+                      { hex: '#F472B6', name: 'Petal Pink' },
+                      { hex: '#00F0FF', name: 'Neon Cyan' },
+                      { hex: '#CCFF00', name: 'Cyber Lime' },
+                      { hex: '#A855F7', name: 'Lavender Purple' },
+                      { hex: '#DC2626', name: 'Crimson Flame' },
+                      { hex: '#38BDF8', name: 'Arctic Blue' },
+                    ].map((swatch) => (
+                      <button
+                        key={swatch.hex}
+                        type="button"
+                        onClick={() => {
+                          sound.playClick();
+                          setBuilderPalette((prev) => ({ ...prev, [activeColorSlot]: swatch.hex }));
+                        }}
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 border-white/20 hover:border-[#CCFF00] hover:scale-110 transition-all cursor-pointer shadow-md flex items-center justify-center"
+                        style={{ backgroundColor: swatch.hex }}
+                        title={`${swatch.name} (${swatch.hex})`}
+                      >
+                        {builderPalette[activeColorSlot].toLowerCase() === swatch.hex.toLowerCase() && (
+                          <div className="w-2 h-2 rounded-full bg-white shadow-xs" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

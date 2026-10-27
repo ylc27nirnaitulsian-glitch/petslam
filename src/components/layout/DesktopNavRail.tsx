@@ -62,19 +62,19 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
   const { isOverlayActive, toggleOverlay } = usePetCompanion();
 
   const navItems = [
-    { id: 'arena' as const, label: 'Arena', icon: Swords, badge: '60 FPS' },
-    { id: 'ranked' as const, label: '1v1 Ranked', icon: Swords, badge: '20 TICK' },
-    { id: 'leaderboard' as const, label: 'Hall of Fame', icon: Trophy, badge: 'CLOUT' },
-    { id: 'sanctuary' as const, label: 'Sanctuary', icon: Heart, badge: null },
-    { id: 'genetics' as const, label: 'Breeding Lab', icon: Dna, badge: 'GEN-2' },
-    { id: 'pass' as const, label: 'Slam Pass', icon: Crown, badge: 'TIERS' },
-    { id: 'quests' as const, label: 'Daily Quests', icon: Target, badge: '3 NEW' },
-    { id: 'studio' as const, label: 'AI Studio', icon: Camera, badge: 'AI' },
-    { id: 'auctions' as const, label: 'Auctions', icon: Gavel, badge: 'LIVE' },
-    { id: 'extension' as const, label: 'Buddy Hub', icon: Tv, badge: 'NEW' },
-    { id: 'beasts' as const, label: 'Squad Deck', icon: PawPrint, badge: null },
-    { id: 'market' as const, label: 'Armory Shop', icon: ShoppingBag, badge: null },
-    { id: 'multiplayer' as const, label: 'Multiplayer', icon: Users, badge: null },
+    { id: 'arena' as const, label: 'Arena', icon: Swords },
+    { id: 'ranked' as const, label: '1v1 Ranked', icon: Swords },
+    { id: 'leaderboard' as const, label: 'Hall of Fame', icon: Trophy },
+    { id: 'sanctuary' as const, label: 'Sanctuary', icon: Heart },
+    { id: 'genetics' as const, label: 'Breeding Lab', icon: Dna },
+    { id: 'pass' as const, label: 'Slam Pass', icon: Crown },
+    { id: 'quests' as const, label: 'Daily Quests', icon: Target },
+    { id: 'studio' as const, label: 'AI Studio', icon: Camera },
+    { id: 'auctions' as const, label: 'Auctions', icon: Gavel },
+    { id: 'extension' as const, label: 'Buddy Hub', icon: Tv },
+    { id: 'beasts' as const, label: 'Squad Deck', icon: PawPrint },
+    { id: 'market' as const, label: 'Armory Shop', icon: ShoppingBag },
+    { id: 'multiplayer' as const, label: 'Multiplayer', icon: Users },
   ];
 
   const handleSelect = (id: MainNavId) => {
@@ -83,7 +83,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
   };
 
   return (
-    <aside className="hidden lg:flex flex-col w-[88px] xl:w-[230px] h-full bg-white/95 dark:bg-[#090D17]/98 backdrop-blur-xl border-r border-slate-200 dark:border-white/20 select-none z-30 shrink-0 transition-all duration-300 shadow-2xl">
+    <aside className="hidden lg:flex flex-col w-[88px] xl:w-[250px] h-full bg-white/95 dark:bg-[#090D17]/98 backdrop-blur-xl border-r border-slate-200 dark:border-white/20 select-none z-30 shrink-0 transition-all duration-300 shadow-2xl">
       {/* Brand Header */}
       <div className="h-16 flex items-center justify-center xl:justify-start px-3 xl:px-5 border-b border-slate-200 dark:border-white/15 gap-3 bg-slate-100/80 dark:bg-slate-950/60">
         <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#CCFF00] to-emerald-400 p-0.5 shadow-[0_0_18px_rgba(204,255,0,0.45)] shrink-0 flex items-center justify-center">
@@ -103,7 +103,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
       </div>
 
       {/* Primary Navigation Rail */}
-      <nav className="flex-1 overflow-y-auto py-3.5 px-2 xl:px-3 space-y-2 scrollbar-thin">
+      <nav className="flex-1 overflow-y-auto py-3.5 px-2 xl:px-3 space-y-1.5 scrollbar-thin">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
@@ -112,7 +112,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
             <button
               key={item.id}
               onClick={() => handleSelect(item.id)}
-              className={`w-full group relative flex items-center justify-center xl:justify-start gap-3.5 px-2.5 xl:px-3.5 py-3 rounded-2xl cursor-pointer transition-all duration-200 ${
+              className={`w-full group relative flex items-center justify-center xl:justify-start gap-3 px-2.5 xl:px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 ${
                 isActive
                   ? 'bg-gradient-to-r from-[#CCFF00]/25 via-[#CCFF00]/15 to-transparent text-slate-950 dark:text-white border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.25)]'
                   : 'text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 border border-transparent'
@@ -135,26 +135,12 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
               </div>
 
               <span
-                className={`hidden xl:inline text-sm font-display uppercase tracking-wider font-extrabold truncate ${
+                className={`hidden xl:inline text-sm font-display uppercase tracking-wider font-extrabold whitespace-nowrap ${
                   isActive ? 'text-slate-950 dark:text-white' : 'text-slate-700 dark:text-slate-100 group-hover:text-slate-950 dark:group-hover:text-white'
                 }`}
               >
                 {item.label}
               </span>
-
-              {item.badge && (
-                <span
-                  className={`hidden xl:inline ml-auto text-xs font-mono font-black px-2 py-0.5 rounded-full ${
-                    item.badge === 'LIVE'
-                      ? 'bg-amber-500/20 text-amber-600 dark:text-amber-200 border border-amber-400/60 animate-pulse'
-                      : item.badge === 'AI'
-                      ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-200 border border-cyan-400/60'
-                      : 'bg-[#CCFF00]/30 text-lime-700 dark:text-[#CCFF00] border border-[#CCFF00]/60'
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              )}
             </button>
           );
         })}

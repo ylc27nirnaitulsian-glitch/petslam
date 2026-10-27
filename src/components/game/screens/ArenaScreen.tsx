@@ -70,6 +70,7 @@ export const ArenaScreen: React.FC = () => {
   // Match State
   const [isMatchmaking, setIsMatchmaking] = useState<boolean>(false);
   const [matchCountdown, setMatchCountdown] = useState<number>(3);
+  const matchmakingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [inBattle, setInBattle] = useState<boolean>(false);
   const [battleOver, setBattleOver] = useState<boolean>(false);
   const [battleResult, setBattleResult] = useState<'victory' | 'defeat' | null>(null);
@@ -197,6 +198,10 @@ export const ArenaScreen: React.FC = () => {
   // Start Ranked Matchmaking Queue (Supports 1v1 and 2v2 Tag Team)
   const handleStartMatchmaking = () => {
     sound.playClick();
+    if (matchmakingTimerRef.current) {
+      clearInterval(matchmakingTimerRef.current);
+      matchmakingTimerRef.current = null;
+    }
     setIsMatchmaking(true);
     setMatchCountdown(3);
 
@@ -220,10 +225,13 @@ export const ArenaScreen: React.FC = () => {
     setPlayerAlly(allyFighter);
     setOpponentTrainer(randomNames[Math.floor(Math.random() * randomNames.length)]);
 
-    const timer = setInterval(() => {
+    matchmakingTimerRef.current = setInterval(() => {
       setMatchCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(timer);
+          if (matchmakingTimerRef.current) {
+            clearInterval(matchmakingTimerRef.current);
+            matchmakingTimerRef.current = null;
+          }
           startSlamMatch(randomOpp1, randomOpp2, allyFighter);
           return 0;
         }
@@ -232,6 +240,25 @@ export const ArenaScreen: React.FC = () => {
       });
     }, 900);
   };
+
+  const handleCancelMatchmaking = () => {
+    sound.playClick();
+    if (matchmakingTimerRef.current) {
+      clearInterval(matchmakingTimerRef.current);
+      matchmakingTimerRef.current = null;
+    }
+    setIsMatchmaking(false);
+    setMatchCountdown(3);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (matchmakingTimerRef.current) {
+        clearInterval(matchmakingTimerRef.current);
+        matchmakingTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Initialize and launch match
   const startSlamMatch = (opp: Animal, oppAlly?: Animal, ally?: Animal) => {
@@ -720,12 +747,12 @@ export const ArenaScreen: React.FC = () => {
           VIEW 1: ARENA LOBBY (Pet Slam 1v1 Queue)
          ========================================================================= */}
       {!inBattle && (
-        <div className="flex-1 flex flex-col p-3 sm:p-5 overflow-y-auto space-y-3 max-w-lg mx-auto w-full pb-28 overscroll-contain">
+        <div className="flex-1 flex flex-col p-3 sm:p-5 overflow-y-auto space-y-4 max-w-lg mx-auto w-full pb-28 overscroll-contain">
           {/* Header Stadium Banner */}
-          <div className="bg-gradient-to-r from-slate-100 via-white to-slate-100 dark:from-[#131B2D] dark:via-[#1A2640] dark:to-[#131B2D] border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-md dark:shadow-xl text-center relative overflow-hidden transition-colors">
+          <div className="shrink-0 bg-gradient-to-r from-slate-100 via-white to-slate-100 dark:from-[#131B2D] dark:via-[#1A2640] dark:to-[#131B2D] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-md dark:shadow-xl text-center relative overflow-hidden transition-colors">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#CCFF00]/10 rounded-full blur-2xl pointer-events-none" />
 
-            <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-slate-600 dark:text-neutral-400 mb-1.5">
+            <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-slate-600 dark:text-neutral-400 mb-2">
               <span className="flex items-center gap-1.5 text-slate-900 dark:text-white font-bold">
                 <Crown className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                 <span>Colosseum League</span>
@@ -736,14 +763,14 @@ export const ArenaScreen: React.FC = () => {
             <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-wider text-slate-900 dark:text-white">
               Pet Slam Arena
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-neutral-300 font-mono mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-neutral-300 font-mono mt-1">
               Real-Time 1v1 Pet Duels · Purebred Canines & Felines · 60 FPS Animated Combat
             </p>
           </div>
 
           {/* Interactive Combat Practice Drill Banner (Auto-prompted for 1st-time visitors, replayable anytime) */}
           {showTutorialPrompt ? (
-            <div className="bg-amber-50/90 dark:bg-gradient-to-r dark:from-amber-950/70 dark:via-[#151F35] dark:to-amber-950/70 border-2 border-amber-400 dark:border-[#CCFF00]/60 rounded-2xl p-3.5 shadow-md dark:shadow-[0_0_20px_rgba(204,255,0,0.2)] relative overflow-hidden animate-in fade-in transition-colors">
+            <div className="shrink-0 bg-amber-50/90 dark:bg-gradient-to-r dark:from-amber-950/70 dark:via-[#151F35] dark:to-amber-950/70 border-2 border-amber-400 dark:border-[#CCFF00]/60 rounded-2xl p-3.5 shadow-md dark:shadow-[0_0_20px_rgba(204,255,0,0.2)] relative overflow-hidden animate-in fade-in transition-colors">
               <div className="flex items-start justify-between gap-2.5">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-[#CCFF00] text-black font-black flex items-center justify-center text-lg shadow shrink-0">
@@ -971,28 +998,37 @@ export const ArenaScreen: React.FC = () => {
               })}
             </div>
 
-            {/* Big Action Battle Launch Button */}
-            <button
-              onClick={handleStartMatchmaking}
-              disabled={isMatchmaking}
-              className="w-full py-3.5 rounded-2xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(204,255,0,0.4)] flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98 mt-1"
-            >
-              {isMatchmaking ? (
-                <>
+            {/* Big Action Battle Launch Button & Cancel Matchmaking Controls */}
+            {isMatchmaking ? (
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full mt-1">
+                <button
+                  disabled
+                  className="flex-1 w-full py-3.5 rounded-2xl bg-[#CCFF00] text-black font-display font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(204,255,0,0.4)] flex items-center justify-center gap-2 cursor-wait"
+                >
                   <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
                   <span>Matching Opponent... ({matchCountdown}s)</span>
-                </>
-              ) : (
-                <>
-                  <Swords className="w-5 h-5 text-black" />
-                  <span>
-                    {battleMode === '2v2'
-                      ? 'Enter Arena (2v2 Tag Team)'
-                      : 'Enter Arena (Ranked 1v1 Slam)'}
-                  </span>
-                </>
-              )}
-            </button>
+                </button>
+                <button
+                  onClick={handleCancelMatchmaking}
+                  className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-display font-black text-xs uppercase tracking-wider shadow-lg border border-rose-400 cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-1.5 shrink-0"
+                  title="Cancel Matchmaking Search"
+                >
+                  <span>Cancel [✕]</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleStartMatchmaking}
+                className="w-full py-3.5 rounded-2xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(204,255,0,0.4)] flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98 mt-1"
+              >
+                <Swords className="w-5 h-5 text-black" />
+                <span>
+                  {battleMode === '2v2'
+                    ? 'Enter Arena (2v2 Tag Team)'
+                    : 'Enter Arena (Ranked 1v1 Slam)'}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       )}

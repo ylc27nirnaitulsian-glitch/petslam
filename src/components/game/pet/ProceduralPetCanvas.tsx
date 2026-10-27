@@ -309,8 +309,11 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       let headTilt = Math.sin(s.time * 1.4) * 0.05;
       let mouthHeight = 0;
 
-      // Species category check
-      const isCat = [
+      const curPalette = customPaletteRef.current || customPalette;
+      const curFeatures = customFeaturesRef.current || customFeatures;
+
+      // Species category check (honors customFeatures.isCat override)
+      const isCat = curFeatures?.isCat !== undefined ? curFeatures.isCat : [
         'tabby',
         'calico',
         'siamese',
@@ -321,17 +324,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         'british',
         'scottish',
       ].includes(species);
-      const isDog = [
-        'shiba',
-        'retriever',
-        'husky',
-        'bulldog',
-        'ignis',
-        'germanshepherd',
-        'rottweiler',
-        'doberman',
-        'corgi',
-      ].includes(species);
+      const isDog = !isCat;
 
       if (anim === 'idle') {
         squashX = 1 + breathCycle * 0.02;
@@ -906,58 +899,8 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       // F. EARS
       const earTwitch = Math.sin(s.time * 8) * (s.pettingIntensity > 0 ? 0.2 : 0.05);
 
-      if (curFeatures?.earType === 'floppy') {
-        [-1, 1].forEach((side) => {
-          ctx.save();
-          ctx.translate(side * 36, -42);
-          ctx.rotate(side * (0.15 + earTwitch));
-          ctx.fillStyle = primaryColor;
-          ctx.beginPath();
-          ctx.ellipse(0, 16, 14, 26, side * 0.1, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = earColor;
-          ctx.beginPath();
-          ctx.ellipse(0, 15, 8, 17, side * 0.1, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        });
-      } else if (curFeatures?.earType === 'pointed') {
-        [-1, 1].forEach((side) => {
-          ctx.save();
-          ctx.translate(side * 28, -58);
-          ctx.rotate(side * (0.24 - earTwitch));
-          ctx.fillStyle = primaryColor;
-          ctx.beginPath();
-          ctx.moveTo(-14, 15);
-          ctx.lineTo(0, -26);
-          ctx.lineTo(14, 15);
-          ctx.closePath();
-          ctx.fill();
-          ctx.fillStyle = earColor;
-          ctx.beginPath();
-          ctx.moveTo(-7, 12);
-          ctx.lineTo(0, -18);
-          ctx.lineTo(7, 12);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
-        });
-      } else if (curFeatures?.earType === 'round') {
-        [-1, 1].forEach((side) => {
-          ctx.save();
-          ctx.translate(side * 30, -56);
-          ctx.fillStyle = primaryColor;
-          ctx.beginPath();
-          ctx.arc(0, 0, 16, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = earColor;
-          ctx.beginPath();
-          ctx.arc(0, 2, 9, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        });
-      } else if (isCat) {
-        if (species === 'scottish') {
+      if (isCat) {
+        if (curFeatures?.earType === 'round' || species === 'scottish') {
           // Scottish Fold flat-folded rounded ears
           [-1, 1].forEach((side) => {
             ctx.save();
@@ -973,63 +916,69 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
             ctx.fill();
             ctx.restore();
           });
-        } else if (species === 'mainecoon') {
-          // Pointed Maine Coon lynx ears with top fur tufts
-          [-1, 1].forEach((side) => {
-            ctx.save();
-            ctx.translate(side * 28, -60);
-            ctx.rotate(side * (0.22 - earTwitch));
-            ctx.fillStyle = primaryColor;
-            ctx.beginPath();
-            ctx.moveTo(-16, 14);
-            ctx.lineTo(0, -32);
-            ctx.lineTo(16, 14);
-            ctx.closePath();
-            ctx.fill();
-
-            // Fur tuft at ear tip
-            ctx.strokeStyle = '#F1F5F9';
-            ctx.lineWidth = 2.2;
-            ctx.beginPath();
-            ctx.moveTo(0, -32);
-            ctx.lineTo(side * 5, -40);
-            ctx.stroke();
-
-            // Pink inner
-            ctx.fillStyle = earColor;
-            ctx.beginPath();
-            ctx.moveTo(-9, 10);
-            ctx.lineTo(0, -22);
-            ctx.lineTo(9, 10);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-          });
         } else {
-          // Pointed Cat Ears with Pink Inner Ear (Tabby, Bengal, British, Siamese, Blackcat)
+          // Sharp, pointed, sleek Cat Ears with Pink Inner Pocket & Fur Tufts
           [-1, 1].forEach((side) => {
             ctx.save();
-            ctx.translate(side * 28, -58);
-            ctx.rotate(side * (0.25 - earTwitch));
+            ctx.translate(side * 27, -56);
+            ctx.rotate(side * (0.26 - earTwitch));
             ctx.fillStyle = primaryColor;
             ctx.beginPath();
-            ctx.moveTo(-14, 14);
-            ctx.lineTo(0, -26);
-            ctx.lineTo(14, 14);
+            ctx.moveTo(-15, 14);
+            ctx.lineTo(0, -32);
+            ctx.lineTo(15, 14);
             ctx.closePath();
             ctx.fill();
 
-            // Pink inside
+            // Pink inside pocket
             ctx.fillStyle = earColor;
             ctx.beginPath();
             ctx.moveTo(-8, 10);
-            ctx.lineTo(0, -18);
+            ctx.lineTo(0, -22);
             ctx.lineTo(8, 10);
             ctx.closePath();
             ctx.fill();
+
+            // Ear edge highlight
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(-4, 6);
+            ctx.lineTo(side * 4, -8);
+            ctx.stroke();
+
             ctx.restore();
           });
         }
+      } else if (curFeatures?.earType === 'floppy' || species === 'retriever' || species === 'rottweiler') {
+        [-1, 1].forEach((side) => {
+          ctx.save();
+          ctx.translate(side * 36, -42);
+          ctx.rotate(side * (0.15 + earTwitch));
+          ctx.fillStyle = primaryColor;
+          ctx.beginPath();
+          ctx.ellipse(0, 16, 14, 26, side * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = earColor;
+          ctx.beginPath();
+          ctx.ellipse(0, 15, 8, 17, side * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      } else if (curFeatures?.earType === 'round' || species === 'bulldog') {
+        [-1, 1].forEach((side) => {
+          ctx.save();
+          ctx.translate(side * 30, -56);
+          ctx.fillStyle = primaryColor;
+          ctx.beginPath();
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = earColor;
+          ctx.beginPath();
+          ctx.arc(0, 2, 9, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
       } else if (species === 'corgi') {
         // Big perky Corgi fox ears!
         [-1, 1].forEach((side) => {
@@ -1046,87 +995,25 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
           ctx.fill();
           ctx.restore();
         });
-      } else if (species === 'retriever' || species === 'rottweiler') {
-        // Floppy Ears
-        [-1, 1].forEach((side) => {
-          ctx.save();
-          ctx.translate(side * 36, -42);
-          ctx.rotate(side * (0.15 + earTwitch));
-          ctx.fillStyle = secondaryColor;
-          ctx.beginPath();
-          ctx.ellipse(0, 14, 14, 24, side * 0.2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        });
-      } else if (species === 'bulldog') {
-        // Big round bat ears (Frenchie style)
-        [-1, 1].forEach((side) => {
-          ctx.save();
-          ctx.translate(side * 32, -62);
-          ctx.rotate(side * 0.2);
-          ctx.fillStyle = primaryColor;
-          ctx.beginPath();
-          ctx.ellipse(0, 0, 16, 22, side * 0.1, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = earColor;
-          ctx.beginPath();
-          ctx.ellipse(0, 2, 10, 15, side * 0.1, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        });
-      } else if (species === 'germanshepherd' || species === 'doberman') {
-        // High alert tall perky ears
-        [-1, 1].forEach((side) => {
-          ctx.save();
-          ctx.translate(side * 28, -62);
-          ctx.rotate(side * (0.16 - earTwitch));
-          ctx.fillStyle = primaryColor;
-          ctx.beginPath();
-          ctx.moveTo(-16, 16);
-          ctx.lineTo(0, -32);
-          ctx.lineTo(16, 16);
-          ctx.closePath();
-          ctx.fill();
-          ctx.fillStyle = earColor;
-          ctx.beginPath();
-          ctx.moveTo(-9, 10);
-          ctx.lineTo(0, -22);
-          ctx.lineTo(9, 10);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
-        });
-      } else if (species === 'kodiak') {
-        // Round Bear ears
-        [-1, 1].forEach((side) => {
-          ctx.fillStyle = primaryColor;
-          ctx.beginPath();
-          ctx.arc(side * 32, -62, 16, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = bellyColor;
-          ctx.beginPath();
-          ctx.arc(side * 32, -62, 9, 0, Math.PI * 2);
-          ctx.fill();
-        });
       } else {
-        // Perky Puppy / Wolf / Shiba Ears
+        // Canine alert upright ears (Shiba, German Shepherd, Husky)
         [-1, 1].forEach((side) => {
           ctx.save();
           ctx.translate(side * 28, -58);
-          ctx.rotate(side * (0.2 - earTwitch));
+          ctx.rotate(side * (0.22 - earTwitch));
           ctx.fillStyle = primaryColor;
           ctx.beginPath();
-          ctx.moveTo(-16, 12);
-          ctx.lineTo(0, -28);
-          ctx.lineTo(16, 12);
+          ctx.moveTo(-16, 14);
+          ctx.lineTo(0, -25);
+          ctx.lineTo(16, 14);
           ctx.closePath();
           ctx.fill();
 
-          ctx.fillStyle = bellyColor;
+          ctx.fillStyle = earColor;
           ctx.beginPath();
-          ctx.moveTo(-9, 8);
-          ctx.lineTo(0, -18);
-          ctx.lineTo(9, 8);
+          ctx.moveTo(-8, 10);
+          ctx.lineTo(0, -16);
+          ctx.lineTo(8, 10);
           ctx.closePath();
           ctx.fill();
           ctx.restore();
@@ -1181,37 +1068,63 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       }
 
       // G. MUZZLE & SNOUT
-      ctx.fillStyle = bellyColor;
-      ctx.beginPath();
-      ctx.ellipse(0, -20, 22, 16, 0, 0, Math.PI * 2);
-      ctx.fill();
+      if (isCat) {
+        // Cat cheek pads (dual cute rounded feline muzzle pads)
+        ctx.fillStyle = bellyColor;
+        ctx.beginPath();
+        ctx.ellipse(-9, -20, 13, 10, -0.1, 0, Math.PI * 2);
+        ctx.ellipse(9, -20, 13, 10, 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Dog muzzle / snout oval
+        ctx.fillStyle = bellyColor;
+        ctx.beginPath();
+        ctx.ellipse(0, -20, 24, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // CAT & CUSTOM WHISKERS
       const shouldDrawWhiskers = curFeatures?.hasWhiskers !== undefined ? curFeatures.hasWhiskers : isCat;
       if (shouldDrawWhiskers) {
-        ctx.strokeStyle = species === 'blackcat' ? '#94A3B8' : '#78716C';
-        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = species === 'blackcat' ? '#CBD5E1' : '#78716C';
+        ctx.lineWidth = 1.6;
         // Left whiskers
-        [-6, 0, 6].forEach((dy, i) => {
+        [-5, 0, 5].forEach((dy, i) => {
           ctx.beginPath();
-          ctx.moveTo(-14, -20 + dy);
-          ctx.lineTo(-44, -24 + dy + i * 2);
+          ctx.moveTo(-12, -20 + dy);
+          ctx.lineTo(-44, -23 + dy + i * 2);
           ctx.stroke();
         });
         // Right whiskers
-        [-6, 0, 6].forEach((dy, i) => {
+        [-5, 0, 5].forEach((dy, i) => {
           ctx.beginPath();
-          ctx.moveTo(14, -20 + dy);
-          ctx.lineTo(44, -24 + dy + i * 2);
+          ctx.moveTo(12, -20 + dy);
+          ctx.lineTo(44, -23 + dy + i * 2);
           ctx.stroke();
         });
       }
 
       // NOSE
       ctx.fillStyle = noseColor;
-      ctx.beginPath();
-      ctx.ellipse(0, -25, isCat ? 6 : 8, isCat ? 4.5 : 6, 0, 0, Math.PI * 2);
-      ctx.fill();
+      if (isCat) {
+        // Feline inverted triangular nose
+        ctx.beginPath();
+        ctx.moveTo(-6, -25);
+        ctx.lineTo(6, -25);
+        ctx.lineTo(0, -20);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Canine rounded nose with nostrils
+        ctx.beginPath();
+        ctx.ellipse(0, -26, 9.5, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(-3.5, -26, 1.5, 0, Math.PI * 2);
+        ctx.arc(3.5, -26, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // MOUTH & TONGUE
       ctx.strokeStyle = noseColor;

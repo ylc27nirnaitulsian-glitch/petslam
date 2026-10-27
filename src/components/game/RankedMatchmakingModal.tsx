@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Swords,
@@ -24,6 +24,7 @@ import {
   MatchFoundData,
   TickUpdateData,
   MatchFinishedData,
+  NetFighterSnapshot,
 } from '../../services/multiplayerNetcode';
 import { triggerHeavyImpactHaptic, triggerMediumImpactHaptic } from '../../utils/haptics';
 
@@ -44,6 +45,10 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
   const [resultData, setResultData] = useState<MatchFinishedData | null>(null);
   const [combatLogs, setCombatLogs] = useState<Array<{ text: string; type: string }>>([]);
 
+  const fallbackTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const botCombatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isBotMatchRef = useRef<boolean>(false);
+
   const isPlayer1 = matchData?.p1.id === (playerTag || 'player_1');
   const myFighter = isPlayer1 ? matchData?.p1.fighter : matchData?.p2.fighter;
   const opponentFighter = isPlayer1 ? matchData?.p2.fighter : matchData?.p1.fighter;
@@ -61,6 +66,15 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
 
   useEffect(() => {
     if (!isOpen) {
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+      if (botCombatIntervalRef.current) {
+        clearInterval(botCombatIntervalRef.current);
+        botCombatIntervalRef.current = null;
+      }
+      isBotMatchRef.current = false;
       if (phase === 'fighting' || phase === 'queuing') {
         multiplayerNetcode.leaveRoom();
         multiplayerNetcode.cancelQueue();
@@ -77,6 +91,11 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
       } else if (event === 'queue_confirmed') {
         setPhase('queuing');
       } else if (event === 'match_found') {
+        if (fallbackTimerRef.current) {
+          clearTimeout(fallbackTimerRef.current);
+          fallbackTimerRef.current = null;
+        }
+        isBotMatchRef.current = false;
         setMatchData(data);
         setPhase('matched');
         sound.playVictory();
@@ -111,7 +130,155 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
     };
   }, [isOpen, phase, isPlayer1]);
 
+  useEffect(() => {
+    return () => {
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+      if (botCombatIntervalRef.current) clearInterval(botCombatIntervalRef.current);
+    };
+  }, []);
+
   if (!isOpen) return null;
+
+  const startBotMatch = (effectivePet: any) => {
+    isBotMatchRef.current = true;
+    const botOpponents = [
+      { name: 'Apex Buster', trainer: 'Rival Kira', breed: 'Husky Storm', cp: 1180, hp: 1050, image: 'https://images.unsplash.com/photo-1537151625747-768eb6cf92b2?w=400&auto=format&fit=crop&q=80' },
+      { name: 'Shadow Saber', trainer: 'Grandmaster Kaito', breed: 'Bengal Stealth', cp: 1240, hp: 980, image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&auto=format&fit=crop&q=80' },
+      { name: 'Titan Corgi', trainer: 'Champion Luna', breed: 'Corgi Alpha', cp: 1120, hp: 1100, image: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&auto=format&fit=crop&q=80' },
+      { name: 'Solar Shiba', trainer: 'Sensei Kenji', breed: 'Shiba Blaze', cp: 1290, hp: 1020, image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&auto=format&fit=crop&q=80' },
+    ];
+    const bot = botOpponents[Math.floor(Math.random() * botOpponents.length)];
+
+    const myFighterSnap: NetFighterSnapshot = {
+      id: playerTag || 'player_1',
+      name: effectivePet.name,
+      species: effectivePet.species,
+      level: effectivePet.level,
+      hp: effectivePet.health || 1000,
+      maxHp: effectivePet.health || 1000,
+      energy: 3,
+      maxEnergy: 10,
+      damage: effectivePet.damage || 80,
+      defense: effectivePet.defense || 40,
+      speed: effectivePet.speed || 50,
+      cp: effectivePet.cp || 1200,
+      image: effectivePet.image || activeBeast.image,
+    };
+
+    const oppFighterSnap: NetFighterSnapshot = {
+      id: 'bot_rival',
+      name: bot.name,
+      species: bot.breed,
+      level: effectivePet.level,
+      hp: bot.hp,
+      maxHp: bot.hp,
+      energy: 3,
+      maxEnergy: 10,
+      damage: 85,
+      defense: 45,
+      speed: 60,
+      cp: bot.cp,
+      image: bot.image,
+    };
+
+    const simulatedMatch: MatchFoundData = {
+      roomId: `sim_${Date.now()}`,
+      p1: { id: playerTag || 'player_1', name: trainerName || 'Trainer', cp: myFighterSnap.cp, rating: 1200, fighter: myFighterSnap },
+      p2: { id: 'bot_rival', name: bot.trainer, cp: bot.cp, rating: 1210, fighter: oppFighterSnap },
+      countdown: 3,
+    };
+
+    setMatchData(simulatedMatch);
+    setPhase('matched');
+    sound.playVictory();
+
+    let cd = 3;
+    setCountdown(3);
+    const cdTimer = setInterval(() => {
+      cd -= 1;
+      setCountdown(cd);
+      if (cd <= 0) {
+        clearInterval(cdTimer);
+        setPhase('fighting');
+        initBotFighting(myFighterSnap, oppFighterSnap, bot.name);
+      }
+    }, 1000);
+  };
+
+  const initBotFighting = (p1Snap: NetFighterSnapshot, p2Snap: NetFighterSnapshot, botName: string) => {
+    let p1HpCur = p1Snap.hp;
+    let p2HpCur = p2Snap.hp;
+    let p1EnergyCur = 3.0;
+    let p2EnergyCur = 3.0;
+    let p1Over = false;
+    let p2Over = false;
+
+    setTickData({
+      roomId: 'sim_room',
+      tick: 1,
+      p1: { id: p1Snap.id, hp: p1HpCur, maxHp: p1Snap.maxHp, energy: p1EnergyCur, isOverdrive: p1Over },
+      p2: { id: p2Snap.id, hp: p2HpCur, maxHp: p2Snap.maxHp, energy: p2EnergyCur, isOverdrive: p2Over },
+      logs: [{ tick: 1, text: `⚔️ Ranked Match Engaged vs ${botName}!`, type: 'info' }],
+    });
+
+    if (botCombatIntervalRef.current) clearInterval(botCombatIntervalRef.current);
+    botCombatIntervalRef.current = setInterval(() => {
+      p1EnergyCur = Math.min(10, p1EnergyCur + 0.35);
+      p2EnergyCur = Math.min(10, p2EnergyCur + 0.35);
+
+      const newLogs: Array<{ tick: number; text: string; type: string }> = [];
+
+      if (p2EnergyCur >= 6 && !p2Over && Math.random() < 0.25) {
+        p2EnergyCur -= 6;
+        p2Over = true;
+        const dmg = Math.round(180 + Math.random() * 60);
+        p1HpCur = Math.max(0, p1HpCur - dmg);
+        newLogs.push({ tick: Date.now(), text: `🔥 ${botName} activated OVERDRIVE for ${dmg} DMG!`, type: 'overdrive' });
+      } else if (p2EnergyCur >= 3 && Math.random() < 0.35) {
+        p2EnergyCur -= 3;
+        const dmg = Math.round(75 + Math.random() * 45);
+        p1HpCur = Math.max(0, p1HpCur - dmg);
+        newLogs.push({ tick: Date.now(), text: `💥 ${botName} struck with Pounce for ${dmg} DMG!`, type: 'strike' });
+      }
+
+      setTickData({
+        roomId: 'sim_room',
+        tick: Date.now(),
+        p1: { id: p1Snap.id, hp: p1HpCur, maxHp: p1Snap.maxHp, energy: p1EnergyCur, isOverdrive: p1Over },
+        p2: { id: p2Snap.id, hp: p2HpCur, maxHp: p2Snap.maxHp, energy: p2EnergyCur, isOverdrive: p2Over },
+        logs: newLogs,
+      });
+
+      if (newLogs.length > 0) {
+        setCombatLogs((prev) => [...prev, ...newLogs].slice(-5));
+      }
+
+      if (p1HpCur <= 0 || p2HpCur <= 0) {
+        if (botCombatIntervalRef.current) {
+          clearInterval(botCombatIntervalRef.current);
+          botCombatIntervalRef.current = null;
+        }
+        const won = p1HpCur > 0;
+        setResultData({
+          roomId: 'sim_room',
+          winnerId: won ? p1Snap.id : p2Snap.id,
+          p1Result: { id: p1Snap.id, won, ratingDelta: won ? 24 : -16, rewardCredits: won ? 350 : 100, rewardExp: won ? 150 : 50 },
+          p2Result: { id: p2Snap.id, won: !won, ratingDelta: !won ? 24 : -16, rewardCredits: 0, rewardExp: 0 },
+          finalTick: 100,
+        });
+        setPhase('finished');
+        if (won) {
+          sound.playVictory();
+          triggerVictoryExplosion();
+          triggerHeavyImpactHaptic();
+          addCredits(350);
+        } else {
+          sound.playDefeat();
+          addCredits(100);
+        }
+      }
+    }, 600);
+  };
 
   const handleStartQueue = () => {
     sound.playClick();
@@ -128,6 +295,12 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
       image: activeBeast.image,
     };
 
+    setPhase('queuing');
+    if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    fallbackTimerRef.current = setTimeout(() => {
+      startBotMatch(effectivePet);
+    }, 3800);
+
     multiplayerNetcode.queueRanked({
       playerId: playerTag || 'player_1',
       playerName: trainerName || 'Trainer',
@@ -138,6 +311,15 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
 
   const handleCancelQueue = () => {
     sound.playClick();
+    if (fallbackTimerRef.current) {
+      clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    }
+    if (botCombatIntervalRef.current) {
+      clearInterval(botCombatIntervalRef.current);
+      botCombatIntervalRef.current = null;
+    }
+    isBotMatchRef.current = false;
     multiplayerNetcode.cancelQueue();
     setPhase('idle');
   };
@@ -145,12 +327,68 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
   const handleExecuteMove = (moveId: string) => {
     sound.playAttack();
     triggerMediumImpactHaptic();
+    if (isBotMatchRef.current && tickData) {
+      const costs: Record<string, { cost: number; dmg: number; name: string }> = {
+        strike: { cost: 2, dmg: 85, name: 'Strike' },
+        pounce: { cost: 3, dmg: 140, name: 'Pounce' },
+        rend: { cost: 4, dmg: 210, name: 'Fang Rend' },
+      };
+      const move = costs[moveId];
+      if (move && tickData.p1.energy >= move.cost) {
+        const nextEnergy = tickData.p1.energy - move.cost;
+        const nextOppHp = Math.max(0, tickData.p2.hp - move.dmg);
+        const log = { tick: Date.now(), text: `⚡ You unleashed ${move.name} for ${move.dmg} DMG!`, type: 'crit' };
+        setCombatLogs((prev) => [...prev, log].slice(-5));
+        setTickData((prev) => prev ? {
+          ...prev,
+          p1: { ...prev.p1, energy: nextEnergy },
+          p2: { ...prev.p2, hp: nextOppHp },
+        } : null);
+        if (nextOppHp <= 0) {
+          if (botCombatIntervalRef.current) {
+            clearInterval(botCombatIntervalRef.current);
+            botCombatIntervalRef.current = null;
+          }
+          setPhase('finished');
+          sound.playVictory();
+          triggerVictoryExplosion();
+          triggerHeavyImpactHaptic();
+          addCredits(350);
+        }
+      }
+      return;
+    }
     multiplayerNetcode.sendMove(moveId);
   };
 
   const handleExecuteOverdrive = () => {
     sound.playVictory();
     triggerHeavyImpactHaptic();
+    if (isBotMatchRef.current && tickData) {
+      if (tickData.p1.energy >= 6 && !tickData.p1.isOverdrive) {
+        const nextEnergy = tickData.p1.energy - 6;
+        const nextOppHp = Math.max(0, tickData.p2.hp - 290);
+        const log = { tick: Date.now(), text: `🔥 OVERDRIVE UNLEASHED! Crushing 290 DMG!`, type: 'overdrive' };
+        setCombatLogs((prev) => [...prev, log].slice(-5));
+        setTickData((prev) => prev ? {
+          ...prev,
+          p1: { ...prev.p1, energy: nextEnergy, isOverdrive: true },
+          p2: { ...prev.p2, hp: nextOppHp },
+        } : null);
+        if (nextOppHp <= 0) {
+          if (botCombatIntervalRef.current) {
+            clearInterval(botCombatIntervalRef.current);
+            botCombatIntervalRef.current = null;
+          }
+          setPhase('finished');
+          sound.playVictory();
+          triggerVictoryExplosion();
+          triggerHeavyImpactHaptic();
+          addCredits(350);
+        }
+      }
+      return;
+    }
     multiplayerNetcode.sendOverdrive();
   };
 
@@ -282,9 +520,10 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
 
               <button
                 onClick={handleCancelQueue}
-                className="py-2 px-5 rounded-xl bg-white/10 hover:bg-white/20 text-neutral-300 font-mono text-xs font-bold uppercase cursor-pointer border border-white/10"
+                className="py-2.5 px-6 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white font-mono text-xs font-bold uppercase cursor-pointer border border-rose-400 shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 mx-auto"
               >
-                Cancel Search
+                <X className="w-4 h-4" />
+                <span>Cancel Search</span>
               </button>
             </div>
           )}

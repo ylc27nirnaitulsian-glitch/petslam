@@ -70,6 +70,7 @@ export interface PetCustomPalette {
 }
 
 export interface PetCustomFeatures {
+  isCat?: boolean;
   earType?: 'pointed' | 'floppy' | 'round';
   hasWhiskers?: boolean;
   eyePatch?: boolean;

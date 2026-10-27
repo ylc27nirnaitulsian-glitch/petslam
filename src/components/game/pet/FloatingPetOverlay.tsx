@@ -330,7 +330,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
       )}
 
       {/* Radial Menu */}
-      {showRadialMenu && (
+      {showRadialMenu && !isMinimized && (
         <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-48 h-32 pointer-events-auto z-40 animate-in fade-in zoom-in-90">
           <div className="relative w-full h-full flex items-center justify-center">
             {/* Top: Feed Berry */}
@@ -423,11 +423,13 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
             sound.playClick();
             setIsMinimized(false);
           }}
-          className="bg-[#0F172A]/90 hover:bg-[#1E293B] border border-[#CCFF00]/50 text-white px-3 py-1.5 rounded-full shadow-2xl flex items-center gap-2 cursor-pointer text-xs font-bold"
+          className="bg-black/95 hover:bg-[#1E293B] border-2 border-[#CCFF00] text-white px-3.5 py-1.5 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.35)] flex items-center gap-2 cursor-pointer text-xs font-mono font-bold active:scale-95 transition-all"
+          title="Click to Expand Screen Buddy"
         >
           <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] animate-pulse" />
-          <span>{activeBeast.name} (Screen Buddy)</span>
-          <ChevronUp className="w-3.5 h-3.5 text-neutral-400" />
+          <span className="text-[#CCFF00] font-black">{activeBeast.name}</span>
+          <span className="text-neutral-300 font-normal">(Expand)</span>
+          <ChevronUp className="w-3.5 h-3.5 text-[#CCFF00]" />
         </button>
       ) : (
         <div
@@ -505,7 +507,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                sound.playClick();
                 setIsMinimized(true);
+                setShowRadialMenu(false);
+                setSpeechBubble(null);
               }}
               className="text-neutral-400 hover:text-white p-1 rounded"
               title="Minimize Companion"
