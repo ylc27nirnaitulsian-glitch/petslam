@@ -2,29 +2,39 @@
 <html lang="en" class="dark scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>PET SLAM – Own Your Beast. Rule the Arena.</title>
-    <meta name="description" content="PET SLAM is where virtual animal ownership meets competitive gaming. Acquire real beasts, train attributes, compete in esports battles, and rule the global arena." />
+    <meta name="description" content="PET SLAM is where virtual animal ownership meets competitive gaming. Acquire real beasts, train attributes, compete in 60 FPS esports battles, and rule the global arena." />
     
+    <!-- PWA & Mobile Web App Meta -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0B0E14" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PET SLAM" />
+    <link rel="apple-touch-icon" href="/assets/hero_beast_arena_1791711055803-Ddwlz3hy.jpg" />
+
     <!-- Canonical & Robots for Google Search Console -->
-    <link rel="canonical" href="https://petslam.com/" />
+    <link rel="canonical" href="https://petslam.app/" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
 
     <!-- Google Search Console Verification Meta Tag -->
-    <!-- Can be populated via VITE_GOOGLE_SITE_VERIFICATION in .env -->
     <meta name="google-site-verification" content="%VITE_GOOGLE_SITE_VERIFICATION%" />
 
     <!-- Open Graph Metadata -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://petslam.com/" />
+    <meta property="og:url" content="https://petslam.app/" />
     <meta property="og:title" content="PET SLAM – Own Your Beast. Rule the Arena." />
-    <meta property="og:description" content="PET SLAM is where virtual animal ownership meets competitive gaming. Acquire real beasts, train attributes, compete in esports battles, and rule the global arena." />
+    <meta property="og:description" content="PET SLAM is where virtual animal ownership meets competitive gaming. Acquire real beasts, train attributes, compete in 60 FPS esports battles, and rule the global arena." />
     <meta property="og:site_name" content="PET SLAM" />
+    <meta property="og:image" content="https://petslam.app/assets/hero_beast_arena_1791711055803-Ddwlz3hy.jpg" />
     
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="PET SLAM – Own Your Beast. Rule the Arena." />
     <meta name="twitter:description" content="PET SLAM is where virtual animal ownership meets competitive gaming. Acquire real beasts, train attributes, and compete for the top spot." />
+    <meta name="twitter:image" content="https://petslam.app/assets/hero_beast_arena_1791711055803-Ddwlz3hy.jpg" />
     
     <!-- Preconnect Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,25 +48,25 @@
       "@graph": [
         {
           "@type": "WebApplication",
-          "@id": "https://petslam.com/#webapp",
+          "@id": "https://petslam.app/#webapp",
           "name": "PET SLAM",
-          "url": "https://petslam.com/",
+          "url": "https://petslam.app/",
           "applicationCategory": "GameApplication",
           "operatingSystem": "All",
-          "description": "Virtual animal ownership meets competitive esports gaming. Acquire beasts, upgrade attributes, compete in the arena, and dominate leaderboards."
+          "description": "Virtual animal ownership meets competitive esports gaming. Acquire beasts, upgrade attributes, compete in the 60 FPS arena, and dominate leaderboards."
         },
         {
           "@type": "Organization",
-          "@id": "https://petslam.com/#organization",
+          "@id": "https://petslam.app/#organization",
           "name": "PET SLAM",
-          "url": "https://petslam.com/",
-          "logo": "https://petslam.com/assets/hero_beast_arena.jpg"
+          "url": "https://petslam.app/",
+          "logo": "https://petslam.app/assets/hero_beast_arena_1791711055803-Ddwlz3hy.jpg"
         }
       ]
     }
     </script>
   </head>
-  <body class="bg-[#0B0E14] text-neutral-100 antialiased selection:bg-[#CCFF00] selection:text-black min-h-screen">
+  <body class="bg-[#0B0E14] text-neutral-100 antialiased selection:bg-[#CCFF00] selection:text-black min-h-screen overflow-x-hidden">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

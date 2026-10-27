@@ -1,0 +1,39 @@
+{
+  "name": "PET SLAM: Esports Animal Battles & Companion",
+  "short_name": "PET SLAM",
+  "description": "Virtual animal ownership meets competitive esports gaming. Acquire beasts, upgrade attributes, compete in the 60 FPS arena, and rule the global leaderboards.",
+  "start_url": "/#game",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0B0E14",
+  "theme_color": "#0B0E14",
+  "icons": [
+    {
+      "src": "/assets/hero_beast_arena_1791711055803-Ddwlz3hy.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment", "sports"],
+  "shortcuts": [
+    {
+      "name": "Battle Arena",
+      "short_name": "Arena",
+      "description": "Enter the live 60 FPS combat arena",
+      "url": "/#arena"
+    },
+    {
+      "name": "Pet Sanctuary",
+      "short_name": "Sanctuary",
+      "description": "Care for and train your active pet",
+      "url": "/#sanctuary"
+    },
+    {
+      "name": "Auction House",
+      "short_name": "Auctions",
+      "description": "Trade rare pedigree beasts",
+      "url": "/#auctions"
+    }
+  ]
+}

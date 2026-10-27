@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GameProvider } from './context/GameContext';
 import { PetCompanionProvider } from './context/PetCompanionContext';
 import { PetSlamTitleScreen } from './components/game/PetSlamTitleScreen';
-import { MobileGameContainer } from './components/game/MobileGameContainer';
+import { DualOrientationShell } from './components/layout/DualOrientationShell';
 import { SystemRequiredDetailsPage } from './components/SystemRequiredDetailsPage';
 import { AlphaQueueModal } from './components/game/AlphaQueueModal';
 import { PetSlamIntroSplash } from './components/game/PetSlamIntroSplash';
@@ -76,7 +76,10 @@ export default function App() {
             onOpenSystemDetails={() => setShowSystemDetailsDirect(true)}
           />
         ) : (
-          <MobileGameContainer onReturnToTitle={() => setHasEnteredGame(false)} />
+          <DualOrientationShell
+            onReturnToTitle={() => setHasEnteredGame(false)}
+            onOpenSystemDetails={() => setShowSystemDetailsDirect(true)}
+          />
         )}
         </div>
       </PetCompanionProvider>

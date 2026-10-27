@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://petslam.com/sitemap.xml
+Sitemap: https://petslam.app/sitemap.xml
