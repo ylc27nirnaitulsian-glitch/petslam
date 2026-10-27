@@ -50,11 +50,10 @@ export const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({
     ? `${clarityId.slice(0, 3)}••••${clarityId.slice(-3)}`
     : 'Simulated Local Telemetry';
 
-  const hasGsc = !!import.meta.env.VITE_GOOGLE_SITE_VERIFICATION;
-  const gscToken = (import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string) || '';
-  const maskedGsc = gscToken
-    ? `${gscToken.slice(0, 4)}••••${gscToken.slice(-4)}`
-    : 'Dynamic Injected Token';
+  const gscToken =
+    (import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string) ||
+    'j_EqV8f-3AEKu3a7vylHiJzMEXKiStUzD0RGf6vPCs4';
+  const maskedGsc = `${gscToken.slice(0, 6)}••••${gscToken.slice(-4)}`;
 
   const isDodoConfigured =
     (typeof window !== 'undefined' && (window as any).DODO_SIMULATION === false) || false;
