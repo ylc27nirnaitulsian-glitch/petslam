@@ -163,13 +163,28 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
             }}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold cursor-pointer transition-all ${
               isOverlayActive
-                ? 'bg-cyan-500 text-black shadow-xs'
+                ? 'bg-cyan-500 text-black shadow-xs font-black'
                 : 'bg-white/10 text-neutral-300 hover:text-white'
             }`}
           >
             {isOverlayActive ? 'Dock' : 'Summon'}
           </button>
         </div>
+
+        <button
+          onClick={() => {
+            sound.playClick();
+            toggleOverlay();
+          }}
+          className={`w-full mt-2 py-1.5 px-2 rounded-xl text-[10px] font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border ${
+            isOverlayActive
+              ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-sm'
+              : 'bg-white/5 border-white/10 text-neutral-300 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          <span>🐾</span>
+          <span>{isOverlayActive ? 'Buddy Roaming Active 🟢' : 'Preview Desktop Buddy on Screen'}</span>
+        </button>
       </div>
 
       {/* 3. Live Auction House Ticker */}

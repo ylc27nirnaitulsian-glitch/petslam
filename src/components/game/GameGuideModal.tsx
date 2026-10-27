@@ -19,10 +19,15 @@ import { sound } from '../../utils/audio';
 interface GameGuideModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onStartPracticeDrill?: () => void;
 }
 
-export const GameGuideModal: React.FC<GameGuideModalProps> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'combat' | 'training' | 'armory' | 'market' | 'ranking'>('combat');
+export const GameGuideModal: React.FC<GameGuideModalProps> = ({
+  isOpen,
+  onClose,
+  onStartPracticeDrill,
+}) => {
+  const [activeTab, setActiveTab] = useState<'roadmap' | 'combat' | 'training' | 'armory' | 'market' | 'ranking'>('roadmap');
 
   if (!isOpen) return null;
 
@@ -58,6 +63,21 @@ export const GameGuideModal: React.FC<GameGuideModalProps> = ({ isOpen, onClose 
 
         {/* Navigation Tabs */}
         <div className="flex gap-1.5 overflow-x-auto py-2.5 border-b border-white/5 scrollbar-none">
+          <button
+            onClick={() => {
+              setActiveTab('roadmap');
+              sound.playClick();
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'roadmap'
+                ? 'bg-[#CCFF00] text-black shadow-md font-black'
+                : 'bg-[#151822] text-neutral-400 hover:text-white border border-white/5'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>🗺️ Progression Map</span>
+          </button>
+
           <button
             onClick={() => {
               setActiveTab('combat');
@@ -136,6 +156,123 @@ export const GameGuideModal: React.FC<GameGuideModalProps> = ({ isOpen, onClose 
 
         {/* Body Content */}
         <div className="flex-1 overflow-y-auto py-3 space-y-3.5 text-xs text-neutral-300">
+          {/* TAB 0: 5-PHASE PROGRESSION ROADMAP */}
+          {activeTab === 'roadmap' && (
+            <div className="space-y-3">
+              {/* Interactive Combat Drill Callout Card */}
+              {onStartPracticeDrill && (
+                <div className="bg-gradient-to-r from-amber-500/20 via-[#18233C] to-amber-500/20 border-2 border-[#CCFF00] rounded-2xl p-3.5 shadow-lg flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-1.5 text-[#CCFF00] font-black text-xs uppercase">
+                      <span>🥋</span>
+                      <span>30-Second Combat Practice Drill</span>
+                      <span className="bg-[#CCFF00] text-black px-1.5 py-0.2 rounded font-mono text-[9px] font-bold">
+                        +250 CR
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-neutral-300 mt-0.5">
+                      Practice Pounce [1], Iron Guard [3], PET SLAM [SPACE], and Tag-In [Q] in a real-time dojo!
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      onClose();
+                      onStartPracticeDrill();
+                    }}
+                    className="py-2 px-3 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer shadow-md shrink-0 active:scale-95"
+                  >
+                    Launch Drill 🥋
+                  </button>
+                </div>
+              )}
+
+              {/* Visual Progression Map Header */}
+              <div className="bg-[#141722] border border-white/10 rounded-2xl p-3">
+                <h3 className="font-display font-black text-xs uppercase text-white tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-[#CCFF00]" />
+                  <span>The 5-Step PET SLAM Journey</span>
+                </h3>
+                <p className="text-[11px] text-neutral-400 mt-0.5">
+                  From real-world photo scanner to desktop screen companion:
+                </p>
+              </div>
+
+              {/* 5 Progression Steps */}
+              <div className="space-y-2">
+                <div className="bg-[#161822] border border-cyan-500/30 rounded-xl p-3 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-300 font-black text-xs flex items-center justify-center shrink-0">
+                    📸 1
+                  </div>
+                  <div>
+                    <h4 className="font-display font-bold text-white text-xs">
+                      Scan Real Pet Photo (AI Studio)
+                    </h4>
+                    <p className="text-[11px] text-neutral-400 mt-0.5 leading-snug">
+                      Snap or upload a photo of your dog or cat. Gemini AI analyzes breed, coat colors, and assigns competitive Combat Power stats.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-[#161822] border border-pink-500/30 rounded-xl p-3 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-pink-500/20 text-pink-300 font-black text-xs flex items-center justify-center shrink-0">
+                    🏡 2
+                  </div>
+                  <div>
+                    <h4 className="font-display font-bold text-white text-xs">
+                      Train in Sanctuary & Conditioning Gym
+                    </h4>
+                    <p className="text-[11px] text-neutral-400 mt-0.5 leading-snug">
+                      Feed treats, wash your pet, stroke affection, and train at the Gym for permanent HP, Speed, and Jaw Bite Force upgrades.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-[#161822] border border-[#CCFF00]/40 rounded-xl p-3 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#CCFF00]/20 text-[#CCFF00] font-black text-xs flex items-center justify-center shrink-0">
+                    ⚔️ 3
+                  </div>
+                  <div>
+                    <h4 className="font-display font-bold text-white text-xs">
+                      Ranked Battles in Colosseum Arena (1v1 & 2v2)
+                    </h4>
+                    <p className="text-[11px] text-neutral-400 mt-0.5 leading-snug">
+                      Climb the global esports ladder! Use Clash-style Elixir timing, dodge attacks, block with Iron Guard, and trigger 60 FPS Overdrive Slams.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-[#161822] border border-amber-500/30 rounded-xl p-3 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 font-black text-xs flex items-center justify-center shrink-0">
+                    ⚖️ 4
+                  </div>
+                  <div>
+                    <h4 className="font-display font-bold text-white text-xs">
+                      Trade in Live Real-Time Auction House
+                    </h4>
+                    <p className="text-[11px] text-neutral-400 mt-0.5 leading-snug">
+                      Bid against rival trainers for apex purebreds and legendary animals, or list your trained champions for instant credit buyouts.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-[#161822] border border-purple-500/30 rounded-xl p-3 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-300 font-black text-xs flex items-center justify-center shrink-0">
+                    🖥️ 5
+                  </div>
+                  <div>
+                    <h4 className="font-display font-bold text-white text-xs">
+                      Export Desktop Buddy (Chrome Extension)
+                    </h4>
+                    <p className="text-[11px] text-neutral-400 mt-0.5 leading-snug">
+                      Export your exact active pet into a packaged browser companion that roams across your screen with voice repeater & posture alerts!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'combat' && (
             <div className="space-y-3">
               <div className="bg-[#141722] border border-[#CCFF00]/20 rounded-2xl p-3.5">

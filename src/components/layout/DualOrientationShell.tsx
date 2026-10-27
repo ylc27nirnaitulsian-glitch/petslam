@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
+import { usePetCompanion } from '../../context/PetCompanionContext';
 import { GameTopBar } from '../game/GameTopBar';
 import { DesktopNavRail, MainNavId } from './DesktopNavRail';
 import { DesktopTelemetryDock } from './DesktopTelemetryDock';
 import { MobileBottomDock } from './MobileBottomDock';
 import { HeroLandingDrawer } from './HeroLandingDrawer';
 import { FloatingPetOverlay } from '../game/pet/FloatingPetOverlay';
+import { sound } from '../../utils/audio';
+import { triggerVictoryExplosion } from '../../utils/confetti';
 
 // Screens & Modals
 import { ArenaScreen } from '../game/screens/ArenaScreen';
@@ -18,7 +21,7 @@ import { PetAuctionHouseModal } from '../game/pet/PetAuctionHouseModal';
 import { ExtensionExporterModal } from '../game/pet/ExtensionExporterModal';
 import { FriendsHubModal } from '../game/FriendsHubModal';
 import { VipPassesModal } from '../game/VipPassesModal';
-import { RotateCw, Smartphone } from 'lucide-react';
+import { RotateCw, Smartphone, Sparkles } from 'lucide-react';
 
 interface DualOrientationShellProps {
   onReturnToTitle?: () => void;
@@ -29,11 +32,13 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   onReturnToTitle,
   onOpenSystemDetails,
 }) => {
-  const { soundEnabled, toggleSound } = useGame();
+  const { soundEnabled, toggleSound, addCredits } = useGame();
+  const { pet } = usePetCompanion();
 
   const [currentTab, setCurrentTab] = useState<MainNavId>('arena');
   const [showInfoDrawer, setShowInfoDrawer] = useState<boolean>(false);
   const [showVipStore, setShowVipStore] = useState<boolean>(false);
+  const [companionToast, setCompanionToast] = useState<string | null>(null);
 
   // Dedicated Modal States
   const [studioModalOpen, setStudioModalOpen] = useState<boolean>(false);
@@ -66,6 +71,43 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
     };
   }, []);
 
+  // Chrome Extension Companion Bridge (postMessage Handshake)
+  useEffect(() => {
+    const handleExtensionMessage = (event: MessageEvent) => {
+      if (
+        event.data?.type === 'PET_SLAM_EXTENSION_HANDSHAKE' ||
+        event.data?.type === 'PET_SLAM_BUDDY_CONNECTED'
+      ) {
+        const hasClaimed = localStorage.getItem('petslam_extension_linked') === 'true';
+        if (!hasClaimed) {
+          localStorage.setItem('petslam_extension_linked', 'true');
+          addCredits(500);
+          sound.playVictory();
+          triggerVictoryExplosion();
+          setCompanionToast('🎉 Companion Linked! +500 Slam Credits Awarded!');
+          setTimeout(() => setCompanionToast(null), 5000);
+        } else {
+          sound.playClick();
+          setCompanionToast('✓ Desktop Companion Synced!');
+          setTimeout(() => setCompanionToast(null), 3000);
+        }
+
+        window.postMessage(
+          {
+            type: 'PET_SLAM_COMPANION_ACK',
+            version: '2.0',
+            pet,
+            timestamp: Date.now(),
+          },
+          '*'
+        );
+      }
+    };
+
+    window.addEventListener('message', handleExtensionMessage);
+    return () => window.removeEventListener('message', handleExtensionMessage);
+  }, [addCredits, pet]);
+
   const handleToggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -97,6 +139,16 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
 
   return (
     <div className="relative w-full h-[100dvh] bg-[#07090E] text-white flex overflow-hidden select-none">
+      {/* Floating Extension Companion Linked Toast */}
+      {companionToast && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 duration-300 pointer-events-none">
+          <div className="px-4 py-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-cyan-600 to-emerald-600 text-white font-mono font-black text-xs sm:text-sm shadow-[0_0_30px_rgba(0,229,255,0.6)] border-2 border-white flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#CCFF00] animate-spin" />
+            <span>{companionToast}</span>
+          </div>
+        </div>
+      )}
+
       {/* 1. Left Glassmorphic Rail (Desktop min-width: 1024px) */}
       <DesktopNavRail
         currentTab={currentTab}
@@ -114,6 +166,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
         <GameTopBar
           onOpenSystemDetails={onOpenSystemDetails || (() => setShowInfoDrawer(true))}
           onReturnToTitle={onReturnToTitle}
+          onStartPracticeDrill={() => setCurrentTab('arena')}
         />
 
         {/* Mobile Orientation Suggestion Banner in Arena */}

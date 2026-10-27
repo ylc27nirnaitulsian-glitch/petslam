@@ -12,6 +12,8 @@ import {
   Radio,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
+import { usePetCompanion } from '../../context/PetCompanionContext';
+import { sound } from '../../utils/audio';
 import { GameGuideModal } from './GameGuideModal';
 import { AccountAuthModal } from './AccountAuthModal';
 import { FriendsHubModal } from './FriendsHubModal';
@@ -22,11 +24,13 @@ interface GameTopBarProps {
   onOpenSystemDetails: () => void;
   onReturnToTitle?: () => void;
   onChallengeFriend?: (friend: any) => void;
+  onStartPracticeDrill?: () => void;
 }
 
 export const GameTopBar: React.FC<GameTopBarProps> = ({
   onReturnToTitle,
   onChallengeFriend,
+  onStartPracticeDrill,
 }) => {
   const {
     trainerName,
@@ -38,6 +42,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
     soundEnabled,
     toggleSound,
   } = useGame();
+  const { isOverlayActive, toggleOverlay } = usePetCompanion();
 
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -111,6 +116,25 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
             </span>
           </div>
 
+          {/* Live Desktop Buddy Toggle Button */}
+          <button
+            onClick={() => {
+              sound.playClick();
+              toggleOverlay();
+            }}
+            className={`flex items-center gap-1 rounded-xl px-2 py-1 text-xs font-mono font-bold transition-all cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+              isOverlayActive
+                ? 'bg-cyan-500/20 border border-cyan-400 text-cyan-300'
+                : 'bg-white/5 hover:bg-white/10 border border-white/15 text-neutral-300 hover:text-white'
+            }`}
+            title={isOverlayActive ? 'Companion Roaming Screen (Click to Dock)' : 'Summon Live Screen Companion'}
+          >
+            <span className="text-xs">🐾</span>
+            <span className="text-[10px] hidden md:inline">
+              {isOverlayActive ? 'Buddy Live 🟢' : 'Summon Buddy'}
+            </span>
+          </button>
+
           {/* VIP Pass Button */}
           <button
             onClick={() => setVipModalOpen(true)}
@@ -166,7 +190,13 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
       </header>
 
       {/* Guide Modal */}
-      {guideModalOpen && <GameGuideModal isOpen={guideModalOpen} onClose={() => setGuideModalOpen(false)} />}
+      {guideModalOpen && (
+        <GameGuideModal
+          isOpen={guideModalOpen}
+          onClose={() => setGuideModalOpen(false)}
+          onStartPracticeDrill={onStartPracticeDrill}
+        />
+      )}
 
       {/* Account Auth Modal (Google Player Hub) */}
       {authModalOpen && (

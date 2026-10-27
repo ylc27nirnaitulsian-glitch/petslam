@@ -113,6 +113,11 @@ export const ExtensionExporterModal: React.FC<ExtensionExporterModalProps> = ({ 
   const [showPassModal, setShowPassModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'popup' | 'kennel' | 'radar' | 'install'>('popup');
   const [previewSpecies, setPreviewSpecies] = useState<PetSpecies>(pet.species);
+  const [copiedExtensionUrl, setCopiedExtensionUrl] = useState(false);
+  const [isExtensionLinked, setIsExtensionLinked] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('petslam_extension_linked') === 'true';
+  });
 
   // All 16 Pet Breeds (8 Dogs & 8 Cats) - 100% Uniform with App
   const allDogBreeds: { id: PetSpecies; name: string; breed: string; cp: number; tag: string }[] = [
@@ -157,6 +162,22 @@ export const ExtensionExporterModal: React.FC<ExtensionExporterModalProps> = ({ 
       zip.file('icons/icon16.png', icon16Blob);
       zip.file('icons/icon48.png', icon48Blob);
       zip.file('icons/icon128.png', icon128Blob);
+
+      // Exact user active pet data sync (Packages exact name, breed, level, stats)
+      const syncedPetData = {
+        id: pet.id || `pet_${pet.species}_${Date.now()}`,
+        species: pet.species,
+        category: pet.category,
+        name: pet.name,
+        title: pet.title || 'Apex Companion',
+        level: pet.level || 1,
+        stage: pet.stage || 1,
+        stats: pet.stats || { attack: 55, defense: 50, agility: 60, stamina: 55, cp: 440 },
+        hunger: pet.hunger ?? 85,
+        happiness: pet.happiness ?? 90,
+        affectionHearts: pet.affectionHearts ?? 3,
+      };
+      zip.file('pet_data.json', JSON.stringify(syncedPetData, null, 2));
 
       // 1. Manifest V3: Unified single extension for all pets & features across ALL browser tabs
       const manifestContent = JSON.stringify(
@@ -209,19 +230,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     const data = await chrome.storage.local.get(['activePet', 'kennelPets', 'coins', 'isSummoned']);
     if (!data.activePet) {
       await chrome.storage.local.set({
-        activePet: {
-          id: 'starter_shiba',
-          species: 'shiba',
-          category: 'dog',
-          name: 'Hachi',
-          title: 'The Loyal Guardian',
-          level: 1,
-          stage: 1,
-          stats: { attack: 52, defense: 48, agility: 65, stamina: 50, cp: 420 },
-          hunger: 85,
-          happiness: 90,
-          affectionHearts: 3
-        },
+        activePet: ${JSON.stringify(syncedPetData)},
         coins: 2450,
         isSummoned: true
       });
@@ -2455,17 +2464,137 @@ Includes:
             </div>
           )}
 
-          {/* TAB 4: SETUP GUIDE */}
+          {/* TAB 4: VISUAL 3-STEP INSTALLATION WIZARD */}
           {activeTab === 'install' && (
-            <div className="space-y-3 text-xs">
-              <h3 className="font-bold text-white text-sm">30-Second Chrome Extension Install</h3>
-              <ol className="list-decimal list-inside space-y-2 text-neutral-300">
-                <li>Click <strong>"Download Unified Extension (.zip)"</strong> below.</li>
-                <li>Extract the zip file into a folder on your computer.</li>
-                <li>In Chrome, Edge, or Brave, navigate to: <code className="text-[#CCFF00] bg-black/60 px-1.5 py-0.5 rounded font-mono">chrome://extensions</code></li>
-                <li>Turn on <strong>"Developer mode"</strong> (top-right).</li>
-                <li>Click <strong>"Load unpacked"</strong> (top-left) and select the extracted folder.</li>
-              </ol>
+            <div className="space-y-4 text-xs">
+              <div className="flex items-center justify-between pb-1 border-b border-white/10">
+                <h3 className="font-display font-black text-white text-sm uppercase tracking-wide flex items-center gap-2">
+                  <span>🚀</span>
+                  <span>3-Step Browser Companion Setup</span>
+                </h3>
+                <span
+                  className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold flex items-center gap-1 ${
+                    isExtensionLinked
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      isExtensionLinked ? 'bg-emerald-400' : 'bg-amber-400 animate-ping'
+                    }`}
+                  />
+                  <span>{isExtensionLinked ? 'Companion Linked ✓' : 'Bridge Ready (+500 CR)'}</span>
+                </span>
+              </div>
+
+              {/* 3 Step Visual Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* Step 1 */}
+                <div className="bg-[#141A28] border border-white/10 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-[#CCFF00] text-black font-black text-xs flex items-center justify-center">
+                        1
+                      </span>
+                      <span className="font-bold text-white text-xs">Download & Extract</span>
+                    </div>
+                    <p className="text-[11px] text-neutral-300 leading-snug">
+                      Download the tailored <code className="text-[#CCFF00]">pet-slam-buddy.zip</code> containing your exact active pet ({pet.name}). Unzip to any folder.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleDownloadZip}
+                    disabled={isGenerating}
+                    className="w-full py-2 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-[#CCFF00] font-mono font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>{isGenerating ? 'Packaging...' : 'Download ZIP'}</span>
+                  </button>
+                </div>
+
+                {/* Step 2 */}
+                <div className="bg-[#141A28] border border-white/10 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-cyan-400 text-black font-black text-xs flex items-center justify-center">
+                        2
+                      </span>
+                      <span className="font-bold text-white text-xs">Open Extensions</span>
+                    </div>
+                    <p className="text-[11px] text-neutral-300 leading-snug">
+                      In Chrome, Edge, or Brave, open extension settings and switch <strong className="text-white">Developer mode</strong> toggle to <span className="text-[#CCFF00]">ON</span>.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      navigator.clipboard.writeText('chrome://extensions');
+                      setCopiedExtensionUrl(true);
+                      setTimeout(() => setCopiedExtensionUrl(false), 2500);
+                    }}
+                    className="w-full py-2 px-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 font-mono font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>{copiedExtensionUrl ? 'Copied to Clipboard! ✓' : 'Copy "chrome://extensions"'}</span>
+                  </button>
+                </div>
+
+                {/* Step 3 */}
+                <div className="bg-[#141A28] border border-white/10 rounded-2xl p-3.5 flex flex-col justify-between space-y-2">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-purple-400 text-black font-black text-xs flex items-center justify-center">
+                        3
+                      </span>
+                      <span className="font-bold text-white text-xs">Load Unpacked</span>
+                    </div>
+                    <p className="text-[11px] text-neutral-300 leading-snug">
+                      Click <strong className="text-white">"Load unpacked"</strong>, select your extracted folder, and watch your companion appear across all browser tabs!
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      window.postMessage({ type: 'PET_SLAM_EXTENSION_HANDSHAKE' }, '*');
+                      setIsExtensionLinked(true);
+                    }}
+                    className="w-full py-2 px-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-400/40 text-purple-300 font-mono font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Test Handshake (+500 CR)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* In-Page Live Preview Banner */}
+              <div className="p-3.5 bg-gradient-to-r from-emerald-950/60 via-[#10192A] to-cyan-950/60 border border-[#CCFF00]/30 rounded-2xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#CCFF00]/20 text-[#CCFF00] flex items-center justify-center text-lg font-bold shrink-0">
+                    🐾
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-xs">
+                      Try Roaming Desktop Buddy Live on Screen
+                    </h4>
+                    <p className="text-[11px] text-neutral-300">
+                      You can interact with your pet, test pitch-shifting voice mimicry, and test hydration alerts directly on this page!
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    toggleOverlay();
+                  }}
+                  className={`py-2 px-3.5 rounded-xl font-mono text-xs font-bold cursor-pointer transition-all shrink-0 ${
+                    isOverlayActive
+                      ? 'bg-cyan-500 text-black shadow-md'
+                      : 'bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black'
+                  }`}
+                >
+                  {isOverlayActive ? 'Dock Pet ✕' : 'Preview Live on Screen 🐾'}
+                </button>
+              </div>
 
               <div className="p-3 bg-amber-500/15 border border-amber-500/30 rounded-xl text-amber-200 text-xs flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />

@@ -29,6 +29,7 @@ import { usePetCompanion } from '../../../context/PetCompanionContext';
 import { ProceduralPetCanvas } from '../pet/ProceduralPetCanvas';
 import { FriendsVoiceRoomModal } from '../FriendsVoiceRoomModal';
 import { PetBattleSceneCanvas, BattleAction, ArenaTheme } from '../arena/PetBattleSceneCanvas';
+import { triggerVictoryExplosion } from '../../../utils/confetti';
 
 interface DamagePopup {
   id: number;
@@ -47,6 +48,7 @@ export const ArenaScreen: React.FC = () => {
     recordMatchResult,
     trophies,
     credits,
+    addCredits,
     trainerName,
     playerLevel,
   } = useGame();
@@ -138,6 +140,50 @@ export const ArenaScreen: React.FC = () => {
 
   // Desktop Keyboard Hotkey Press State (for active visual feedback)
   const [pressedHotkey, setPressedHotkey] = useState<string | null>(null);
+
+  // 30-Second Interactive Combat Practice Drill State
+  const [showTutorialPrompt, setShowTutorialPrompt] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('petslam_tutorial_completed') !== 'true';
+  });
+  const [isPracticeDrill, setIsPracticeDrill] = useState<boolean>(false);
+  const [practiceStep, setPracticeStep] = useState<1 | 2 | 3 | 4 | null>(null);
+  const [practiceCompleted, setPracticeCompleted] = useState<boolean>(false);
+
+  // Start 30-Second Interactive Practice Drill
+  const startPracticeDrill = () => {
+    sound.playClick();
+    setIsPracticeDrill(true);
+    setPracticeStep(1);
+    setPracticeCompleted(false);
+
+    const baseDog = ANIMALS_DATA.find((b) => b.breed.toLowerCase().includes('shiba')) || ANIMALS_DATA[0];
+    const senseiPet: Animal = {
+      ...baseDog,
+      id: 'sensei_shiba',
+      name: 'Master Sensei Shib',
+      health: 1500,
+      damage: 40,
+    };
+
+    setSelectedOpponent(senseiPet);
+    setOpponentTrainer('Master Sensei Shib');
+    startSlamMatch(senseiPet);
+
+    setLastCombatLog('🥋 DOJO STEP 1/4: Tap Quick Pounce [1] to strike!');
+    setAnnouncerText('🥋 DOJO: STEP 1/4');
+    setAnnouncerPulse(true);
+  };
+
+  const handleSkipTutorial = () => {
+    sound.playClick();
+    localStorage.setItem('petslam_tutorial_completed', 'true');
+    setShowTutorialPrompt(false);
+    if (isPracticeDrill) {
+      setIsPracticeDrill(false);
+      setInBattle(false);
+    }
+  };
 
   // Helper to spawn floating damage numbers
   const addPopup = (text: string, type: DamagePopup['type'], x: number, y: number) => {
@@ -287,10 +333,10 @@ export const ArenaScreen: React.FC = () => {
 
   // AI Opponent Tactical Loop
   useEffect(() => {
-    if (!inBattle || battleOver) return;
+    if (!inBattle || battleOver || isPracticeDrill) return;
 
     const aiInterval = setInterval(() => {
-      if (battleOver) return;
+      if (battleOver || isPracticeDrill) return;
 
       const aiRoll = Math.random();
 
@@ -394,6 +440,17 @@ export const ArenaScreen: React.FC = () => {
         isCrit: false,
         isBlocked: false,
       });
+
+      if (isPracticeDrill && practiceStep === 2) {
+        setTimeout(() => {
+          setPracticeStep(3);
+          sound.playBell();
+          setElixir(6); // Maximize energy immediately for Overdrive!
+          setLastCombatLog('🥋 DOJO STEP 3/4: Energy Maxed! Unleash PET SLAM Overdrive [SPACE]!');
+          setAnnouncerText('🥋 DOJO: STEP 3/4');
+          setAnnouncerPulse(true);
+        }, 600);
+      }
       return;
     }
 
@@ -407,6 +464,33 @@ export const ArenaScreen: React.FC = () => {
     };
     setLastCombatLog(`⚡ ${currentActiveFighter.name} used ${moveNames[cardType]}!`);
     sound.playAttack();
+
+    // 30-Second Practice Drill Step Verification
+    if (isPracticeDrill) {
+      if (practiceStep === 1 && cardType === 'pounce') {
+        setTimeout(() => {
+          setPracticeStep(2);
+          sound.playBell();
+          setLastCombatLog('🥋 DOJO STEP 2/4: Sensei prepares strike! Raise Iron Guard [3]!');
+          setAnnouncerText('🥋 DOJO: STEP 2/4');
+          setAnnouncerPulse(true);
+          setOpponentIntent('⚠️ Sensei preparing strike...');
+          setTimeout(() => {
+            if (isPracticeDrill) {
+              executeOpponentAttack(40, 'Sparring Strike');
+            }
+          }, 800);
+        }, 600);
+      } else if (practiceStep === 3 && cardType === 'slam') {
+        setTimeout(() => {
+          setPracticeStep(4);
+          sound.playBell();
+          setLastCombatLog('🥋 DOJO STEP 4/4: Final Step! Tag in a teammate [Q/W/E/R] for 75 landing DMG!');
+          setAnnouncerText('🥋 DOJO: STEP 4/4');
+          setAnnouncerPulse(true);
+        }, 700);
+      }
+    }
 
     // Esports Combo Counter Update
     setComboCount((prev) => {
@@ -519,6 +603,18 @@ export const ArenaScreen: React.FC = () => {
         setPlayerAnim('idle');
         setOpponentAnim('idle');
       }, 350);
+
+      // Complete 30-Second Practice Drill
+      if (isPracticeDrill && practiceStep === 4) {
+        setTimeout(() => {
+          setPracticeCompleted(true);
+          sound.playVictory();
+          triggerVictoryExplosion();
+          addCredits(250);
+          localStorage.setItem('petslam_tutorial_completed', 'true');
+          setShowTutorialPrompt(false);
+        }, 500);
+      }
     }, 250);
   };
 
@@ -644,6 +740,62 @@ export const ArenaScreen: React.FC = () => {
               Real-Time 1v1 Pet Duels · Purebred Canines & Felines · 60 FPS Animated Combat
             </p>
           </div>
+
+          {/* Interactive Combat Practice Drill Banner (Auto-prompted for 1st-time visitors, replayable anytime) */}
+          {showTutorialPrompt ? (
+            <div className="bg-gradient-to-r from-amber-950/70 via-[#151F35] to-amber-950/70 border-2 border-[#CCFF00]/60 rounded-2xl p-3.5 shadow-[0_0_20px_rgba(204,255,0,0.2)] relative overflow-hidden animate-in fade-in">
+              <div className="flex items-start justify-between gap-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#CCFF00] text-black font-black flex items-center justify-center text-lg shadow shrink-0">
+                    🥋
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-display font-black text-xs uppercase text-white tracking-wider">
+                        Interactive Combat Practice Drill
+                      </span>
+                      <span className="text-[8px] font-mono bg-[#CCFF00] text-black px-1.5 py-0.2 rounded font-bold">
+                        +250 CR
+                      </span>
+                    </div>
+                    <p className="text-[10px] sm:text-[11px] text-neutral-300 font-mono mt-0.5 leading-snug">
+                      Master Pounce [1], Iron Guard [3], Overdrive [SPACE], and Tag-Ins in 30 seconds!
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleSkipTutorial}
+                  className="text-neutral-400 hover:text-white text-[10px] font-mono underline cursor-pointer shrink-0"
+                  title="Skip practice tutorial"
+                >
+                  Skip
+                </button>
+              </div>
+
+              <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center gap-2">
+                <button
+                  onClick={startPracticeDrill}
+                  className="flex-1 py-2 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer shadow active:scale-95 transition-transform"
+                >
+                  Start 30s Practice Drill 🥋
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-xs font-mono">
+              <span className="text-neutral-300 flex items-center gap-1.5">
+                <span>🥋</span>
+                <span>Dojo Practice Complete</span>
+              </span>
+              <button
+                onClick={startPracticeDrill}
+                className="text-[#CCFF00] hover:underline font-bold text-[11px] cursor-pointer"
+              >
+                Replay 30s Drill ↺
+              </button>
+            </div>
+          )}
 
           {/* 1v1 vs 2v2 Mode Switcher */}
           <div className="flex items-center p-1 bg-black/60 border border-white/10 rounded-2xl max-w-xs mx-auto w-full shadow-md">
@@ -872,6 +1024,39 @@ export const ArenaScreen: React.FC = () => {
               {p.text}
             </div>
           ))}
+
+          {/* 0. DOJO PRACTICE DRILL PROGRESS BAR */}
+          {isPracticeDrill && (
+            <div className="bg-gradient-to-r from-[#121A2E] via-[#1A2642] to-[#121A2E] border-2 border-[#CCFF00]/50 rounded-xl px-3 py-1.5 flex items-center justify-between text-xs font-mono shadow-md">
+              <div className="flex items-center gap-1.5 sm:gap-2.5">
+                <span className="text-[#CCFF00] font-black flex items-center gap-1">
+                  <span>🥋</span>
+                  <span>DOJO DRILL:</span>
+                </span>
+                <span className={practiceStep === 1 ? 'text-[#CCFF00] font-black underline' : (practiceStep && practiceStep > 1) ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>
+                  {(practiceStep && practiceStep > 1) ? '✓ 1.Pounce' : '1.Pounce'}
+                </span>
+                <span className="text-neutral-600">›</span>
+                <span className={practiceStep === 2 ? 'text-[#CCFF00] font-black underline' : (practiceStep && practiceStep > 2) ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>
+                  {(practiceStep && practiceStep > 2) ? '✓ 2.Guard' : '2.Guard'}
+                </span>
+                <span className="text-neutral-600">›</span>
+                <span className={practiceStep === 3 ? 'text-[#CCFF00] font-black underline' : (practiceStep && practiceStep > 3) ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>
+                  {(practiceStep && practiceStep > 3) ? '✓ 3.SLAM' : '3.SLAM'}
+                </span>
+                <span className="text-neutral-600">›</span>
+                <span className={practiceStep === 4 ? 'text-[#CCFF00] font-black underline' : 'text-neutral-500'}>
+                  4.Tag-In
+                </span>
+              </div>
+              <button
+                onClick={handleSkipTutorial}
+                className="text-neutral-400 hover:text-white text-[10px] underline cursor-pointer shrink-0"
+              >
+                Skip Drill ✕
+              </button>
+            </div>
+          )}
 
           {/* 1. MATCH STATUS & ARENA THEME SELECTOR BAR */}
           <div className="flex items-center justify-between bg-[#101524] border border-white/10 rounded-xl px-2.5 py-1 shrink-0 shadow-sm gap-1">
@@ -1147,6 +1332,8 @@ export const ArenaScreen: React.FC = () => {
                     className={`w-7 h-7 rounded-lg overflow-hidden border cursor-pointer transition-all relative active:scale-95 ${
                       b.id === currentActiveFighter.id
                         ? 'border-[#CCFF00] ring-1 ring-[#CCFF00]'
+                        : isPracticeDrill && practiceStep === 4
+                        ? 'border-cyan-400 ring-2 ring-cyan-400 shadow-[0_0_12px_#00E5FF] animate-pulse scale-105'
                         : isKeyActive
                         ? 'border-cyan-400 ring-2 ring-cyan-400 scale-95'
                         : 'border-white/20 hover:border-white/50 opacity-60'
@@ -1199,7 +1386,9 @@ export const ArenaScreen: React.FC = () => {
               onClick={() => handlePlayCard('pounce')}
               disabled={elixir < 2}
               className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 relative ${
-                elixir >= 2
+                isPracticeDrill && practiceStep === 1
+                  ? 'bg-cyan-500/40 border-[#CCFF00] ring-4 ring-[#CCFF00] shadow-[0_0_20px_#CCFF00] scale-105 animate-pulse text-white'
+                  : elixir >= 2
                   ? pressedHotkey === '1'
                     ? 'bg-cyan-500/40 border-cyan-300 ring-2 ring-cyan-400 scale-95 text-white'
                     : 'bg-[#151D30] hover:bg-[#1C2640] border-cyan-400 text-white shadow active:scale-95'
@@ -1243,7 +1432,9 @@ export const ArenaScreen: React.FC = () => {
               onClick={() => handlePlayCard('shield')}
               disabled={elixir < 2}
               className={`p-1 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 relative ${
-                elixir >= 2
+                isPracticeDrill && practiceStep === 2
+                  ? 'bg-blue-600/50 border-blue-300 ring-4 ring-blue-400 shadow-[0_0_20px_#38BDF8] scale-105 animate-pulse text-white'
+                  : elixir >= 2
                   ? pressedHotkey === '3'
                     ? 'bg-blue-500/40 border-blue-300 ring-2 ring-blue-400 scale-95 text-white'
                     : 'bg-[#151D30] hover:bg-[#1C2640] border-blue-400 text-white shadow active:scale-95'
@@ -1289,7 +1480,9 @@ export const ArenaScreen: React.FC = () => {
               onClick={() => handlePlayCard('slam')}
               disabled={elixir < 6}
               className={`p-1 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-12 sm:h-14 relative ${
-                elixir >= 6
+                isPracticeDrill && practiceStep === 3
+                  ? 'bg-[#CCFF00] border-white ring-4 ring-[#CCFF00] shadow-[0_0_25px_#CCFF00] scale-105 animate-bounce text-black'
+                  : elixir >= 6
                   ? pressedHotkey === 'space'
                     ? 'bg-[#CCFF00] border-white ring-4 ring-[#CCFF00] scale-95 text-black'
                     : 'bg-gradient-to-b from-[#CCFF00] to-amber-500 border-white text-black shadow-[0_0_15px_rgba(204,255,0,0.7)] active:scale-95 animate-pulse'
@@ -1308,6 +1501,41 @@ export const ArenaScreen: React.FC = () => {
               </span>
             </button>
           </div>
+
+          {/* =========================================================================
+              DOJO PRACTICE DRILL COMPLETION MODAL (+250 SLAM CREDITS)
+             ========================================================================= */}
+          {practiceCompleted && (
+            <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+              <div className="bg-[#101626] border-2 border-[#CCFF00] rounded-3xl p-6 text-center max-w-xs w-full shadow-2xl space-y-4">
+                <div className="w-16 h-16 rounded-full bg-[#CCFF00] text-black text-2xl flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(204,255,0,0.6)]">
+                  🥋
+                </div>
+                <div>
+                  <h2 className="font-display font-black text-xl text-[#CCFF00] uppercase tracking-wider">
+                    Dojo Drill Mastered!
+                  </h2>
+                  <p className="text-[11px] text-neutral-300 font-mono mt-1">
+                    You've mastered Pounce strikes, Shield deflection, SLAM Overdrive, and Squad tag-ins!
+                  </p>
+                </div>
+                <div className="p-3 bg-black/50 rounded-2xl border border-[#CCFF00]/40 font-mono text-sm font-bold text-[#CCFF00]">
+                  🎉 +250 Slam Credits Awarded!
+                </div>
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    setIsPracticeDrill(false);
+                    setPracticeCompleted(false);
+                    setInBattle(false);
+                  }}
+                  className="w-full py-3 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer shadow-lg active:scale-95"
+                >
+                  Enter Colosseum Arena
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* =========================================================================
               MATCH RESULT MODAL OVERLAY (Victory / Defeat)

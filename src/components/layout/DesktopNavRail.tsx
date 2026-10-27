@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
+import { usePetCompanion } from '../../context/PetCompanionContext';
 
 export type MainNavId =
   | 'arena'
@@ -46,6 +47,8 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
   isFullscreen,
   onToggleFullscreen,
 }) => {
+  const { isOverlayActive, toggleOverlay } = usePetCompanion();
+
   const navItems = [
     { id: 'arena' as const, label: 'Arena', icon: Swords, badge: '60 FPS' },
     { id: 'sanctuary' as const, label: 'Sanctuary', icon: Heart, badge: null },
@@ -142,6 +145,25 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
 
       {/* Bottom Utility Controls */}
       <div className="p-2 xl:p-3 border-t border-white/10 space-y-1 bg-[#090C12]/80">
+        {/* Live Buddy Toggle */}
+        <button
+          onClick={() => {
+            sound.playClick();
+            toggleOverlay();
+          }}
+          className={`w-full flex items-center justify-center xl:justify-start gap-2.5 px-2 xl:px-3 py-2 rounded-xl cursor-pointer text-xs font-mono transition-all border ${
+            isOverlayActive
+              ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-[0_0_10px_rgba(0,229,255,0.25)]'
+              : 'bg-white/5 border-white/5 text-neutral-400 hover:text-white hover:bg-white/10'
+          }`}
+          title={isOverlayActive ? 'Companion Roaming Screen (Click to Dock)' : 'Summon Desktop Buddy on Screen'}
+        >
+          <span className="text-xs">🐾</span>
+          <span className="hidden xl:inline text-[11px] font-bold">
+            {isOverlayActive ? 'Buddy Live 🟢' : 'Summon Buddy'}
+          </span>
+        </button>
+
         {/* Audio Toggle */}
         <button
           onClick={onToggleSound}
