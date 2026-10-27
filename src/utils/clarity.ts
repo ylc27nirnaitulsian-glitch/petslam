@@ -22,15 +22,15 @@ export function initClarity(config?: ClarityConfig): boolean {
   if (typeof window === 'undefined') return false;
 
   // Prevent double-initialization
-  if (window.CLARITY_INITIALIZED) {
+  if (window.CLARITY_INITIALIZED || (typeof window !== 'undefined' && typeof (window as any).clarity === 'function' && (window as any).clarity.q)) {
+    window.CLARITY_INITIALIZED = true;
     return true;
   }
 
   const projectId =
     config?.projectId ||
     (import.meta.env.VITE_CLARITY_PROJECT_ID as string) ||
-    (typeof window !== 'undefined' && typeof localStorage !== 'undefined' ? localStorage.getItem('petslam_clarity_project_id') || '' : '') ||
-    '';
+    'z4be9kfna6';
 
   if (!projectId || projectId === 'YOUR_CLARITY_PROJECT_ID') {
     if (config?.enableDebug || import.meta.env.DEV) {

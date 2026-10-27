@@ -47,7 +47,7 @@ export const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({
   // Read environment variable presence safely
   const [clarityCustomId, setClarityCustomId] = useState<string>(() => {
     try {
-      return localStorage.getItem('petslam_clarity_project_id') || (import.meta.env.VITE_CLARITY_PROJECT_ID as string) || '';
+      return localStorage.getItem('petslam_clarity_project_id') || (import.meta.env.VITE_CLARITY_PROJECT_ID as string) || 'z4be9kfna6';
     } catch {
       return '';
     }
