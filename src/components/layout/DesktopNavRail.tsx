@@ -14,6 +14,7 @@ import {
   Minimize2,
   Info,
   Sparkles,
+  Activity,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { usePetCompanion } from '../../context/PetCompanionContext';
@@ -32,6 +33,7 @@ interface DesktopNavRailProps {
   currentTab: MainNavId;
   onTabChange: (tab: MainNavId) => void;
   onOpenInfoDrawer: () => void;
+  onOpenDiagnostics?: () => void;
   soundEnabled: boolean;
   onToggleSound: () => void;
   isFullscreen: boolean;
@@ -42,6 +44,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
   currentTab,
   onTabChange,
   onOpenInfoDrawer,
+  onOpenDiagnostics,
   soundEnabled,
   onToggleSound,
   isFullscreen,
@@ -195,6 +198,23 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
             {isFullscreen ? 'Windowed' : 'Fullscreen'}
           </span>
         </button>
+
+        {/* System Diagnostics & Telemetry Modal */}
+        {onOpenDiagnostics && (
+          <button
+            onClick={() => {
+              sound.playClick();
+              onOpenDiagnostics();
+            }}
+            className="w-full flex items-center justify-center xl:justify-start gap-2.5 px-2 xl:px-3 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-white cursor-pointer text-xs font-mono transition-all border border-purple-500/25 active:scale-95"
+            title="System Diagnostics & Cloud Status (Ctrl+Shift+D)"
+          >
+            <Activity className="w-4 h-4 text-purple-400 shrink-0" />
+            <span className="hidden xl:inline text-[11px] font-bold">
+              Diagnostics
+            </span>
+          </button>
+        )}
 
         {/* Showcase Drawer Button */}
         <button

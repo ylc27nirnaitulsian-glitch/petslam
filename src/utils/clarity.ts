@@ -72,11 +72,19 @@ export function initClarity(config?: ClarityConfig): boolean {
  * Track custom business and engagement events in Microsoft Clarity
  */
 export function trackClarityEvent(eventName: string): void {
-  if (typeof window !== 'undefined' && typeof window.clarity === 'function') {
-    try {
-      window.clarity('event', eventName);
-    } catch {
-      // Ignore if clarity blocked by adblockers
+  if (typeof window !== 'undefined') {
+    (window as any).__CLARITY_EVENT_LOG = (window as any).__CLARITY_EVENT_LOG || [];
+    (window as any).__CLARITY_EVENT_LOG.unshift({ event: eventName, time: new Date().toLocaleTimeString() });
+    if ((window as any).__CLARITY_EVENT_LOG.length > 20) {
+      (window as any).__CLARITY_EVENT_LOG.pop();
+    }
+
+    if (typeof window.clarity === 'function') {
+      try {
+        window.clarity('event', eventName);
+      } catch {
+        // Ignore if clarity blocked by adblockers
+      }
     }
   }
 }

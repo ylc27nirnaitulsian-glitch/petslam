@@ -21,6 +21,7 @@ import { PetAuctionHouseModal } from '../game/pet/PetAuctionHouseModal';
 import { ExtensionExporterModal } from '../game/pet/ExtensionExporterModal';
 import { FriendsHubModal } from '../game/FriendsHubModal';
 import { VipPassesModal } from '../game/VipPassesModal';
+import { SystemDiagnosticsModal } from '../diagnostic/SystemDiagnosticsModal';
 import { RotateCw, Smartphone, Sparkles } from 'lucide-react';
 
 interface DualOrientationShellProps {
@@ -48,6 +49,20 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
 
   // Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
+
+  // Global Hotkey Listener (Ctrl + Shift + D / Cmd + Shift + D)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+        e.preventDefault();
+        setIsDiagnosticsOpen((prev) => !prev);
+        sound.playClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Mobile Orientation Detection
   const [isPortrait, setIsPortrait] = useState<boolean>(() => {
@@ -154,6 +169,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
         currentTab={currentTab}
         onTabChange={handleNavSelect}
         onOpenInfoDrawer={() => setShowInfoDrawer(true)}
+        onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
         soundEnabled={soundEnabled}
         onToggleSound={toggleSound}
         isFullscreen={isFullscreen}
@@ -226,6 +242,12 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       )}
       {showVipStore && (
         <VipPassesModal isOpen={showVipStore} onClose={() => setShowVipStore(false)} />
+      )}
+      {isDiagnosticsOpen && (
+        <SystemDiagnosticsModal
+          isOpen={isDiagnosticsOpen}
+          onClose={() => setIsDiagnosticsOpen(false)}
+        />
       )}
 
       {/* 6. High-Converting Hero/Landing Drawer */}
