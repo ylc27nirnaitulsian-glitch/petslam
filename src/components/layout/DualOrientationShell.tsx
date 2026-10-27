@@ -27,6 +27,7 @@ import { BreedingLabModal } from '../game/pet/BreedingLabModal';
 import { SlamBattlePassModal } from '../game/liveops/SlamBattlePassModal';
 import { DailyQuestsDrawer } from '../game/liveops/DailyQuestsDrawer';
 import { LeaderboardModal } from '../Leaderboards/LeaderboardModal';
+import { PetWorldMapView } from '../game/pet/PetWorldMapView';
 import { RotateCw, Smartphone, Sparkles } from 'lucide-react';
 
 interface DualOrientationShellProps {
@@ -56,12 +57,19 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   const [passModalOpen, setPassModalOpen] = useState<boolean>(false);
   const [questsDrawerOpen, setQuestsDrawerOpen] = useState<boolean>(false);
   const [leaderboardModalOpen, setLeaderboardModalOpen] = useState<boolean>(false);
+  const [radarModalOpen, setRadarModalOpen] = useState<boolean>(false);
 
   // Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
 
-  // Global Hotkey Listener (Ctrl + Shift + D / Cmd + Shift + D)
+  // Admin query param and Global Hotkey Listener (Ctrl + Shift + D / Cmd + Shift + D)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('admin=true')) {
+      setIsDiagnosticsOpen(true);
+    }
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
@@ -179,6 +187,10 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       setLeaderboardModalOpen(true);
       return;
     }
+    if (tab === 'radar') {
+      setRadarModalOpen(true);
+      return;
+    }
     setCurrentTab(tab);
   };
 
@@ -199,7 +211,6 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
         currentTab={currentTab}
         onTabChange={handleNavSelect}
         onOpenInfoDrawer={() => setShowInfoDrawer(true)}
-        onOpenDiagnostics={() => setIsDiagnosticsOpen(true)}
         soundEnabled={soundEnabled}
         onToggleSound={toggleSound}
         isFullscreen={isFullscreen}
@@ -215,6 +226,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
           onStartPracticeDrill={() => setCurrentTab('arena')}
           onOpenQuests={() => setQuestsDrawerOpen(true)}
           onOpenLeaderboard={() => setLeaderboardModalOpen(true)}
+          onOpenRadar={() => setRadarModalOpen(true)}
         />
 
         {/* Mobile Orientation Suggestion Banner in Arena */}
@@ -316,6 +328,9 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
           onClose={() => setLeaderboardModalOpen(false)}
           onOpenUpload={() => setStudioModalOpen(true)}
         />
+      )}
+      {radarModalOpen && (
+        <PetWorldMapView onClose={() => setRadarModalOpen(false)} />
       )}
 
       {/* 6. High-Converting Hero/Landing Drawer */}

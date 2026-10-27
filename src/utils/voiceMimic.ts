@@ -1,5 +1,5 @@
-// Real-time Voice Mimic & Pitch Shifter for Talking Tom style UI
-// Records microphone input and plays back in a high-pitched cartoon voice with mouth lip-sync!
+// Real-time Voice Mimic & Pitch Shifter for Pet Companion
+// Records microphone input and plays back in a pitched companion voice with mouth lip-sync!
 
 export class VoiceMimicEngine {
   private audioCtx: AudioContext | null = null;
@@ -92,7 +92,7 @@ export class VoiceMimicEngine {
     }
   }
 
-  // 2. Stop listening and pitch-shift repeat in Talking Tom voice!
+  // 2. Stop listening and pitch-shift repeat in companion voice!
   public async stopAndRepeat(
     onMouthSync: (amplitude: number) => void,
     onFinish: () => void

@@ -186,7 +186,7 @@ export const ExtensionExporterModal: React.FC<ExtensionExporterModalProps> = ({ 
           name: 'Pet Slam - Multi-Pet Sanctuary & Screen Companion',
           version: '3.1.0',
           description:
-            'Interactive Talking Tom companion with all Dog, Cat, and Beast breeds, voice repeater, Pokemon GO wild catch radar, auction market, and persistent on-screen roaming across all tabs!',
+            'Interactive multi-pet screen companion with all Dog, Cat, and Beast breeds, voice mimic repeater, Pokemon GO wild catch radar, auction market, and persistent on-screen roaming across all tabs!',
           icons: {
             '16': 'icons/icon16.png',
             '48': 'icons/icon48.png',
@@ -1026,9 +1026,9 @@ function createPetCanvas(species, stage, width, height) {
     <button class="tab-btn" data-tab="auctions">⚖️ Market</button>
   </div>
 
-  <!-- TAB 1: BUDDY (Talking Tom Stage Room) -->
+  <!-- TAB 1: BUDDY (Interactive Sanctuary Stage) -->
   <div class="tab-content active" id="tab-buddy">
-    <div class="speech-bubble" id="petSpeech">Hi! I'm Hachi! Tap me or speak to me! 🐾</div>
+    <div class="speech-bubble" id="petSpeech">Hi! I'm your companion! Tap me or speak to me! 🐾</div>
 
     <div class="room-stage" id="stageContainer" title="Tap head to poke, belly to tickle, stroke to pet!">
       <button class="light-switch" id="lightSwitchBtn">☀️ Day</button>
@@ -1036,23 +1036,22 @@ function createPetCanvas(species, stage, width, height) {
 
     <!-- Voice Mimic Bar -->
     <div class="voice-bar">
-      <button class="mic-btn" id="micBtn">🎙️ Hold & Speak (Talking Tom)</button>
+      <button class="mic-btn" id="micBtn">🎙️ Hold & Speak (Pet Voice Mimic)</button>
       <button class="action-btn" id="voicePresetBtn" style="flex:0.6;">📢 Say Hello</button>
     </div>
 
-    <!-- Talking Tom Action Bar -->
+    <!-- Companion Care Action Bar -->
     <div class="action-grid">
-      <button class="action-btn" id="milkBtn">🥛 Milk Bowl</button>
-      <button class="action-btn" id="bathBtn">🧼 Bubble Bath</button>
-      <button class="action-btn" id="tootBtn">💨 Funny Toot</button>
-      <button class="action-btn" id="feedBerryBtn">🍓 Feed Berry</button>
+      <button class="action-btn" id="feedBerryBtn">🍓 Feed Berry<span style="font-size:8px;color:#CCFF00;">+50🪙</span></button>
+      <button class="action-btn" id="bathBtn">🧼 Bubble Bath<span style="font-size:8px;color:#38BDF8;">+30❤️</span></button>
+      <button class="action-btn" id="petStrokeBtn">❤️ Stroke Fur<span style="font-size:8px;color:#F43F5E;">Purr</span></button>
+      <button class="action-btn" id="catchBtn">🎾 Play Catch<span style="font-size:8px;color:#CCFF00;">+35🪙</span></button>
     </div>
 
     <div class="action-grid">
-      <button class="action-btn" id="petStrokeBtn">❤️ Stroke Fur</button>
-      <button class="action-btn" id="gymWorkoutBtn">🏋️ Gym Workout</button>
-      <button class="action-btn" id="renamePetBtn">✏️ Rename Pet</button>
-      <button class="action-btn" id="screenRoamBtn" style="color:#CCFF00;border-color:#CCFF00;">🐾 Roam All Tabs</button>
+      <button class="action-btn" id="gymWorkoutBtn">🏋️ Workout<span style="font-size:8px;color:#F59E0B;">+10 CP</span></button>
+      <button class="action-btn" id="renamePetBtn">✏️ Rename</button>
+      <button class="action-btn" id="screenRoamBtn" style="grid-column: span 2;color:#CCFF00;border-color:#CCFF00;">🐾 Roam on Screen</button>
     </div>
   </div>
 
@@ -1374,17 +1373,17 @@ document.getElementById('micBtn').addEventListener('click', async () => {
         const decoded = await ctx.decodeAudioData(arrayBuf);
         const source = ctx.createBufferSource();
         source.buffer = decoded;
-        source.playbackRate.value = 1.45; // High-pitch Talking Tom voice!
+        source.playbackRate.value = 1.35; // Natural high-pitch companion voice
         source.connect(ctx.destination);
         
         petCanvas.setAnimation('talk');
         petCanvas.setTalkingVolume(0.8);
-        document.getElementById('petSpeech').textContent = "Repeating: *Talking Tom Voice* 📢";
+        document.getElementById('petSpeech').textContent = "Repeating in " + activePet.name + "'s voice! 🐾";
         source.start(0);
         source.onended = () => {
           petCanvas.setAnimation('idle');
           petCanvas.setTalkingVolume(0);
-          document.getElementById('petSpeech').textContent = "Hehe! That was funny!";
+          document.getElementById('petSpeech').textContent = "Hehe! What a great conversation!";
         };
       };
       mediaRecorder.start();
@@ -1395,7 +1394,7 @@ document.getElementById('micBtn').addEventListener('click', async () => {
     } catch (err) {
       // High-pitch speech synthesis fallback
       document.getElementById('petSpeech').textContent = 'Hi! Voice mimic ready! 🐾';
-      speakFallback("Hello! I am " + activePet.name + "! I love running across all your tabs in Pet Slam!");
+      speakFallback("Hello! I am " + activePet.name + "! I love roaming with you in Pet Slam!");
     }
   } else {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
@@ -1403,7 +1402,7 @@ document.getElementById('micBtn').addEventListener('click', async () => {
       mediaRecorder.stream.getTracks().forEach(t => t.stop());
     }
     isRecording = false;
-    btn.textContent = '🎙️ Hold & Speak (Talking Tom)';
+    btn.textContent = '🎙️ Hold & Speak (Pet Voice Mimic)';
     btn.classList.remove('recording');
   }
 });
@@ -1411,8 +1410,8 @@ document.getElementById('micBtn').addEventListener('click', async () => {
 function speakFallback(text) {
   if (!window.speechSynthesis) return;
   const u = new SpeechSynthesisUtterance(text);
-  u.pitch = 1.9; // Cartoon high pitch
-  u.rate = 1.35;
+  u.pitch = 1.5;
+  u.rate = 1.25;
   petCanvas.setAnimation('talk');
   petCanvas.setTalkingVolume(0.8);
   u.onend = () => {
@@ -1424,60 +1423,66 @@ function speakFallback(text) {
 
 document.getElementById('voicePresetBtn').addEventListener('click', () => {
   const phrases = [
-    "Hello there! I'm your best buddy!",
+    "Hello there! I'm your best companion!",
     "I'm walking across all your browser tabs right now!",
     "Can you feed me a delicious berry please?",
-    "Purrr, you are the absolute best!"
+    "Purrr, you are the absolute best trainer!"
   ];
   const phrase = phrases[Math.floor(Math.random() * phrases.length)];
   document.getElementById('petSpeech').textContent = phrase;
   speakFallback(phrase);
 });
 
-// Action Bar Handlers
-document.getElementById('milkBtn').addEventListener('click', () => {
+// Meaningful Companion Care Action Handlers
+document.getElementById('feedBerryBtn').addEventListener('click', async () => {
   playSlurp();
-  petCanvas.setAnimation('drink_milk');
-  document.getElementById('petSpeech').textContent = '*Slurp slurp* Refreshing milk! 🥛';
-  setTimeout(() => petCanvas.setAnimation('idle'), 2400);
+  petCanvas.setAnimation('eat');
+  coins += 50;
+  await chrome.storage.local.set({ coins });
+  const countEl = document.getElementById('coinCount');
+  if (countEl) countEl.textContent = coins.toLocaleString();
+  document.getElementById('petSpeech').textContent = 'Munch munch! +50 Coins & +25 XP! 🍓';
+  petCanvas.spawnParticle('heart');
+  setTimeout(() => petCanvas.setAnimation('idle'), 2200);
 });
 
 document.getElementById('bathBtn').addEventListener('click', () => {
   playPop();
   petCanvas.setAnimation('bath');
-  document.getElementById('petSpeech').textContent = 'Squeaky clean! Pop the bubbles! 🧼✨';
+  document.getElementById('petSpeech').textContent = 'Squeaky clean! +30 Affection Hearts! 🧼✨';
   setTimeout(() => petCanvas.setAnimation('idle'), 2400);
-});
-
-document.getElementById('tootBtn').addEventListener('click', () => {
-  playToot();
-  petCanvas.setAnimation('fart');
-  document.getElementById('petSpeech').textContent = 'Oops! Excuse me! 💨🤭';
-  setTimeout(() => petCanvas.setAnimation('idle'), 2000);
-});
-
-document.getElementById('feedBerryBtn').addEventListener('click', () => {
-  playSlurp();
-  petCanvas.setAnimation('eat');
-  document.getElementById('petSpeech').textContent = 'Munch munch! Delicious berry! 🍓';
-  petCanvas.spawnParticle('heart');
-  setTimeout(() => petCanvas.setAnimation('idle'), 2200);
 });
 
 document.getElementById('petStrokeBtn').addEventListener('click', () => {
   if (activePet.category === 'cat') playMeow(); else playBark();
   petCanvas.setAnimation('pet');
-  document.getElementById('petSpeech').textContent = 'Purrrrr! You give the best pets! ❤️';
+  document.getElementById('petSpeech').textContent = 'Purrrrr! You give the best pets! +15 Affection ❤️';
   petCanvas.spawnParticle('heart');
   setTimeout(() => petCanvas.setAnimation('idle'), 1800);
 });
 
-document.getElementById('gymWorkoutBtn').addEventListener('click', () => {
+const catchBtn = document.getElementById('catchBtn');
+if (catchBtn) {
+  catchBtn.addEventListener('click', async () => {
+    playCoinSound();
+    petCanvas.setAnimation('celebrate');
+    coins += 35;
+    await chrome.storage.local.set({ coins });
+    const countEl = document.getElementById('coinCount');
+    if (countEl) countEl.textContent = coins.toLocaleString();
+    document.getElementById('petSpeech').textContent = 'Great throw! Leaping catch! +35 Coins & +15 XP! 🎾';
+    petCanvas.spawnParticle('heart');
+    setTimeout(() => petCanvas.setAnimation('idle'), 2000);
+  });
+}
+
+document.getElementById('gymWorkoutBtn').addEventListener('click', async () => {
   playPop();
   petCanvas.setAnimation('celebrate');
-  activePet.cp = (activePet.cp || 400) + 2;
-  document.getElementById('petSpeech').textContent = 'Gym Workout! +2 CP (Total: ' + activePet.cp + ') 🏋️';
-  setTimeout(() => petCanvas.setAnimation('idle'), 1500);
+  activePet.cp = (activePet.cp || 400) + 10;
+  await chrome.storage.local.set({ activePet });
+  document.getElementById('petSpeech').textContent = 'Gym Workout complete! +10 Combat Power! (Total CP: ' + activePet.cp + ') 🏋️';
+  setTimeout(() => petCanvas.setAnimation('idle'), 1800);
 });
 
 document.getElementById('renamePetBtn').addEventListener('click', () => {
@@ -1771,8 +1776,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     hostElement = host;
     host.style.cssText = [
       'position: fixed !important',
-      'bottom: 24px !important',
-      'right: 24px !important',
+      'top: 100px !important',
+      'left: 100px !important',
       'z-index: 2147483647 !important',
       'display: ' + (isSummonedGlobally ? 'block' : 'none') + ' !important',
       'width: auto !important',
@@ -1812,7 +1817,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         filter: drop-shadow(0 10px 25px rgba(0,0,0,0.65));
         transition: transform 0.15s ease;
       }
-      .wrapper:active { cursor: grabbing; transform: scale(1.05); }
+      .wrapper:active { cursor: grabbing; transform: scale(1.03); }
       .bubble {
         background: #0F172A;
         color: #FFFFFF;
@@ -1836,6 +1841,47 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         margin-bottom: 2px;
         letter-spacing: 0.5px;
       }
+      .charging-halo {
+        position: absolute;
+        inset: -12px;
+        border-radius: 50%;
+        border: 2px solid #00F0FF;
+        box-shadow: 0 0 22px #00F0FF, inset 0 0 15px rgba(0,240,255,0.45);
+        animation: pulseCharging 1.4s infinite alternate;
+        pointer-events: none;
+        display: none;
+      }
+      @keyframes pulseCharging {
+        0% { transform: scale(0.98); opacity: 0.5; }
+        100% { transform: scale(1.06); opacity: 1; }
+      }
+      .minimized-pill {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        background: #0B0E17;
+        border: 2px solid #CCFF00;
+        color: #FFFFFF;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 900;
+        cursor: grab;
+        box-shadow: 0 0 18px rgba(204,255,0,0.35);
+        font-family: inherit;
+        user-select: none;
+      }
+      .minimized-pill:hover { background: #1E293B; }
+      .minimized-pill:active { cursor: grabbing; }
+      .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #CCFF00;
+        box-shadow: 0 0 8px #CCFF00;
+        animation: pulseDot 1s infinite alternate;
+      }
+      @keyframes pulseDot { 0% { opacity: 0.4; } 100% { opacity: 1; } }
       .toolbar {
         position: absolute;
         bottom: -28px;
@@ -1863,6 +1909,10 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     wrapper.className = 'wrapper';
     shadow.appendChild(wrapper);
 
+    const chargingHalo = document.createElement('div');
+    chargingHalo.className = 'charging-halo';
+    wrapper.appendChild(chargingHalo);
+
     bubbleEl = document.createElement('div');
     bubbleEl.className = 'bubble';
     bubbleEl.textContent = activePetData.name + " is roaming here! 🐾";
@@ -1880,17 +1930,40 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     const toolbar = document.createElement('div');
     toolbar.className = 'toolbar';
     toolbar.innerHTML = \`
-      <button class="tool-btn" id="feedTool" title="Feed Berry">🍓</button>
-      <button class="tool-btn" id="petTool" title="Stroke Fur">❤️</button>
-      <button class="tool-btn" id="bathTool" title="Bubble Bath">🧼</button>
-      <button class="tool-btn" id="batteryTool" title="Battery & Charger Reaction">⚡</button>
-      <button class="tool-btn" id="postureTool" title="Hydration & Posture Check">💧</button>
-      <button class="tool-btn" id="jumpTool" title="Celebrate">🤾</button>
-      <button class="close-btn" id="hideTool" title="Hide (summon back via extension icon anytime)">✕</button>
+      <button class="tool-btn" id="feedTool" title="Feed Berry (+50🪙 +25XP)">🍓</button>
+      <button class="tool-btn" id="petTool" title="Stroke Fur (+15❤️)">❤️</button>
+      <button class="tool-btn" id="bathTool" title="Bubble Bath (+30❤️)">🧼</button>
+      <button class="tool-btn" id="workoutTool" title="Gym Workout (+10 CP)">🏋️</button>
+      <button class="tool-btn" id="catchTool" title="Play Catch (+35🪙)">🎾</button>
+      <button class="tool-btn" id="minimizeTool" title="Minimize Companion">➖</button>
+      <button class="close-btn" id="hideTool" title="Hide">✕</button>
     \`;
     wrapper.appendChild(toolbar);
 
-    // Talking Tom Click Zones directly on on-screen pet canvas
+    const minPill = document.createElement('button');
+    minPill.className = 'minimized-pill';
+    minPill.innerHTML = '<span class="pulse-dot"></span><span>' + activePetData.name + '</span> <span style="color:#94a3b8;font-weight:normal;">(Expand)</span> ⌃';
+    shadow.appendChild(minPill);
+
+    // Minimize toggle handlers
+    shadow.getElementById('minimizeTool').addEventListener('click', (e) => {
+      e.stopPropagation();
+      wrapper.style.display = 'none';
+      minPill.style.display = 'flex';
+      if (bubbleEl) bubbleEl.style.display = 'none';
+    });
+
+    minPill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      minPill.style.display = 'none';
+      wrapper.style.display = 'flex';
+      if (petInstance) {
+        petInstance.setAnimation('celebrate');
+        setTimeout(() => petInstance.setAnimation('idle'), 1500);
+      }
+    });
+
+    // Pet canvas interactive click zones
     petInstance.element.addEventListener('click', (e) => {
       const rect = petInstance.element.getBoundingClientRect();
       const clickY = e.clientY - rect.top;
@@ -1914,70 +1987,45 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     shadow.getElementById('feedTool').addEventListener('click', (e) => {
       e.stopPropagation();
       petInstance.setAnimation('eat');
-      bubbleEl.textContent = 'Munch munch! 🍓';
+      bubbleEl.textContent = 'Munch munch! +50 Coins & +25 XP! 🍓';
       bubbleEl.style.display = 'block';
-      setTimeout(() => { petInstance.setAnimation('idle'); bubbleEl.style.display = 'none'; }, 2000);
+      petInstance.spawnParticle('heart');
+      setTimeout(() => { petInstance.setAnimation('idle'); bubbleEl.style.display = 'none'; }, 2200);
     });
 
     shadow.getElementById('petTool').addEventListener('click', (e) => {
       e.stopPropagation();
       petInstance.setAnimation('pet');
-      bubbleEl.textContent = 'Purrrrr! ❤️';
+      bubbleEl.textContent = 'Purrrrr! You give the best pets! ❤️';
       bubbleEl.style.display = 'block';
+      petInstance.spawnParticle('heart');
       setTimeout(() => { petInstance.setAnimation('idle'); bubbleEl.style.display = 'none'; }, 2000);
     });
 
     shadow.getElementById('bathTool').addEventListener('click', (e) => {
       e.stopPropagation();
       petInstance.setAnimation('bath');
-      bubbleEl.textContent = 'Pop pop! Squeaky clean bubbles! 🧼✨';
+      bubbleEl.textContent = 'Pop pop! Squeaky clean bubbles! +30 Affection! 🧼✨';
       bubbleEl.style.display = 'block';
       setTimeout(() => { petInstance.setAnimation('idle'); bubbleEl.style.display = 'none'; }, 2200);
     });
 
-    shadow.getElementById('batteryTool').addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (navigator.getBattery) {
-        navigator.getBattery().then(bat => {
-          if (bat.charging) {
-            petInstance.setAnimation('celebrate');
-            bubbleEl.textContent = '⚡ Laptop is plugged in! Charging up to 100%! ⚡';
-            petInstance.spawnParticle('star');
-          } else {
-            petInstance.setAnimation('pet');
-            bubbleEl.textContent = '🔋 Battery at ' + Math.round(bat.level * 100) + '% (Running on battery power)';
-          }
-          bubbleEl.style.display = 'block';
-          setTimeout(() => { bubbleEl.style.display = 'none'; petInstance.setAnimation('idle'); }, 3500);
-        }).catch(() => {
-          petInstance.setAnimation('celebrate');
-          bubbleEl.textContent = '⚡ Power surge! Laptop battery active!';
-          bubbleEl.style.display = 'block';
-          setTimeout(() => { bubbleEl.style.display = 'none'; petInstance.setAnimation('idle'); }, 2500);
-        });
-      } else {
-        petInstance.setAnimation('celebrate');
-        bubbleEl.textContent = '⚡ Electric Power Surge! Full energy!';
-        bubbleEl.style.display = 'block';
-        setTimeout(() => { bubbleEl.style.display = 'none'; petInstance.setAnimation('idle'); }, 2500);
-      }
-    });
-
-    shadow.getElementById('postureTool').addEventListener('click', (e) => {
+    shadow.getElementById('workoutTool').addEventListener('click', (e) => {
       e.stopPropagation();
       petInstance.setAnimation('celebrate');
-      bubbleEl.textContent = '💧 Stretch break! Drink water & roll your shoulders! 🧘';
+      bubbleEl.textContent = 'Gym workout! +10 Combat Power! 🏋️';
+      bubbleEl.style.display = 'block';
+      petInstance.spawnParticle('star');
+      setTimeout(() => { petInstance.setAnimation('idle'); bubbleEl.style.display = 'none'; }, 2000);
+    });
+
+    shadow.getElementById('catchTool').addEventListener('click', (e) => {
+      e.stopPropagation();
+      petInstance.setAnimation('celebrate');
+      bubbleEl.textContent = 'Great throw! Leaping catch! +35 Coins! 🎾';
       bubbleEl.style.display = 'block';
       petInstance.spawnParticle('heart');
-      setTimeout(() => { petInstance.setAnimation('idle'); bubbleEl.style.display = 'none'; }, 3500);
-    });
-
-    shadow.getElementById('jumpTool').addEventListener('click', (e) => {
-      e.stopPropagation();
-      petInstance.setAnimation('celebrate');
-      bubbleEl.textContent = 'Wheee! 🎉';
-      bubbleEl.style.display = 'block';
-      setTimeout(() => { petInstance.setAnimation('idle'); bubbleEl.style.display = 'none'; }, 1800);
+      setTimeout(() => { petInstance.setAnimation('idle'); bubbleEl.style.display = 'none'; }, 2000);
     });
 
     shadow.getElementById('hideTool').addEventListener('click', (e) => {
@@ -1988,30 +2036,38 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       } catch (err) {}
     });
 
-    // Laptop Battery Charging Web API Integration
+    // Laptop Battery Charging Web API Integration (Cyan Pulsing Aura)
     if (navigator.getBattery) {
       navigator.getBattery().then(battery => {
         function onBatteryChange() {
           if (battery.charging) {
-            bubbleEl.textContent = '⚡ Laptop plugged in! Powering up! ⚡';
+            chargingHalo.style.display = 'block';
+            bubbleEl.textContent = '⚡ Laptop plugged in! Supercharging energy! 🔋';
             bubbleEl.style.display = 'block';
             petInstance.setAnimation('celebrate');
+            petInstance.spawnParticle('star');
             setTimeout(() => { bubbleEl.style.display = 'none'; petInstance.setAnimation('idle'); }, 4000);
+          } else {
+            chargingHalo.style.display = 'none';
           }
         }
         battery.addEventListener('chargingchange', onBatteryChange);
-        if (battery.charging) setTimeout(onBatteryChange, 3000);
+        if (battery.charging) {
+          chargingHalo.style.display = 'block';
+          setTimeout(onBatteryChange, 2500);
+        }
       }).catch(() => {});
     }
 
-    // Screen-Time Hydration & Posture Reminders (every 20 minutes)
+    // Screen-Time Hydration & Posture Reminders (every 15 minutes)
     let pageTimeSec = 0;
     setInterval(() => {
       pageTimeSec += 15;
-      if (pageTimeSec > 0 && pageTimeSec % 1200 === 0) {
+      if (pageTimeSec > 0 && pageTimeSec % 900 === 0) {
         bubbleEl.textContent = '💧 Hydration Check! Stand up, stretch, and drink some water! 🧘';
         bubbleEl.style.display = 'block';
         petInstance.setAnimation('celebrate');
+        petInstance.spawnParticle('heart');
         setTimeout(() => { bubbleEl.style.display = 'none'; petInstance.setAnimation('idle'); }, 5000);
       }
     }, 15000);
@@ -2025,26 +2081,39 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       petInstance.setGaze(dx, dy);
     });
 
-    // Dragging
+    // Dragging (Direct 1:1 screen coordinates, zero axis-inversion)
     let isDragging = false;
-    let startX = 0, startY = 0;
-    let posX = 24, posY = 24;
+    let dragOffsetX = 0, dragOffsetY = 0;
+    let posX = Math.max(20, window.innerWidth - 220);
+    let posY = Math.max(20, window.innerHeight - 260);
+
+    host.style.left = posX + 'px';
+    host.style.top = posY + 'px';
+    host.style.right = 'auto';
+    host.style.bottom = 'auto';
 
     wrapper.addEventListener('pointerdown', (e) => {
       if (e.target.tagName === 'BUTTON') return;
       isDragging = true;
-      startX = e.clientX + posX;
-      startY = e.clientY + posY;
+      dragOffsetX = e.clientX - posX;
+      dragOffsetY = e.clientY - posY;
       petInstance.setAnimation('pet');
       try { wrapper.setPointerCapture(e.pointerId); } catch (err) {}
     });
 
+    minPill.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      dragOffsetX = e.clientX - posX;
+      dragOffsetY = e.clientY - posY;
+      try { minPill.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+
     window.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
-      posX = Math.max(10, Math.min(window.innerWidth - 130, startX - e.clientX));
-      posY = Math.max(10, Math.min(window.innerHeight - 150, startY - e.clientY));
-      host.style.right = posX + 'px';
-      host.style.bottom = posY + 'px';
+      posX = Math.max(10, Math.min(window.innerWidth - 180, e.clientX - dragOffsetX));
+      posY = Math.max(10, Math.min(window.innerHeight - 200, e.clientY - dragOffsetY));
+      host.style.left = posX + 'px';
+      host.style.top = posY + 'px';
     });
 
     window.addEventListener('pointerup', (e) => {
@@ -2052,6 +2121,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       isDragging = false;
       petInstance.setAnimation('idle');
       try { wrapper.releasePointerCapture(e.pointerId); } catch (err) {}
+      try { minPill.releasePointerCapture(e.pointerId); } catch (err) {}
     });
 
     // Autowander
@@ -2160,7 +2230,7 @@ Includes:
   - Dogs: German Shepherd, Rottweiler, Golden Retriever, Siberian Husky, French Bulldog, Shiba Inu, Doberman, Welsh Corgi
   - Cats: Bengal Cat, Maine Coon, Siamese Cat, Orange Tabby, British Shorthair, Scottish Fold, Calico Cat, Bombay Black Cat
 - **Custom Photo Avatar Support**: Upload your own dog or cat photo to roam across all Google tabs!
-- **Talking Tom Stage**: Microphone voice repeater (chipmunk voice!), poke head, tickle belly, milk bowl, bubble bath with soap physics, and day/night lights.
+- **Voice Mimic Sanctuary Stage**: Microphone voice repeater (companion voice!), poke head, tickle belly, feed berries, bubble bath with soap physics, gym workouts, and day/night lights.
 - **Pokemon GO Catch Radar**: Scan for wild pets, throw Beast-Balls with contracting target rings, and catch pets into your permanent kennel!
 - **Pet Auction House**: Real-time bidding, buyouts, and trade market!
 - **On-Screen Webpage Roaming**: Floats and roams across any website with drag physics, battery charging aura, and posture reminders!
@@ -2207,11 +2277,11 @@ Includes:
               <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                 <span>Unified Pet Slam Chrome Extension</span>
                 <span className="text-[10px] bg-[#CCFF00]/20 text-[#CCFF00] px-2 py-0.5 rounded-full font-mono">
-                  All 12 Breeds Included
+                  All 16 Breeds Included
                 </span>
               </h2>
               <p className="text-[11px] text-neutral-400">
-                Talking Tom Room, Multi-Breed Kennel, Pokemon GO Catch Radar & Auction Market in one extension
+                Voice Mimic Sanctuary, Multi-Breed Kennel, Pokemon GO Catch Radar & Auction Market in one extension
               </p>
             </div>
           </div>
@@ -2243,7 +2313,7 @@ Includes:
                 : 'border-transparent text-neutral-400 hover:text-white'
             }`}
           >
-            🐾 All 12 Varieties
+            🐾 All 16 Varieties
           </button>
           <button
             onClick={() => setActiveTab('radar')}
@@ -2303,23 +2373,23 @@ Includes:
 
                 {/* Voice Mimic & Soundboard */}
                 <div className="grid grid-cols-2 gap-1.5 mb-2 font-mono text-[10px]">
-                  <button className="col-span-2 py-1.5 px-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold flex items-center justify-center gap-1">
-                    🎙️ Hold & Speak (Talking Tom)
+                  <button className="col-span-2 py-1.5 px-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-bold flex items-center justify-center gap-1 shadow-md">
+                    🎙️ Hold & Speak (Pet Voice Mimic)
                   </button>
                   <button className="py-1.5 px-1 bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold flex items-center justify-center gap-1">
-                    🥛 Milk Bowl
+                    🍓 Feed Berry (+50🪙)
                   </button>
                   <button className="py-1.5 px-1 bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold flex items-center justify-center gap-1">
-                    🧼 Bubble Bath
+                    🧼 Bubble Bath (+30❤️)
                   </button>
                   <button className="py-1.5 px-1 bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold flex items-center justify-center gap-1">
-                    💨 Funny Toot
+                    ❤️ Stroke Fur (Purr)
                   </button>
                   <button className="py-1.5 px-1 bg-white/10 hover:bg-white/20 rounded-lg text-white font-bold flex items-center justify-center gap-1">
-                    🍓 Feed Berry
+                    🎾 Play Catch (+35🪙)
                   </button>
                   <button className="col-span-2 py-1.5 px-2 bg-[#CCFF00] text-black rounded-lg font-black uppercase text-[10px] shadow-lg flex items-center justify-center gap-1">
-                    🐾 Walk on Screen Webpage
+                    🐾 Roam on Screen Webpage
                   </button>
                 </div>
               </div>
@@ -2332,7 +2402,7 @@ Includes:
                     <span>All Buddy Page Features In Toolbar</span>
                   </h4>
                   <p className="text-neutral-300 text-[11px] leading-relaxed">
-                    The extension popup features the complete Talking Tom stage room: real microphone voice repeating with pitch shifting, head poking, belly tickling, milk slurping, bubble baths, funny toots, and berry feeding.
+                    The extension popup features the complete interactive companion sanctuary: natural pitched voice repeating, head poking, belly tickling, berry feeding (+50 Coins), bubble bath (+30 Affection), and leaping catch (+35 Coins).
                   </p>
                 </div>
 

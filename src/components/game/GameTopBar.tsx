@@ -6,20 +6,13 @@ import {
   VolumeX,
   HelpCircle,
   Home,
-  Users,
-  Shield,
-  Crown,
-  Radio,
-  Target,
+  Plus,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
-import { usePetCompanion } from '../../context/PetCompanionContext';
 import { sound } from '../../utils/audio';
 import { GameGuideModal } from './GameGuideModal';
 import { AccountAuthModal } from './AccountAuthModal';
-import { FriendsHubModal } from './FriendsHubModal';
-import { VipPassesModal } from './VipPassesModal';
-import { FriendsVoiceRoomModal } from './FriendsVoiceRoomModal';
+import { TokenRefillModal } from './TokenRefillModal';
 import { ThemeToggle } from '../ThemeToggle';
 
 interface GameTopBarProps {
@@ -29,6 +22,7 @@ interface GameTopBarProps {
   onStartPracticeDrill?: () => void;
   onOpenQuests?: () => void;
   onOpenLeaderboard?: () => void;
+  onOpenRadar?: () => void;
 }
 
 export const GameTopBar: React.FC<GameTopBarProps> = ({
@@ -37,6 +31,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
   onStartPracticeDrill,
   onOpenQuests,
   onOpenLeaderboard,
+  onOpenRadar,
 }) => {
   const {
     trainerName,
@@ -48,13 +43,10 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
     soundEnabled,
     toggleSound,
   } = useGame();
-  const { isOverlayActive, toggleOverlay } = usePetCompanion();
 
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [friendsModalOpen, setFriendsModalOpen] = useState(false);
-  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
-  const [vipModalOpen, setVipModalOpen] = useState(false);
+  const [tokenRefillOpen, setTokenRefillOpen] = useState(false);
 
   return (
     <>
@@ -107,96 +99,36 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
         </div>
 
         {/* Right Side: Resources & Utilities (Locked shrink-0, zero overlap) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Trophies Pill / Hall of Fame Leaderboard Trigger */}
           <button
             onClick={() => {
               sound.playClick();
               onOpenLeaderboard?.();
             }}
-            className="flex items-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 rounded-xl px-2.5 py-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
+            className="flex items-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 rounded-xl px-2.5 sm:px-3 py-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
             title="Hall of Fame Leaderboards (PvP Elo & OutbidPet)"
           >
             <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
             <span className="font-mono text-sm font-black text-amber-900 dark:text-amber-200 tabular-nums">{trophies}</span>
           </button>
 
-          {/* Coins Pill */}
-          <div className="flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/40 rounded-xl px-2.5 sm:px-3 py-1.5 shadow-sm">
-            <Coins className="w-4 h-4 text-amber-500 shrink-0" />
-            <span className="font-mono text-sm font-black text-amber-900 dark:text-amber-200 tabular-nums">
-              {credits.toLocaleString()}
-            </span>
-          </div>
-
-          {/* Live Desktop Buddy Toggle Button */}
+          {/* Interactive Coins Pill -> Opens TokenRefillModal */}
           <button
             onClick={() => {
               sound.playClick();
-              toggleOverlay();
+              setTokenRefillOpen(true);
             }}
-            className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-mono font-black transition-all cursor-pointer shadow-sm active:scale-95 shrink-0 ${
-              isOverlayActive
-                ? 'bg-cyan-100 border-2 border-cyan-500 text-cyan-900 dark:bg-cyan-950/90 dark:border-cyan-400 dark:text-cyan-200 shadow-[0_0_15px_rgba(0,240,255,0.4)]'
-                : 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 dark:bg-slate-900/90 dark:hover:bg-slate-800 dark:border-white/20 dark:text-slate-200'
-            }`}
-            title={isOverlayActive ? 'Companion Roaming Screen (Click to Dock)' : 'Summon Live Screen Companion'}
+            className="flex items-center gap-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 hover:border-amber-500/70 rounded-xl px-2.5 sm:px-3 py-1.5 shadow-sm cursor-pointer transition-all active:scale-95 group"
+            title="Click to Refill or Earn Slam Tokens"
           >
-            <span className="text-sm">🐾</span>
-            <span className="text-xs hidden md:inline">
-              {isOverlayActive ? 'Buddy Live 🟢' : 'Summon Buddy'}
+            <Coins className="w-4 h-4 text-amber-500 shrink-0 group-hover:scale-110 transition-transform" />
+            <span className="font-mono text-sm font-black text-amber-900 dark:text-amber-200 tabular-nums">
+              {credits.toLocaleString()}
             </span>
-          </button>
-
-          {/* Daily Quests Drawer Button */}
-          {onOpenQuests && (
-            <button
-              onClick={onOpenQuests}
-              className="flex items-center gap-1.5 bg-cyan-100 hover:bg-cyan-200 dark:bg-cyan-950/70 dark:hover:bg-cyan-900/80 border border-cyan-400/60 rounded-xl px-2.5 py-1.5 text-xs font-mono font-black text-cyan-900 dark:text-cyan-200 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
-              title="Daily Quests & Battle Directives"
-            >
-              <Target className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-              <span className="text-xs font-black hidden sm:inline">Quests</span>
-            </button>
-          )}
-
-          {/* VIP Pass Button */}
-          <button
-            onClick={() => setVipModalOpen(true)}
-            className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500/20 to-fuchsia-500/20 hover:from-amber-500/30 hover:to-fuchsia-500/30 border border-amber-500/50 rounded-xl px-2.5 py-1.5 text-xs font-mono font-black text-amber-900 dark:text-amber-200 transition-all cursor-pointer shadow-sm active:scale-95 shrink-0"
-            title="VIP Licenses (Auction $1.99, Avatar $0.99)"
-          >
-            <Crown className="w-4 h-4 text-amber-500" />
-            <span className="text-xs font-black">VIP</span>
-          </button>
-
-          {/* Voice Chat Room Button */}
-          <button
-            onClick={() => setVoiceModalOpen(true)}
-            className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/50 text-purple-700 dark:text-purple-200 transition-colors cursor-pointer shrink-0 shadow-sm"
-            title="Multiplayer Voice Chat Room"
-          >
-            <Radio className="w-4 h-4" />
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500" />
-          </button>
-
-          {/* Friends Button */}
-          <button
-            onClick={() => setFriendsModalOpen(true)}
-            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-slate-900/90 dark:hover:bg-slate-800 dark:border-white/20 text-slate-800 dark:text-cyan-300 transition-colors cursor-pointer shrink-0 shadow-sm"
-            title="Multiplayer Friends & Clan"
-          >
-            <Users className="w-4 h-4" />
-          </button>
-
-          {/* Guide Button */}
-          <button
-            onClick={() => setGuideModalOpen(true)}
-            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-slate-900/90 dark:hover:bg-slate-800 dark:border-white/20 text-slate-800 dark:text-[#CCFF00] transition-colors cursor-pointer shrink-0 shadow-sm"
-            title="Game Guide"
-          >
-            <HelpCircle className="w-4 h-4" />
+            <span className="flex items-center justify-center w-4 h-4 rounded-md bg-amber-500/30 text-amber-900 dark:text-amber-200 text-[10px] font-black group-hover:bg-amber-500 group-hover:text-black transition-colors">
+              +
+            </span>
           </button>
 
           {/* Light / Dark Mode Toggle */}
@@ -213,6 +145,15 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
             ) : (
               <VolumeX className="w-4 h-4 text-slate-400" />
             )}
+          </button>
+
+          {/* Guide Button */}
+          <button
+            onClick={() => setGuideModalOpen(true)}
+            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-slate-900/90 dark:hover:bg-slate-800 dark:border-white/20 text-slate-800 dark:text-[#CCFF00] transition-colors cursor-pointer shrink-0 shadow-sm"
+            title="Game Guide"
+          >
+            <HelpCircle className="w-4 h-4" />
           </button>
         </div>
       </header>
@@ -235,30 +176,16 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
         />
       )}
 
-      {/* Friends & Clan Hub */}
-      {friendsModalOpen && (
-        <FriendsHubModal
-          onClose={() => setFriendsModalOpen(false)}
-          onChallengeFriend={(friend) => {
-            onChallengeFriend?.(friend);
-            setFriendsModalOpen(false);
-          }}
+      {/* Token Refill Modal */}
+      {tokenRefillOpen && (
+        <TokenRefillModal
+          isOpen={tokenRefillOpen}
+          onClose={() => setTokenRefillOpen(false)}
+          onOpenArena={onStartPracticeDrill}
+          onOpenQuests={onOpenQuests}
+          onOpenRadar={onOpenRadar}
         />
       )}
-
-      {/* Voice Chat Room */}
-      {voiceModalOpen && (
-        <FriendsVoiceRoomModal
-          onClose={() => setVoiceModalOpen(false)}
-          onStartDuelWithFriend={(friendName) => {
-            setVoiceModalOpen(false);
-            onChallengeFriend?.({ name: friendName });
-          }}
-        />
-      )}
-
-      {/* VIP Passes Modal */}
-      {vipModalOpen && <VipPassesModal isOpen={vipModalOpen} onClose={() => setVipModalOpen(false)} />}
     </>
   );
 };

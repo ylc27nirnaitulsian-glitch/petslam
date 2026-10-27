@@ -8,13 +8,10 @@ import {
   PawPrint,
   ShoppingBag,
   Users,
-  Volume2,
-  VolumeX,
+  Compass,
   Maximize2,
   Minimize2,
   Info,
-  Sparkles,
-  Activity,
   Dna,
   Crown,
   Target,
@@ -36,7 +33,8 @@ export type MainNavId =
   | 'genetics'
   | 'pass'
   | 'quests'
-  | 'leaderboard';
+  | 'leaderboard'
+  | 'radar';
 
 interface DesktopNavRailProps {
   currentTab: MainNavId;
@@ -53,9 +51,6 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
   currentTab,
   onTabChange,
   onOpenInfoDrawer,
-  onOpenDiagnostics,
-  soundEnabled,
-  onToggleSound,
   isFullscreen,
   onToggleFullscreen,
 }) => {
@@ -65,6 +60,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
     { id: 'arena' as const, label: 'Arena', icon: Swords },
     { id: 'ranked' as const, label: '1v1 Ranked', icon: Swords },
     { id: 'leaderboard' as const, label: 'Hall of Fame', icon: Trophy },
+    { id: 'radar' as const, label: 'World Map', icon: Compass },
     { id: 'sanctuary' as const, label: 'Sanctuary', icon: Heart },
     { id: 'genetics' as const, label: 'Breeding Lab', icon: Dna },
     { id: 'pass' as const, label: 'Slam Pass', icon: Crown },
@@ -167,26 +163,10 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
           </span>
         </button>
 
-        {/* Audio Toggle */}
-        <button
-          onClick={onToggleSound}
-          className="w-full flex items-center justify-center xl:justify-start gap-2.5 px-2.5 xl:px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer text-xs font-mono font-semibold transition-colors border border-transparent hover:border-slate-300 dark:hover:border-white/10"
-          title={soundEnabled ? 'Mute Game Audio' : 'Unmute Game Audio'}
-        >
-          {soundEnabled ? (
-            <Volume2 className="w-4 h-4 text-emerald-600 dark:text-[#CCFF00]" />
-          ) : (
-            <VolumeX className="w-4 h-4 text-slate-400" />
-          )}
-          <span className="hidden xl:inline text-xs font-medium">
-            {soundEnabled ? 'Audio Live' : 'Muted'}
-          </span>
-        </button>
-
         {/* Fullscreen Toggle */}
         <button
           onClick={onToggleFullscreen}
-          className="w-full flex items-center justify-center xl:justify-start gap-2.5 px-2.5 xl:px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer text-xs font-mono font-semibold transition-colors border border-transparent hover:border-slate-300 dark:hover:border-white/10"
+          className="w-full flex items-center justify-center xl:justify-start gap-2.5 px-2.5 xl:px-3.5 py-2.5 rounded-xl text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 cursor-pointer text-xs font-mono font-semibold transition-colors border border-transparent hover:border-slate-300 dark:hover:border-white/10"
           title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen (F11)'}
         >
           {isFullscreen ? (
@@ -198,23 +178,6 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
             {isFullscreen ? 'Windowed' : 'Fullscreen'}
           </span>
         </button>
-
-        {/* System Diagnostics & Telemetry Modal */}
-        {onOpenDiagnostics && (
-          <button
-            onClick={() => {
-              sound.playClick();
-              onOpenDiagnostics();
-            }}
-            className="w-full flex items-center justify-center xl:justify-start gap-2.5 px-2.5 xl:px-3.5 py-2 rounded-xl bg-purple-100 dark:bg-purple-600/20 hover:bg-purple-200 dark:hover:bg-purple-600/35 text-purple-900 dark:text-purple-200 hover:text-purple-950 dark:hover:text-white cursor-pointer text-xs font-mono font-bold transition-all border border-purple-300 dark:border-purple-400/40 active:scale-95 shadow-xs"
-            title="System Diagnostics & Cloud Status (Ctrl+Shift+D)"
-          >
-            <Activity className="w-4 h-4 text-purple-600 dark:text-purple-300 shrink-0" />
-            <span className="hidden xl:inline text-xs font-black">
-              Diagnostics
-            </span>
-          </button>
-        )}
 
         {/* Showcase Drawer Button */}
         <button

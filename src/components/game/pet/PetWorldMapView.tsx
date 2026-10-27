@@ -261,7 +261,21 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
 
     mapInstanceRef.current = map;
 
+    // Trigger invalidateSize to prevent grey tiles inside modal containers
+    const invalidateTimer = setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
     return () => {
+      clearTimeout(invalidateTimer);
+      resizeObserver.disconnect();
       map.remove();
       mapInstanceRef.current = null;
     };

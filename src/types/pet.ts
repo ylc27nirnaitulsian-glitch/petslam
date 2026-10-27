@@ -38,10 +38,10 @@ export type PetAnimationState =
   | 'celebrate'
   | 'fetch'
   | 'drag'
-  | 'talk'       // Talking Tom voice mimic lip-sync
-  | 'dizzy'      // Talking Tom poke head
-  | 'laugh'      // Talking Tom tickle belly
-  | 'drink_milk' // Talking Tom milk bowl
+  | 'talk'       // Voice mimic lip-sync
+  | 'dizzy'      // Poke head dizzy
+  | 'laugh'      // Tickle belly laugh
+  | 'drink_milk' // Hydration / milk bowl
   | 'bath'       // Soap bubbles & wash
   | 'fart';      // Funny cartoon prank
 
