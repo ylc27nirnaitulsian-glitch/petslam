@@ -1,0 +1,54 @@
+{
+  "project": "PET SLAM",
+  "document": "LinkedIn 5-Slide PDF Carousel",
+  "dimensions": {
+    "width": 1080,
+    "height": 1350,
+    "ratio": "4:5"
+  },
+  "theme": {
+    "background": "#0B0F19",
+    "primaryText": "#FFFFFF",
+    "accentColor": "#00F0FF",
+    "highlightColor": "#CCFF00",
+    "fontHeading": "Inter Bold",
+    "fontBody": "Inter Regular"
+  },
+  "slides": [
+    {
+      "slideNumber": 1,
+      "tag": "RETROSPECTIVE",
+      "headline": "Tamagotchis in 1996 vs. Virtual Pets in 2026",
+      "subhead": "Why generic digital pets are dead—and what happens when your real dog or cat enters the arena.",
+      "footer": "Swipe to see what's changed ->"
+    },
+    {
+      "slideNumber": 2,
+      "tag": "THE PROBLEM",
+      "headline": "The 9-Hour Screen Fatigue",
+      "subhead": "Millions of people work long hours alone on laptops. Desktop companions are trending, but generic pixel pets lose their novelty in 48 hours.",
+      "footer": "petslam.app"
+    },
+    {
+      "slideNumber": 3,
+      "tag": "THE INNOVATION",
+      "headline": "From Real Photo to 60 FPS Fighter",
+      "subhead": "Using multimodal vision, PET SLAM scans your actual pet's coat, ear shapes, and personality quirks to build a custom combatant.",
+      "footer": "petslam.app"
+    },
+    {
+      "slideNumber": 4,
+      "tag": "DUAL LIFE",
+      "headline": "Fighter by Night. Coworker by Day.",
+      "subhead": "Compete in 60 FPS stadium arena battles, or export your pet as a lightweight Chrome extension that roams your browser tabs.",
+      "footer": "petslam.app"
+    },
+    {
+      "slideNumber": 5,
+      "tag": "CALL TO ACTION",
+      "headline": "What Are Your Pet's Combat Stats?",
+      "subhead": "Play 100% free in your browser right now. Zero downloads. Zero accounts required.",
+      "footer": "Enter the Arena at petslam.app"
+    }
+  ]
+}
