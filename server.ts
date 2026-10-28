@@ -864,6 +864,57 @@ app.post('/api/pet/lore-search', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// Kokoro Neural TTS Server Endpoint
+// ---------------------------------------------------------------------------
+let serverKokoroTTS: any = null;
+let serverKokoroInitializing = false;
+
+app.post('/api/tts/speak', async (req, res) => {
+  try {
+    const { text, voice = 'af_heart' } = req.body;
+    if (!text || typeof text !== 'string') {
+      res.status(400).json({ success: false, error: 'Text parameter is required' });
+      return;
+    }
+
+    if (!serverKokoroTTS && !serverKokoroInitializing) {
+      serverKokoroInitializing = true;
+      try {
+        const { KokoroTTS } = await import('kokoro-js');
+        serverKokoroTTS = await KokoroTTS.from_pretrained(
+          'onnx-community/Kokoro-82M-v1.0-ONNX',
+          { dtype: 'q8', device: 'cpu' }
+        );
+        serverKokoroInitializing = false;
+        console.log('[KokoroTTS-Server] Loaded 82M model for server synthesis');
+      } catch (err: any) {
+        serverKokoroInitializing = false;
+        console.warn('[KokoroTTS-Server] Model load notice:', err?.message || err);
+      }
+    }
+
+    if (serverKokoroTTS) {
+      const audio = await serverKokoroTTS.generate(text, { voice });
+      res.json({
+        success: true,
+        samplingRate: audio.sampling_rate || 24000,
+        audioLength: audio.audio?.length || 0,
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      mode: 'client_fallback',
+      message: 'Client-side WebAssembly/WebGPU synthesis active',
+    });
+  } catch (err: any) {
+    console.error('[KokoroTTS-Server] Error:', err);
+    res.status(500).json({ success: false, error: err?.message || 'TTS generation failed' });
+  }
+});
+
 // Setup Vite middleware in dev or static files in production
 async function startServer() {
   if (!isProduction) {

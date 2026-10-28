@@ -17,10 +17,13 @@ import {
   Mic,
   Bath,
   Smile,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { sound } from '../../../utils/audio';
 import { voiceMimic } from '../../../utils/voiceMimic';
 import { mapBeastToSpecies } from '../../../utils/petVisuals';
+import { kokoroTTS } from '../../../utils/kokoroTTS';
 
 interface FloatingPetOverlayProps {
   onOpenSanctuary?: () => void;
@@ -83,6 +86,9 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   // Screen Time & Reminders
   const [screenSeconds, setScreenSeconds] = useState(0);
 
+  // Kokoro Local TTS State
+  const [ttsEnabled, setTtsEnabled] = useState(() => kokoroTTS.getIsEnabled());
+
   const dragRef = useRef({
     startX: 0,
     startY: 0,
@@ -99,6 +105,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const showSpeech = useCallback((text: string, duration = 3500) => {
     if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
     setSpeechBubble(text);
+    kokoroTTS.speak(text);
     speechTimerRef.current = setTimeout(() => {
       setSpeechBubble(null);
     }, duration);
@@ -539,6 +546,28 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 <span>Meow 🐱</span>
               </button>
             )}
+
+            {/* Kokoro Local TTS Voice Toggle */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                sound.playClick();
+                const nowEnabled = kokoroTTS.toggle();
+                setTtsEnabled(nowEnabled);
+                if (nowEnabled) {
+                  showSpeech('Kokoro Voice Active! 🗣️');
+                }
+              }}
+              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                ttsEnabled
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                  : 'bg-white/10 text-neutral-400 border border-white/10'
+              }`}
+              title={ttsEnabled ? 'Kokoro Neural TTS: ON (Click to Mute)' : 'Kokoro Neural TTS: OFF (Click to Enable)'}
+            >
+              {ttsEnabled ? <Volume2 className="w-3 h-3 text-cyan-400" /> : <VolumeX className="w-3 h-3" />}
+              <span>TTS</span>
+            </button>
 
             {/* Size Toggle Button */}
             <button
