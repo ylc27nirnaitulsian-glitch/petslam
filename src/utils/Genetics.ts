@@ -1,10 +1,30 @@
 /**
- * Breeding Genetics Engine for PET SLAM
- * Inherits parent attributes with ±10% gaussian variance, blends coat hex colors,
- * and rolls a 5% rare mutation chance (Radioactive, Nebula, Solar God, Eclipse).
+ * Breeding Genetics & Procedural Chimera Engine for PET SLAM
+ * Inherits parent attributes with ±10% gaussian variance, blends 6-tone coat hex colors,
+ * implements a 5-tier weighted rarity ladder (Common -> Rare -> Epic -> Legendary -> Mythic)
+ * with level/affection boost, creates true procedural Chimera hybrid cross-breeds,
+ * and rolls rare mutations (Radioactive Neon, Void Nebula, Solar God, Blood Eclipse).
  */
 
-import { CompanionPet, PetCustomPalette, PetSpecies, PetCategory } from '../types/pet';
+import { CompanionPet, PetCustomPalette, PetSpecies, PetCategory, PetRarity, PetCustomFeatures } from '../types/pet';
+
+export const RARITY_TIERS: PetRarity[] = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+
+export const RARITY_LEVEL_MAP: Record<PetRarity, number> = {
+  common: 0,
+  rare: 1,
+  epic: 2,
+  legendary: 3,
+  mythic: 4,
+};
+
+export const RARITY_BADGE_COLORS: Record<PetRarity, { bg: string; text: string; border: string; glow: string }> = {
+  common: { bg: 'bg-neutral-800', text: 'text-neutral-300', border: 'border-neutral-600', glow: 'rgba(163,163,163,0.3)' },
+  rare: { bg: 'bg-cyan-950', text: 'text-cyan-400', border: 'border-cyan-500', glow: 'rgba(0,240,255,0.4)' },
+  epic: { bg: 'bg-purple-950', text: 'text-purple-400', border: 'border-purple-500', glow: 'rgba(168,85,247,0.45)' },
+  legendary: { bg: 'bg-amber-950', text: 'text-amber-400', border: 'border-amber-500', glow: 'rgba(245,158,11,0.5)' },
+  mythic: { bg: 'bg-gradient-to-r from-fuchsia-950 to-rose-950', text: 'text-fuchsia-300', border: 'border-fuchsia-400', glow: 'rgba(217,70,239,0.7)' },
+};
 
 export interface EggEntity {
   id: string;
@@ -15,6 +35,12 @@ export interface EggEntity {
   species: PetSpecies;
   category: PetCategory;
   name: string;
+  rarity: PetRarity;
+  isChimera: boolean;
+  hybridSpeciesName?: string;
+  customFeatures: PetCustomFeatures;
+  ascendedTier: boolean;
+  ascensionChancePercent: number;
   offspringPalette: PetCustomPalette;
   offspringStats: {
     attack: number;
@@ -62,6 +88,44 @@ export function blendHexColors(hex1: string, hex2: string, weight = 0.5): string
   } catch {
     return hex1;
   }
+}
+
+// Extract pet rarity safely
+export function getPetRarity(pet: CompanionPet): PetRarity {
+  if (pet.rarity) return pet.rarity;
+  const t = pet.title.toLowerCase();
+  if (t.includes('mythic')) return 'mythic';
+  if (t.includes('mutant') || t.includes('titan') || t.includes('legendary')) return 'legendary';
+  if (pet.level >= 15 || pet.stats.cp >= 550) return 'epic';
+  if (pet.level >= 8 || pet.stats.cp >= 400) return 'rare';
+  return 'common';
+}
+
+// Calculate ascension probability based on parent level and affection
+export function calculateAscensionChance(parent1: CompanionPet, parent2: CompanionPet): number {
+  const p1Rarity = getPetRarity(parent1);
+  const p2Rarity = getPetRarity(parent2);
+  const highestTierIdx = Math.max(RARITY_LEVEL_MAP[p1Rarity], RARITY_LEVEL_MAP[p2Rarity]);
+  if (highestTierIdx >= RARITY_TIERS.length - 1) {
+    return 0; // Already max tier (Mythic)
+  }
+
+  // 30% baseline chance
+  let chance = 0.30;
+
+  // Level bonus: up to +10% (scaled across parent levels)
+  const avgLevel = ((parent1.level || 5) + (parent2.level || 5)) / 2;
+  const levelBonus = Math.min(0.10, (avgLevel / 30) * 0.10);
+
+  // Affection hearts bonus: up to +10% (scaled across 0-5 hearts)
+  const avgHearts = ((parent1.affectionHearts || 1) + (parent2.affectionHearts || 1)) / 2;
+  const heartBonus = Math.min(0.10, (avgHearts / 5) * 0.10);
+
+  // Same tier synergy: if both parents are same high tier, +5%
+  const synergy = (p1Rarity === p2Rarity && highestTierIdx > 0) ? 0.05 : 0;
+
+  chance = Math.min(0.50, chance + levelBonus + heartBonus + synergy);
+  return Math.round(chance * 100) / 100;
 }
 
 // Rare Mutations (5% chance)
@@ -120,11 +184,34 @@ const RARE_MUTATIONS = [
   },
 ];
 
+const SPECIES_DISPLAY_NAMES: Record<string, string> = {
+  bengal: 'Bengal',
+  mainecoon: 'Maine Coon',
+  siamese: 'Siamese',
+  tabby: 'Tabby',
+  british: 'British Shorthair',
+  scottish: 'Scottish Fold',
+  calico: 'Calico',
+  blackcat: 'Shadow Cat',
+  germanshepherd: 'Shepherd',
+  rottweiler: 'Rottweiler',
+  retriever: 'Retriever',
+  husky: 'Husky',
+  bulldog: 'Bulldog',
+  shiba: 'Shiba',
+  doberman: 'Doberman',
+  corgi: 'Corgi',
+  kodiak: 'Kodiak',
+  bagheera: 'Panther',
+  ignis: 'Ignis',
+  sultan: 'Sultan',
+};
+
 export function breedCompanionPets(parent1: CompanionPet, parent2: CompanionPet): EggEntity {
   const p1Stats = parent1.stats || { attack: 60, defense: 60, agility: 60, stamina: 60, cp: 400 };
   const p2Stats = parent2.stats || { attack: 60, defense: 60, agility: 60, stamina: 60, cp: 400 };
 
-  // 1. Stat Inheritance (Weighted Average ±10% Gaussian variance)
+  // 1. Stat Inheritance (Weighted Average +-10% Gaussian variance)
   const calcStat = (s1: number, s2: number) => {
     const base = (s1 + s2) / 2;
     const variance = 1 + (Math.random() - 0.5) * 0.2; // 0.90 to 1.10
@@ -164,7 +251,29 @@ export function breedCompanionPets(parent1: CompanionPet, parent2: CompanionPet)
     nose: Math.random() > 0.5 ? p1Pal.nose : p2Pal.nose,
   };
 
-  // 3. Rare Mutation Roll (5% chance)
+  // 3. Rarity Progression Ladder
+  const p1Rarity = getPetRarity(parent1);
+  const p2Rarity = getPetRarity(parent2);
+  const higherTierIdx = Math.max(RARITY_LEVEL_MAP[p1Rarity], RARITY_LEVEL_MAP[p2Rarity]);
+  const ascensionChance = calculateAscensionChance(parent1, parent2);
+  const rollAscend = Math.random() < ascensionChance && higherTierIdx < RARITY_TIERS.length - 1;
+  const finalRarity: PetRarity = rollAscend ? RARITY_TIERS[higherTierIdx + 1] : RARITY_TIERS[higherTierIdx];
+
+  // Rarity stat scaling multiplier
+  const rarityMultipliers: Record<PetRarity, number> = {
+    common: 1.0,
+    rare: 1.08,
+    epic: 1.18,
+    legendary: 1.30,
+    mythic: 1.48,
+  };
+  const rMult = rarityMultipliers[finalRarity];
+  attack = Math.round(attack * rMult);
+  defense = Math.round(defense * rMult);
+  agility = Math.round(agility * rMult);
+  stamina = Math.round(stamina * rMult);
+
+  // 4. Rare Mutation Roll (5% chance)
   const isMutant = Math.random() < 0.05;
   let mutationType: string | undefined = undefined;
 
@@ -180,12 +289,51 @@ export function breedCompanionPets(parent1: CompanionPet, parent2: CompanionPet)
 
   const cp = Math.round(attack * 1.8 + defense * 1.4 + agility * 1.6 + stamina * 1.5);
 
-  // Species inheritance (50/50 from parents)
+  // 5. Procedural Chimera Hybrid Fusion
+  const isCrossBreed = parent1.species !== parent2.species || parent1.category !== parent2.category;
+  const isChimera = isCrossBreed;
+
+  const p1Breed = SPECIES_DISPLAY_NAMES[parent1.species] || parent1.species;
+  const p2Breed = SPECIES_DISPLAY_NAMES[parent2.species] || parent2.species;
+
+  const hybridSpeciesName = isChimera
+    ? `${p1Breed}-${p2Breed} Chimera`
+    : `Purebred ${p1Breed}`;
+
+  // Species inheritance base for physics/animation
   const species = Math.random() > 0.5 ? parent1.species : parent2.species;
   const category = Math.random() > 0.5 ? parent1.category : parent2.category;
 
-  const names = ['Aegis', 'Blitz', 'Cipher', 'Draco', 'Echo', 'Fable', 'Gale', 'Hyperion', 'Kaiser', 'Luna'];
-  const name = `${names[Math.floor(Math.random() * names.length)]} Junior`;
+  // Custom physical features blending
+  const p1Feat = parent1.customFeatures || {};
+  const p2Feat = parent2.customFeatures || {};
+
+  const customFeatures: PetCustomFeatures = {
+    isCat: category === 'cat',
+    isChimera,
+    hybridSpeciesName,
+    parent1Species: parent1.species,
+    parent2Species: parent2.species,
+    earType: p1Feat.earType || (category === 'cat' ? 'pointed' : 'floppy'),
+    chimeraSecondaryEarType: p2Feat.earType || (p2Feat.isCat ? 'pointed' : 'floppy'),
+    hasWhiskers: category === 'cat' || parent1.category === 'cat' || parent2.category === 'cat',
+    hasRosettes: parent1.species === 'bengal' || parent2.species === 'bengal' || Math.random() < 0.35,
+    hasStripes: parent1.species === 'tabby' || parent2.species === 'tabby' || Math.random() < 0.35,
+    hasMuzzleMask: parent1.species === 'husky' || parent2.species === 'husky' || parent1.species === 'germanshepherd' || parent2.species === 'germanshepherd' || Math.random() < 0.4,
+    hasEyebrowDots: parent1.species === 'rottweiler' || parent2.species === 'rottweiler' || parent1.species === 'doberman' || parent2.species === 'doberman' || Math.random() < 0.3,
+    eyePatch: Math.random() < 0.25,
+    fluffyTail: true,
+    collarColor: finalRarity === 'mythic' ? '#FF007A' : finalRarity === 'legendary' ? '#F59E0B' : '#CCFF00',
+    signatureMove: {
+      name: isChimera ? `${p1Breed}-${p2Breed} Fusion Slam` : `Genetic Instinct Pounce`,
+      description: isChimera
+        ? `Dual-discipline hybrid strike combining canine crushing power with feline razor agility!`
+        : `Inherited ancestral technique delivering high critical-hit damage!`,
+    },
+  };
+
+  const names = ['Aegis', 'Blitz', 'Cipher', 'Draco', 'Echo', 'Fable', 'Gale', 'Hyperion', 'Kaiser', 'Luna', 'Valkyrie', 'Titan', 'Zephyr', 'Orion', 'Nova'];
+  const name = `${names[Math.floor(Math.random() * names.length)]} ${isChimera ? 'Chimera' : 'Junior'}`;
 
   return {
     id: `egg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -196,6 +344,12 @@ export function breedCompanionPets(parent1: CompanionPet, parent2: CompanionPet)
     species,
     category,
     name,
+    rarity: finalRarity,
+    isChimera,
+    hybridSpeciesName,
+    customFeatures,
+    ascendedTier: rollAscend,
+    ascensionChancePercent: Math.round(ascensionChance * 100),
     offspringPalette,
     offspringStats: { attack, defense, agility, stamina, cp },
     isMutant,
@@ -207,12 +361,27 @@ export function breedCompanionPets(parent1: CompanionPet, parent2: CompanionPet)
 }
 
 export function hatchEggToCompanionPet(egg: EggEntity): CompanionPet {
+  const isMythic = egg.rarity === 'mythic';
+  const isLegendary = egg.rarity === 'legendary';
+
+  let title = `${egg.rarity.toUpperCase()} Prodigy`;
+  if (isMythic) {
+    title = `Mythic ${egg.hybridSpeciesName || 'Chimera Sovereign'}`;
+  } else if (egg.isMutant) {
+    title = `Mutant ${egg.mutationType}`;
+  } else if (egg.isChimera) {
+    title = `${egg.rarity.toUpperCase()} Chimera Hybrid`;
+  }
+
   return {
     id: `bred_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     species: egg.species,
     category: egg.category,
     name: egg.name,
-    title: egg.isMutant ? `Mutant ${egg.mutationType}` : 'Pedigree Offspring',
+    title,
+    rarity: egg.rarity,
+    isChimera: egg.isChimera,
+    hybridSpeciesName: egg.hybridSpeciesName,
     stage: 1,
     level: 1,
     exp: 0,
@@ -225,10 +394,22 @@ export function hatchEggToCompanionPet(egg: EggEntity): CompanionPet {
     mood: 'excited',
     stats: egg.offspringStats,
     battleBuff: {
-      name: egg.isMutant ? 'Mutant Surge' : 'Hereditary Instinct',
-      description: egg.isMutant ? '+25% Overdrive Damage from rare genetic mutation.' : '+10% Speed in battle.',
+      name: isMythic
+        ? 'Mythic Celestial Aura'
+        : egg.isMutant
+        ? 'Mutant Surge'
+        : egg.isChimera
+        ? 'Chimera Hybrid Vigor'
+        : 'Hereditary Instinct',
+      description: isMythic
+        ? '+35% Overdrive & +20% Critical Strike Chance from Mythic lineage.'
+        : egg.isMutant
+        ? '+25% Overdrive Damage from rare genetic mutation.'
+        : egg.isChimera
+        ? '+15% All-Round Combat Attributes from cross-species hybrid vigor.'
+        : '+10% Speed in battle.',
       effectType: 'crit_chance',
-      potency: egg.isMutant ? 25 : 10,
+      potency: isMythic ? 35 : egg.isMutant ? 25 : egg.isChimera ? 15 : 10,
     },
     createdAt: Date.now(),
     lastFedAt: Date.now(),
@@ -238,20 +419,22 @@ export function hatchEggToCompanionPet(egg: EggEntity): CompanionPet {
     caughtAt: 'Sanctuary Genetics Lab',
     isFavorite: true,
     customPalette: egg.offspringPalette,
-    customFeatures: {
-      earType: 'pointed',
-      hasWhiskers: egg.category === 'cat',
-      eyePatch: Math.random() < 0.25,
-      collarColor: '#CCFF00',
-      fluffyTail: true,
-      signatureMove: {
-        name: `${egg.name}'s Genetic Pounce`,
-        description: 'Inherited power blast combining both parents genetic prowess!',
-      },
-    },
-    breedName: `Bred Gen-2 ${egg.species}`,
-    personalityTraits: egg.isMutant ? ['Rare Mutant', 'Genetic Marvel', 'Arena Apex'] : ['Playful', 'Loyal', 'High Potential'],
-    quirk: egg.isMutant ? 'Glows in dark arenas with neon cyber radiation!' : 'Inherited strong instincts from both parents.',
+    customFeatures: egg.customFeatures,
+    breedName: egg.isChimera ? egg.hybridSpeciesName : `Bred Gen-2 ${egg.species}`,
+    personalityTraits: isMythic
+      ? ['Mythic Sovereign', 'Celestial Lineage', 'Apex Predator']
+      : egg.isMutant
+      ? ['Rare Mutant', 'Genetic Marvel', 'Arena Apex']
+      : egg.isChimera
+      ? ['Chimera Hybrid', 'Dual Instinct', 'Adaptive Fighter']
+      : ['Playful', 'Loyal', 'High Potential'],
+    quirk: isMythic
+      ? 'Radiates an iridescent celestial aura that mesmerizes opponents in the arena!'
+      : egg.isMutant
+      ? 'Glows in dark arenas with neon cyber radiation!'
+      : egg.isChimera
+      ? 'Can vocalize both a piercing bark and a stealthy purr!'
+      : 'Inherited strong instincts from both parents.',
     isCustomAvatar: true,
   };
 }

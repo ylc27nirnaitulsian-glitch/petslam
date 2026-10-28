@@ -69,6 +69,8 @@ export interface PetCustomPalette {
   nose: string;       // Nose / muzzle
 }
 
+export type PetRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
+
 export interface PetCustomFeatures {
   isCat?: boolean;
   earType?: 'pointed' | 'floppy' | 'round';
@@ -82,6 +84,16 @@ export interface PetCustomFeatures {
     name: string;
     description: string;
   };
+  // Hybrid Chimera & Genetics features
+  isChimera?: boolean;
+  hybridSpeciesName?: string;
+  chimeraSecondaryEarType?: 'pointed' | 'floppy' | 'round';
+  hasRosettes?: boolean;
+  hasStripes?: boolean;
+  hasMuzzleMask?: boolean;
+  hasEyebrowDots?: boolean;
+  parent1Species?: PetSpecies;
+  parent2Species?: PetSpecies;
 }
 
 export interface CompanionPet {
@@ -109,6 +121,9 @@ export interface CompanionPet {
   totalBerriesEaten: number;
   caughtAt?: string; // Location or "Wild Encounter" or "Photo Studio"
   isFavorite?: boolean;
+  rarity?: PetRarity;
+  isChimera?: boolean;
+  hybridSpeciesName?: string;
   // Custom Photo Avatar Attributes
   customPalette?: PetCustomPalette;
   customFeatures?: PetCustomFeatures;
@@ -187,7 +202,7 @@ export interface WildPetEncounter {
   title: string;
   cp: number;
   level: number;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  rarity: PetRarity;
   baseCatchRate: number; // e.g. 0.65
   distanceMeters: number;
   spawnTimeRemaining: number; // in seconds

@@ -452,19 +452,22 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       ctx.ellipse(cx, shadowY, shadowWidth, shadowHeight, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 2. AURA (FOR TITAN STAGE OR BUFFED)
-      if (stage === 3 || showAura) {
+      // 2. AURA (FOR TITAN STAGE, MYTHIC RARITY, CHIMERA OR BUFFED)
+      const isMythic = curFeatures?.isChimera || showAura || stage === 3;
+      if (stage === 3 || showAura || curFeatures?.isChimera) {
         ctx.save();
         const auraRadius = 85 * uniformScale;
         const auraGrad = ctx.createRadialGradient(cx, cy - 8 * uniformScale, 20 * uniformScale, cx, cy - 8 * uniformScale, auraRadius);
-        const auraColor = isCat
+        const auraColor = curFeatures?.isChimera
+          ? 'rgba(217, 70, 239, ' // Fuchsia Celestial Chimera Aura
+          : isCat
           ? 'rgba(6, 182, 212, '
           : isDog
           ? 'rgba(234, 179, 8, '
           : 'rgba(204, 255, 0, ';
-        const pulse = 0.25 + Math.sin(s.time * 3) * 0.12;
+        const pulse = 0.28 + Math.sin(s.time * 3.5) * 0.14;
         auraGrad.addColorStop(0, `${auraColor}${pulse})`);
-        auraGrad.addColorStop(0.7, `${auraColor}${pulse * 0.4})`);
+        auraGrad.addColorStop(0.7, `${auraColor}${pulse * 0.45})`);
         auraGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = auraGrad;
         ctx.beginPath();
@@ -1046,16 +1049,16 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         ctx.lineTo(6, -14);
         ctx.closePath();
         ctx.fill();
-      } else if (species === 'rottweiler' || species === 'doberman') {
+      } else if (species === 'rottweiler' || species === 'doberman' || curFeatures?.hasEyebrowDots) {
         // Distinct tan eyebrow dots above eyes
-        ctx.fillStyle = '#B45309';
+        ctx.fillStyle = secondaryColor || '#B45309';
         ctx.beginPath();
         ctx.ellipse(-20, -50, 4.5, 3.2, -0.2, 0, Math.PI * 2);
         ctx.ellipse(20, -50, 4.5, 3.2, 0.2, 0, Math.PI * 2);
         ctx.fill();
-      } else if (species === 'bengal') {
+      } else if (species === 'bengal' || curFeatures?.hasRosettes) {
         // Leopard rosettes on cheeks
-        ctx.strokeStyle = '#78350F';
+        ctx.strokeStyle = secondaryColor || '#78350F';
         ctx.lineWidth = 2;
         [-1, 1].forEach((side) => {
           ctx.beginPath();
@@ -1063,6 +1066,22 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
           ctx.stroke();
           ctx.beginPath();
           ctx.arc(side * 28, -34, 3.5, 0.5, Math.PI * 2);
+          ctx.stroke();
+        });
+      }
+
+      // Chimera Cross-Markings: if Chimera has both stripes or extra hybrid marks
+      if (curFeatures?.hasStripes) {
+        ctx.strokeStyle = secondaryColor || '#475569';
+        ctx.lineWidth = 2;
+        [-1, 1].forEach((side) => {
+          ctx.beginPath();
+          ctx.moveTo(side * 18, -48);
+          ctx.lineTo(side * 30, -50);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(side * 16, -42);
+          ctx.lineTo(side * 28, -43);
           ctx.stroke();
         });
       }

@@ -1040,6 +1040,12 @@ function createPetCanvas(species, stage, width, height) {
       <button class="action-btn" id="voicePresetBtn" style="flex:0.6;">📢 Say Hello</button>
     </div>
 
+    <!-- Dedicated Bark & Meow Context-Aware Audio -->
+    <div class="action-grid" style="margin-bottom:6px;">
+      <button class="action-btn" id="barkBtn" style="border-color:#F59E0B;color:#F59E0B;">🐶 Bark<span style="font-size:8px;color:#FDE68A;">Woof!</span></button>
+      <button class="action-btn" id="meowBtn" style="border-color:#F43F5E;color:#F43F5E;">🐱 Meow<span style="font-size:8px;color:#FDA4AF;">Purr~</span></button>
+    </div>
+
     <!-- Companion Care Action Bar -->
     <div class="action-grid">
       <button class="action-btn" id="feedBerryBtn">🍓 Feed Berry<span style="font-size:8px;color:#CCFF00;">+50🪙</span></button>
@@ -1460,6 +1466,28 @@ document.getElementById('petStrokeBtn').addEventListener('click', () => {
   petCanvas.spawnParticle('heart');
   setTimeout(() => petCanvas.setAnimation('idle'), 1800);
 });
+
+const barkBtn = document.getElementById('barkBtn');
+if (barkBtn) {
+  barkBtn.addEventListener('click', () => {
+    playBark();
+    petCanvas.setAnimation('celebrate');
+    document.getElementById('petSpeech').textContent = 'Woof woof! Arf! 🐶🐾';
+    petCanvas.spawnParticle('heart');
+    setTimeout(() => petCanvas.setAnimation('idle'), 1600);
+  });
+}
+
+const meowBtn = document.getElementById('meowBtn');
+if (meowBtn) {
+  meowBtn.addEventListener('click', () => {
+    playMeow();
+    petCanvas.setAnimation('celebrate');
+    document.getElementById('petSpeech').textContent = 'Meow meow! Purrrr~ 🐱✨';
+    petCanvas.spawnParticle('heart');
+    setTimeout(() => petCanvas.setAnimation('idle'), 1600);
+  });
+}
 
 const catchBtn = document.getElementById('catchBtn');
 if (catchBtn) {
@@ -2742,7 +2770,9 @@ Includes:
                     try {
                       trackClarityEvent('extension_pass_dodo_click');
                       const checkout = await createDodoCheckout({ passType: 'extension' });
-                      if (checkout.simulated) {
+                      if (checkout.checkoutUrl && !checkout.simulated) {
+                        window.location.href = checkout.checkoutUrl;
+                      } else if (checkout.simulated && checkout.mode === 'test_sandbox') {
                         unlockPass('extension', false);
                         setShowPassModal(false);
                         handleDownloadZip();

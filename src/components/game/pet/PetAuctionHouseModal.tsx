@@ -616,10 +616,12 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                     try {
                       trackClarityEvent('auction_pass_dodo_click');
                       const checkout = await createDodoCheckout({ passType: 'auction' });
-                      if (checkout.simulated) {
+                      if (checkout.checkoutUrl && !checkout.simulated) {
+                        window.location.href = checkout.checkoutUrl;
+                      } else if (checkout.simulated && checkout.mode === 'test_sandbox') {
                         unlockPass('auction', false);
                         setShowLicenseModal(false);
-                        showToast('⚡ [Dodo Sandbox] VIP Auction License Activated!');
+                        showToast('⚡ [Dodo Test Sandbox] VIP Auction License Activated!');
                       } else if (checkout.checkoutUrl) {
                         window.location.href = checkout.checkoutUrl;
                       }

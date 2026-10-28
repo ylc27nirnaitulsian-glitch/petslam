@@ -281,6 +281,22 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     setTimeout(() => setAnimState('idle'), 2600);
   };
 
+  const isChimera = Boolean(pet.isChimera || pet.customFeatures?.isChimera);
+
+  const handleBark = () => {
+    sound.playBark();
+    setAnimState('celebrate');
+    showSpeech(`Woof woof! Arf! 🐶🐾`, 2200);
+    setTimeout(() => setAnimState('idle'), 1500);
+  };
+
+  const handleMeow = () => {
+    sound.playMeow();
+    setAnimState('celebrate');
+    showSpeech(`Meow meow! Purrrr~ 🐱✨`, 2200);
+    setTimeout(() => setAnimState('idle'), 1500);
+  };
+
   const handleVoiceMimic = async () => {
     showSpeech(`Listening... Say something! 🎙️`);
     const res = await voiceMimic.startListening();
@@ -395,6 +411,34 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
               <Mic className="w-4 h-4" />
             </button>
 
+            {/* Top-Left: Bark (Dogs & Chimeras) */}
+            {(pet.category === 'dog' || isChimera) && (
+              <button
+                onClick={() => {
+                  handleBark();
+                  setShowRadialMenu(false);
+                }}
+                className="absolute top-2 left-2 bg-amber-500 hover:bg-amber-400 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
+                title="Bark 🐶"
+              >
+                🐶
+              </button>
+            )}
+
+            {/* Top-Right: Meow (Cats & Chimeras) */}
+            {(pet.category === 'cat' || isChimera) && (
+              <button
+                onClick={() => {
+                  handleMeow();
+                  setShowRadialMenu(false);
+                }}
+                className="absolute top-2 right-2 bg-pink-500 hover:bg-pink-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
+                title="Meow 🐱"
+              >
+                🐱
+              </button>
+            )}
+
             {/* Center: Open Sanctuary */}
             <button
               onClick={() => {
@@ -469,6 +513,33 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
 
           {/* Mini Control Dock on hover */}
           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 mt-1 bg-black/85 backdrop-blur-md px-3 py-1 rounded-full border border-white/15 shadow-xl">
+            {/* Context-Aware Voice Triggers */}
+            {(pet.category === 'dog' || isChimera) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBark();
+                }}
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 hover:bg-amber-400 hover:text-black text-amber-300 border border-amber-500/30 transition-colors cursor-pointer flex items-center gap-0.5"
+                title="Bark"
+              >
+                <span>Bark 🐶</span>
+              </button>
+            )}
+
+            {(pet.category === 'cat' || isChimera) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMeow();
+                }}
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-pink-500/20 hover:bg-pink-400 hover:text-black text-pink-300 border border-pink-500/30 transition-colors cursor-pointer flex items-center gap-0.5"
+                title="Meow"
+              >
+                <span>Meow 🐱</span>
+              </button>
+            )}
+
             {/* Size Toggle Button */}
             <button
               onClick={(e) => {

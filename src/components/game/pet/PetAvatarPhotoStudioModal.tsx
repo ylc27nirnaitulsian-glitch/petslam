@@ -1314,7 +1314,9 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                     try {
                       trackClarityEvent('avatar_pass_dodo_click');
                       const checkout = await createDodoCheckout({ passType: 'avatar' });
-                      if (checkout.simulated) {
+                      if (checkout.checkoutUrl && !checkout.simulated) {
+                        window.location.href = checkout.checkoutUrl;
+                      } else if (checkout.simulated && checkout.mode === 'test_sandbox') {
                         unlockPass('avatar', false);
                         setShowPassModal(false);
                         finalizeSave();

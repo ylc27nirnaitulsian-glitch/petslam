@@ -12,19 +12,25 @@ import {
   Flame,
   CheckCircle,
   Crown,
+  Coins,
+  ChevronDown,
+  RotateCcw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { sound } from '../../../utils/audio';
 import { triggerVictoryExplosion } from '../../../utils/confetti';
 import { usePetCompanion } from '../../../context/PetCompanionContext';
 import { useGame } from '../../../context/GameContext';
-import { CompanionPet } from '../../../types/pet';
+import { CompanionPet, PetRarity } from '../../../types/pet';
 import { Animal } from '../../../data/animals';
 import { animalImages } from '../../../assets/images';
 import {
   breedCompanionPets,
   hatchEggToCompanionPet,
   EggEntity,
+  getPetRarity,
+  calculateAscensionChance,
+  RARITY_BADGE_COLORS,
 } from '../../../utils/Genetics';
 import { ProceduralPetCanvas } from './ProceduralPetCanvas';
 import { triggerHeavyImpactHaptic, triggerMediumImpactHaptic } from '../../../utils/haptics';
@@ -34,66 +40,98 @@ interface BreedingLabModalProps {
   onClose: () => void;
 }
 
+const MENTOR_PET: CompanionPet = {
+  id: 'mentor_parent',
+  name: 'Alpha Luna',
+  title: 'Sanctuary Alpha Mentor',
+  species: 'husky',
+  category: 'dog',
+  stage: 2,
+  level: 15,
+  exp: 0,
+  maxExp: 100,
+  affectionHearts: 5,
+  affectionPoints: 100,
+  hunger: 100,
+  happiness: 100,
+  energy: 100,
+  mood: 'excited',
+  rarity: 'epic',
+  stats: { attack: 85, defense: 78, agility: 82, stamina: 80, cp: 580 },
+  battleBuff: {
+    name: 'Alpha Aura',
+    description: '+15% Genetic Prowess',
+    effectType: 'crit_chance',
+    potency: 15,
+  },
+  createdAt: Date.now(),
+  lastFedAt: Date.now(),
+  lastPettedAt: Date.now(),
+  totalPats: 10,
+  totalBerriesEaten: 5,
+  caughtAt: 'Sanctuary Elite Roster',
+  customPalette: {
+    primary: '#38BDF8',
+    secondary: '#0284C7',
+    belly: '#F0F9FF',
+    ear: '#E0F2FE',
+    eye: '#F59E0B',
+    nose: '#0F172A',
+  },
+};
+
 export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onClose }) => {
   const { kennelPets, pet, addCustomAvatarPet } = usePetCompanion();
-  const { registerCustomFighter } = useGame();
+  const { registerCustomFighter, credits, addCredits } = useGame();
 
   const [parent1, setParent1] = useState<CompanionPet | null>(null);
   const [parent2, setParent2] = useState<CompanionPet | null>(null);
+  const [selectingSlot, setSelectingSlot] = useState<1 | 2 | null>(null);
   const [currentEgg, setCurrentEgg] = useState<EggEntity | null>(null);
   const [hatchCountdown, setHatchCountdown] = useState<number>(10);
   const [isHatching, setIsHatching] = useState<boolean>(false);
   const [hatchedPet, setHatchedPet] = useState<CompanionPet | null>(null);
+  const [feeError, setFeeError] = useState<string | null>(null);
 
-  // Auto-select parents if available
-  useEffect(() => {
-    const availablePets = kennelPets && kennelPets.length > 0 ? kennelPets : (pet ? [pet] : []);
-    if (availablePets.length >= 2) {
-      if (!parent1) setParent1(availablePets[0]);
-      if (!parent2) setParent2(availablePets[1]);
-    } else if (availablePets.length >= 1) {
-      setParent1(availablePets[0]);
-      // Synthetic companion mentor parent
-      setParent2({
-        id: 'mentor_parent',
-        name: 'Alpha Luna',
-        title: 'Sanctuary Alpha Mentor',
-        species: 'husky',
-        category: 'dog',
-        stage: 2,
-        level: 15,
-        exp: 0,
-        maxExp: 100,
-        affectionHearts: 5,
-        affectionPoints: 100,
-        hunger: 100,
-        happiness: 100,
-        energy: 100,
-        mood: 'excited',
-        stats: { attack: 85, defense: 78, agility: 82, stamina: 80, cp: 580 },
-        battleBuff: {
-          name: 'Alpha Aura',
-          description: '+15% Genetic Prowess',
-          effectType: 'crit_chance',
-          potency: 15,
-        },
-        createdAt: Date.now(),
-        lastFedAt: Date.now(),
-        lastPettedAt: Date.now(),
-        totalPats: 10,
-        totalBerriesEaten: 5,
-        caughtAt: 'Sanctuary Elite Roster',
-        customPalette: {
-          primary: '#38BDF8',
-          secondary: '#0284C7',
-          belly: '#F0F9FF',
-          ear: '#E0F2FE',
-          eye: '#F59E0B',
-          nose: '#0F172A',
-        },
+  const BREEDING_FEE_CREDITS = 500;
+
+  // Aggregate all unique selectable pets (kennel + active pet + mentor)
+  const candidatePets: CompanionPet[] = React.useMemo(() => {
+    const list: CompanionPet[] = [];
+    const seen = new Set<string>();
+
+    if (pet && !seen.has(pet.id)) {
+      list.push(pet);
+      seen.add(pet.id);
+    }
+    if (kennelPets) {
+      kennelPets.forEach((p) => {
+        if (!seen.has(p.id)) {
+          list.push(p);
+          seen.add(p.id);
+        }
       });
     }
-  }, [kennelPets, pet, parent1, parent2]);
+    if (!seen.has(MENTOR_PET.id)) {
+      list.push(MENTOR_PET);
+      seen.add(MENTOR_PET.id);
+    }
+    return list;
+  }, [kennelPets, pet]);
+
+  // Auto-select initial parents
+  useEffect(() => {
+    if (!parent1 && candidatePets.length > 0) {
+      setParent1(candidatePets[0]);
+    }
+    if (!parent2) {
+      if (candidatePets.length > 1) {
+        setParent2(candidatePets[1]);
+      } else {
+        setParent2(MENTOR_PET);
+      }
+    }
+  }, [candidatePets, parent1, parent2]);
 
   // Egg Incubation countdown timer
   useEffect(() => {
@@ -117,7 +155,22 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
   if (!isOpen) return null;
 
   const handleStartBreeding = () => {
+    setFeeError(null);
     if (!parent1 || !parent2) return;
+    if (parent1.id === parent2.id) {
+      setFeeError('Select two different parents to breed!');
+      sound.playClick();
+      return;
+    }
+
+    if (credits < BREEDING_FEE_CREDITS) {
+      setFeeError(`Insufficient Slam Credits! Need ${BREEDING_FEE_CREDITS.toLocaleString()} credits.`);
+      sound.playClick();
+      return;
+    }
+
+    // Deduct breeding fee
+    addCredits(-BREEDING_FEE_CREDITS);
     sound.playVictory();
     triggerMediumImpactHaptic();
 
@@ -149,33 +202,38 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
         name: babyPet.name,
         species: babyPet.species,
         breed: babyPet.breedName || babyPet.species,
-        scientificName: 'Canis / Felis Gen-2',
+        scientificName: babyPet.isChimera ? 'Chimaera Hybrid' : 'Canis / Felis Gen-2',
         category: babyPet.category === 'cat' ? 'Felines' : 'Canines',
-        rarity: babyPet.title.includes('Mutant') ? 'Legendary' : 'Rare',
+        rarity: babyPet.rarity === 'mythic' ? 'Legendary' : babyPet.rarity === 'legendary' ? 'Legendary' : 'Rare',
         level: 5,
-        health: 1050,
-        damage: 180,
-        speed: 84,
+        health: 1100 + (babyPet.stats.defense * 2),
+        damage: 180 + Math.round(babyPet.stats.attack * 0.4),
+        speed: 84 + Math.round(babyPet.stats.agility * 0.2),
         weightKg: 25,
         biteForcePsi: 220,
-        topSpeedKmh: 45,
-        strikeJoules: 640,
+        topSpeedKmh: 48,
+        strikeJoules: 680,
         elixirCost: 3,
-        strength: 82,
+        strength: 84,
         endurance: 84,
-        agility: 84,
-        biteForce: 220,
+        agility: 86,
+        biteForce: 230,
         image: animalImages.bengalTiger,
         fallbackImage: animalImages.bengalTiger,
         acquisitionStatus: 'Available',
-        currentPriceCredits: 10000,
+        currentPriceCredits: 12000,
         combatArchetype: 'Precision Striker',
         description: `Bred Gen-2 prodigy combining traits from ${currentEgg.parent1Name} & ${currentEgg.parent2Name}.`,
-        signatureAbility: `${babyPet.customFeatures?.signatureMove?.name || 'Genetic Pounce'}: Inherited genetic fury.`,
+        signatureAbility: `${babyPet.customFeatures?.signatureMove?.name || 'Chimera Slam'}: Inherited genetic fury.`,
       };
       registerCustomFighter(fighter);
     }, 1400);
   };
+
+  const p1Rarity = parent1 ? getPetRarity(parent1) : 'common';
+  const p2Rarity = parent2 ? getPetRarity(parent2) : 'common';
+  const ascensionOdds = parent1 && parent2 ? calculateAscensionChance(parent1, parent2) : 0.3;
+  const isChimeraPair = parent1 && parent2 && (parent1.species !== parent2.species || parent1.category !== parent2.category);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/85 backdrop-blur-md select-none font-sans">
@@ -196,17 +254,23 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
                 </span>
               </div>
               <p className="text-[11px] text-neutral-400">
-                Stat Variance ±10% · Hex Coat Color Blending · 5% Rare Mutant Roll
+                Choose Parents · 5-Tier Rarity Ladder · Chimera Hybrid Fusions
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-xl hover:bg-white/5 cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-black/60 border border-white/10 px-2.5 py-1 rounded-full text-xs font-mono">
+              <Coins className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[#CCFF00] font-bold">{credits.toLocaleString()}</span>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-neutral-400 hover:text-white rounded-xl hover:bg-white/5 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body */}
@@ -215,12 +279,24 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
             /* STEP 1: SELECT PARENTS & PREVIEW GENETICS */
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                {/* Parent 1 */}
-                <div className="bg-[#101424] border border-white/10 rounded-2xl p-3 flex flex-col items-center text-center">
-                  <span className="text-[10px] font-mono font-bold text-cyan-300 uppercase mb-2">
-                    Parent 1 (Alpha)
-                  </span>
-                  <div className="w-24 h-24 rounded-2xl bg-black/40 border border-white/15 flex items-center justify-center overflow-hidden mb-2">
+                {/* Parent 1 Slot */}
+                <div
+                  onClick={() => {
+                    sound.playClick();
+                    setSelectingSlot(1);
+                  }}
+                  className="bg-[#101424] hover:bg-[#131930] border-2 border-cyan-500/40 hover:border-cyan-400 rounded-2xl p-3 flex flex-col items-center text-center cursor-pointer transition-all group relative overflow-hidden"
+                >
+                  <div className="flex items-center justify-between w-full mb-1.5">
+                    <span className="text-[10px] font-mono font-bold text-cyan-300 uppercase">
+                      Parent 1 (Alpha)
+                    </span>
+                    <span className="text-[9px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/40 group-hover:bg-cyan-500 group-hover:text-black font-mono">
+                      Change ▾
+                    </span>
+                  </div>
+
+                  <div className="w-24 h-24 rounded-2xl bg-black/50 border border-white/15 flex items-center justify-center overflow-hidden mb-2 relative">
                     {parent1 && (
                       <ProceduralPetCanvas
                         species={parent1.species}
@@ -229,21 +305,43 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
                         height={90}
                         interactive={false}
                         customPalette={parent1.customPalette}
+                        customFeatures={parent1.customFeatures}
                       />
                     )}
                   </div>
-                  <div className="text-xs font-bold text-white uppercase">{parent1?.name}</div>
-                  <div className="text-[10px] font-mono text-neutral-400">
-                    Lv.{parent1?.level || 10} · CP {parent1?.stats.cp || 500}
+
+                  <div className="text-xs font-bold text-white uppercase truncate max-w-[140px]">
+                    {parent1?.name || 'Select Pet'}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`text-[9px] font-mono font-black uppercase px-2 py-0.5 rounded-full border ${RARITY_BADGE_COLORS[p1Rarity].bg} ${RARITY_BADGE_COLORS[p1Rarity].text} ${RARITY_BADGE_COLORS[p1Rarity].border}`}>
+                      {p1Rarity}
+                    </span>
+                    <span className="text-[10px] font-mono text-neutral-400">
+                      Lv.{parent1?.level || 1} · CP {parent1?.stats.cp || 400}
+                    </span>
                   </div>
                 </div>
 
-                {/* Parent 2 */}
-                <div className="bg-[#1A1024] border border-white/10 rounded-2xl p-3 flex flex-col items-center text-center">
-                  <span className="text-[10px] font-mono font-bold text-fuchsia-300 uppercase mb-2">
-                    Parent 2 (Beta)
-                  </span>
-                  <div className="w-24 h-24 rounded-2xl bg-black/40 border border-white/15 flex items-center justify-center overflow-hidden mb-2">
+                {/* Parent 2 Slot */}
+                <div
+                  onClick={() => {
+                    sound.playClick();
+                    setSelectingSlot(2);
+                  }}
+                  className="bg-[#1A1024] hover:bg-[#221430] border-2 border-fuchsia-500/40 hover:border-fuchsia-400 rounded-2xl p-3 flex flex-col items-center text-center cursor-pointer transition-all group relative overflow-hidden"
+                >
+                  <div className="flex items-center justify-between w-full mb-1.5">
+                    <span className="text-[10px] font-mono font-bold text-fuchsia-300 uppercase">
+                      Parent 2 (Beta)
+                    </span>
+                    <span className="text-[9px] bg-fuchsia-950 text-fuchsia-300 px-2 py-0.5 rounded-full border border-fuchsia-500/40 group-hover:bg-fuchsia-500 group-hover:text-black font-mono">
+                      Change ▾
+                    </span>
+                  </div>
+
+                  <div className="w-24 h-24 rounded-2xl bg-black/50 border border-white/15 flex items-center justify-center overflow-hidden mb-2 relative">
                     {parent2 && (
                       <ProceduralPetCanvas
                         species={parent2.species}
@@ -252,26 +350,56 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
                         height={90}
                         interactive={false}
                         customPalette={parent2.customPalette}
+                        customFeatures={parent2.customFeatures}
                       />
                     )}
                   </div>
-                  <div className="text-xs font-bold text-white uppercase">{parent2?.name}</div>
-                  <div className="text-[10px] font-mono text-neutral-400">
-                    Lv.{parent2?.level || 15} · CP {parent2?.stats.cp || 580}
+
+                  <div className="text-xs font-bold text-white uppercase truncate max-w-[140px]">
+                    {parent2?.name || 'Select Pet'}
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`text-[9px] font-mono font-black uppercase px-2 py-0.5 rounded-full border ${RARITY_BADGE_COLORS[p2Rarity].bg} ${RARITY_BADGE_COLORS[p2Rarity].text} ${RARITY_BADGE_COLORS[p2Rarity].border}`}>
+                      {p2Rarity}
+                    </span>
+                    <span className="text-[10px] font-mono text-neutral-400">
+                      Lv.{parent2?.level || 1} · CP {parent2?.stats.cp || 400}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Genetic Projection Card */}
-              <div className="bg-gradient-to-r from-fuchsia-950/30 via-[#101526] to-cyan-950/30 border border-fuchsia-500/30 rounded-2xl p-3.5 space-y-2">
+              {/* Hybrid & Rarity Fusion Prediction Banner */}
+              <div className="bg-gradient-to-r from-fuchsia-950/40 via-[#101526] to-cyan-950/40 border border-fuchsia-500/30 rounded-2xl p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between text-xs font-mono font-bold">
                   <span className="text-white flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-fuchsia-400" />
-                    <span>Projected Offspring Biometrics</span>
+                    <span>Genetic Fusion Compatibility</span>
                   </span>
-                  <span className="text-[#CCFF00] text-[10px]">5% Rare Mutation Chance</span>
+                  {isChimeraPair ? (
+                    <span className="text-[10px] bg-gradient-to-r from-fuchsia-500 to-cyan-400 text-black px-2 py-0.5 rounded-full font-black uppercase tracking-wider animate-pulse">
+                      🧬 CHIMERA HYBRID
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-white/10 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/30">
+                      PUREBRED GEN-2
+                    </span>
+                  )}
                 </div>
 
+                {/* Rarity Ladder Tier Progression Callout */}
+                <div className="bg-black/50 p-2.5 rounded-xl border border-white/10 flex items-center justify-between text-xs font-mono">
+                  <div className="flex items-center gap-2">
+                    <span className="text-neutral-400 text-[11px]">Rarity Projection:</span>
+                    <span className="text-white font-bold uppercase">{p1Rarity} × {p2Rarity}</span>
+                  </div>
+                  <div className="text-[11px] text-[#CCFF00] font-bold flex items-center gap-1">
+                    <span>{Math.round(ascensionOdds * 100)}% Chance to Ascend Tier! ⬆</span>
+                  </div>
+                </div>
+
+                {/* Projected Biometrics */}
                 <div className="grid grid-cols-4 gap-1.5 text-center font-mono text-[10px]">
                   <div className="bg-black/40 p-1.5 rounded-xl border border-white/10">
                     <div className="text-neutral-400">EST. ATK</div>
@@ -300,17 +428,36 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
                 </div>
 
                 <div className="text-[10px] text-neutral-400 font-mono italic">
-                  Coat hex pigments blend procedurally. Mutations roll Radioactive Neon, Void Nebula, or Solar God coats!
+                  Cross-breeding merges facial markings & blended coat pigments into a procedural Chimera offspring!
                 </div>
               </div>
 
-              {/* Action Button */}
+              {/* Breeding Resource Fee & Action */}
+              {feeError && (
+                <div className="text-xs font-mono text-rose-400 bg-rose-950/40 border border-rose-500/40 p-2 rounded-xl text-center">
+                  {feeError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between text-xs font-mono text-neutral-300 px-1">
+                <span>Sanctuary Daycare Breeding Fee:</span>
+                <span className="text-amber-400 font-bold flex items-center gap-1">
+                  <Coins className="w-3.5 h-3.5" />
+                  <span>500 Credits</span>
+                  {credits < BREEDING_FEE_CREDITS ? (
+                    <span className="text-rose-400 text-[10px] ml-1">(Need More)</span>
+                  ) : (
+                    <span className="text-emerald-400 text-[10px] ml-1">✓ Available</span>
+                  )}
+                </span>
+              </div>
+
               <button
                 onClick={handleStartBreeding}
                 className="w-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 hover:from-fuchsia-400 hover:to-cyan-300 text-black font-black text-xs py-3.5 px-4 rounded-xl shadow-[0_0_25px_rgba(217,70,239,0.35)] flex items-center justify-center gap-2 font-mono uppercase tracking-wider cursor-pointer active:scale-98 transition-all"
               >
                 <Dna className="w-4 h-4 text-black" />
-                <span>Initiate Genetic Fusion & Incubate Egg</span>
+                <span>Initiate Genetic Fusion & Incubate Egg (500 Credits)</span>
               </button>
             </div>
           ) : !hatchedPet ? (
@@ -320,7 +467,9 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
                 {/* Radiant Glow Behind Egg */}
                 <div
                   className={`absolute inset-0 rounded-full blur-2xl transition-all duration-700 ${
-                    currentEgg.isMutant
+                    currentEgg.rarity === 'mythic'
+                      ? 'bg-gradient-to-r from-fuchsia-500 via-rose-500 to-cyan-400 opacity-90 animate-pulse'
+                      : currentEgg.isMutant
                       ? 'bg-gradient-to-r from-fuchsia-500 to-lime-400 opacity-70 animate-pulse'
                       : 'bg-gradient-to-r from-cyan-400 to-fuchsia-500 opacity-40'
                   }`}
@@ -359,6 +508,11 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
                 <div className="text-xs font-mono text-fuchsia-300 mt-1">
                   Parents: {currentEgg.parent1Name} × {currentEgg.parent2Name}
                 </div>
+                {currentEgg.ascendedTier && (
+                  <div className="text-[11px] font-mono text-[#CCFF00] font-bold mt-1">
+                    ✨ Rarity Ascension Activated! Ascended to {currentEgg.rarity.toUpperCase()}!
+                  </div>
+                )}
                 {!currentEgg.isReadyToHatch && (
                   <div className="text-2xl font-mono font-black text-[#CCFF00] mt-2">
                     {hatchCountdown}s
@@ -373,7 +527,7 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
                   className="w-full max-w-sm mx-auto bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black text-xs py-3.5 px-4 rounded-xl shadow-[0_0_25px_rgba(204,255,0,0.5)] flex items-center justify-center gap-2 font-mono uppercase tracking-wider cursor-pointer active:scale-98 transition-all animate-bounce"
                 >
                   <Sparkles className="w-4 h-4 text-black" />
-                  <span>Crack Egg & Reveal Gen-2 Baby!</span>
+                  <span>Crack Egg & Reveal Offspring!</span>
                 </button>
               ) : (
                 <div className="text-[11px] font-mono text-neutral-400">
@@ -389,9 +543,16 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
               </div>
 
               <div>
-                <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#CCFF00] bg-[#CCFF00]/15 px-2.5 py-0.5 rounded-full border border-[#CCFF00]/40">
-                  {hatchedPet.title}
-                </span>
+                <div className="flex items-center justify-center gap-2">
+                  <span className={`text-[10px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full border ${RARITY_BADGE_COLORS[hatchedPet.rarity || 'common'].bg} ${RARITY_BADGE_COLORS[hatchedPet.rarity || 'common'].text} ${RARITY_BADGE_COLORS[hatchedPet.rarity || 'common'].border}`}>
+                    {hatchedPet.rarity?.toUpperCase() || 'COMMON'}
+                  </span>
+                  {hatchedPet.isChimera && (
+                    <span className="text-[10px] font-mono font-bold bg-fuchsia-950 text-fuchsia-300 px-2 py-0.5 rounded-full border border-fuchsia-400">
+                      CHIMERA HYBRID
+                    </span>
+                  )}
+                </div>
                 <h3 className="text-2xl font-display font-black uppercase text-white tracking-wider mt-1.5">
                   {hatchedPet.name}
                 </h3>
@@ -410,6 +571,7 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
                   interactive={true}
                   customPalette={hatchedPet.customPalette}
                   customFeatures={hatchedPet.customFeatures}
+                  showAura={hatchedPet.rarity === 'mythic' || hatchedPet.rarity === 'legendary'}
                 />
               </div>
 
@@ -433,6 +595,18 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
                 </div>
               </div>
 
+              {hatchedPet.customFeatures?.signatureMove && (
+                <div className="bg-black/40 border border-fuchsia-500/30 rounded-xl p-2.5 max-w-sm mx-auto text-left font-mono text-[11px]">
+                  <div className="text-fuchsia-400 font-bold flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{hatchedPet.customFeatures.signatureMove.name}</span>
+                  </div>
+                  <div className="text-neutral-400 text-[10px] mt-0.5">
+                    {hatchedPet.customFeatures.signatureMove.description}
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-2 max-w-sm mx-auto">
                 <button
                   onClick={() => {
@@ -453,6 +627,96 @@ export const BreedingLabModal: React.FC<BreedingLabModalProps> = ({ isOpen, onCl
             </div>
           )}
         </div>
+
+        {/* PET SELECTOR DRAWER MODAL */}
+        {selectingSlot && (
+          <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col p-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div>
+                <h3 className="text-sm font-bold uppercase text-white font-mono">
+                  Select Parent {selectingSlot} (Candidate Roster)
+                </h3>
+                <p className="text-[11px] text-neutral-400">
+                  Pick any pet from your Sanctuary kennel
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectingSlot(null)}
+                className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-3 space-y-2">
+              {candidatePets.map((candidate) => {
+                const candidateRarity = getPetRarity(candidate);
+                const isSelectedAsOtherParent =
+                  selectingSlot === 1
+                    ? parent2?.id === candidate.id
+                    : parent1?.id === candidate.id;
+
+                return (
+                  <div
+                    key={candidate.id}
+                    onClick={() => {
+                      if (isSelectedAsOtherParent) return;
+                      sound.playClick();
+                      if (selectingSlot === 1) {
+                        setParent1(candidate);
+                      } else {
+                        setParent2(candidate);
+                      }
+                      setSelectingSlot(null);
+                    }}
+                    className={`p-3 rounded-2xl border flex items-center justify-between transition-all ${
+                      isSelectedAsOtherParent
+                        ? 'opacity-40 bg-black/30 border-white/5 cursor-not-allowed'
+                        : 'bg-[#101424] hover:bg-[#182038] border-white/10 hover:border-cyan-400 cursor-pointer'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                        <ProceduralPetCanvas
+                          species={candidate.species}
+                          stage={1}
+                          width={55}
+                          height={55}
+                          interactive={false}
+                          customPalette={candidate.customPalette}
+                          customFeatures={candidate.customFeatures}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white uppercase">{candidate.name}</span>
+                          <span className={`text-[8px] font-mono font-black uppercase px-2 py-0.2 rounded-full border ${RARITY_BADGE_COLORS[candidateRarity].bg} ${RARITY_BADGE_COLORS[candidateRarity].text} ${RARITY_BADGE_COLORS[candidateRarity].border}`}>
+                            {candidateRarity}
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-mono text-neutral-400 mt-0.5">
+                          {candidate.breedName || candidate.species} · Lv.{candidate.level || 1} · CP {candidate.stats.cp || 400}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      {isSelectedAsOtherParent ? (
+                        <span className="text-[10px] font-mono text-neutral-500 uppercase">
+                          Selected in Slot {selectingSlot === 1 ? '2' : '1'}
+                        </span>
+                      ) : (
+                        <button className="text-[10px] font-mono font-bold bg-cyan-400 text-black px-3 py-1.5 rounded-xl uppercase hover:bg-cyan-300">
+                          Select
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
