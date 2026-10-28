@@ -97,7 +97,7 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
         'Screen-roaming companion on bottom & sidebars',
         'Laptop battery & charging detector alerts ⚡',
         'Posture, hydration & 20-20-20 screen reminders 💧',
-        'Talking Tom voice mimic & poke interactions',
+        'Natural pet voice mimic & poke interactions',
         'Full Chrome Extension (Manifest V3) ZIP download',
       ],
     },

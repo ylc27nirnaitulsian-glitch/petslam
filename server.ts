@@ -57,8 +57,11 @@ if (!fs.existsSync(DATA_DIR)) {
 // ---------------------------------------------------------------------------
 // Dodo Payments Configuration & Client
 // ---------------------------------------------------------------------------
-const dodoApiKey = process.env.DODO_PAYMENTS_API_KEY;
-const dodoWebhookSecret = process.env.DODO_PAYMENTS_WEBHOOK_SECRET;
+const dodoApiKey =
+  process.env.DODO_PAYMENTS_API_KEY ||
+  'dodo_test_r9a5A4oyLuJ4pMD8.Sc7lZ9a1amcp8YTzVOUqFQUQ8iIFViJBJcT0eRTvbtHgHr6m';
+const dodoWebhookSecret =
+  process.env.DODO_PAYMENTS_WEBHOOK_SECRET || 'whsec_AQ2COHed/IfEtoQ1gZnfmTgHykOYoDiL';
 const dodoEnv =
   (process.env.DODO_PAYMENTS_ENVIRONMENT as 'test_mode' | 'live_mode') || 'test_mode';
 
@@ -78,35 +81,35 @@ if (dodoApiKey && dodoApiKey !== 'your_dodo_api_key_here' && dodoApiKey.trim().l
 // Product Catalog definition for PET SLAM Monetization
 const DODO_PRODUCTS = {
   auction: {
-    id: process.env.DODO_PRODUCT_AUCTION_PASS || 'pdt_auction_pass',
+    id: process.env.DODO_PRODUCT_AUCTION_PASS || 'pdt_0NqgJlisZzb8svxO90gL0',
     title: 'Auction House VIP License',
     price: '$1.99',
     amountCents: 199,
     description: 'Permanent unlock for high-stakes live player pet auctions and bidding.',
   },
   avatar: {
-    id: process.env.DODO_PRODUCT_AVATAR_PASS || 'pdt_avatar_pass',
+    id: process.env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0NqgJPS04QMUNn6vlOUrI',
     title: 'Custom Pet DNA Avatar Pass',
     price: '$0.99',
     amountCents: 99,
     description: 'Upload your pet photos to generate high-res stylized fighting avatars.',
   },
   extension: {
-    id: process.env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_extension_pass',
+    id: process.env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0NqgJtNVeIeTlUsEMZ3C1',
     title: 'Browser Extension Lifetime Pass',
     price: '$1.99',
     amountCents: 199,
     description: 'Lifetime interactive browser companion overlay with real-time feeding & voice mimicry.',
   },
   bundle: {
-    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_genesis_bundle',
+    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
     title: 'All-Access Genesis VIP Bundle',
     price: '$4.99',
     amountCents: 499,
     description: 'Unlocks Auction Pass, Avatar Studio Pass, Extension Pass + 5,000 Bonus Credits.',
   },
   credits_5000: {
-    id: process.env.DODO_PRODUCT_CREDITS_5K || 'pdt_credits_5k',
+    id: process.env.DODO_PRODUCT_CREDITS_5K || 'pdt_0NqgJznwnQjxDNNAydOuK',
     title: '5,000 Slam Credits Pack',
     price: '$4.99',
     amountCents: 499,
