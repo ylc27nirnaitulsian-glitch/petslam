@@ -100,24 +100,22 @@ export const TokenRefillModal: React.FC<TokenRefillModalProps> = ({
     localStorage.setItem('petslam_faucet_last_claim', Date.now().toString());
     setFaucetClaimed(true);
     setPurchaseToast('🎉 +500 Free Daily Tokens Claimed!');
-    trackClarityEvent('claim_daily_faucet', { amount: 500 });
+    trackClarityEvent('claim_daily_faucet');
     setTimeout(() => setPurchaseToast(null), 4000);
   };
 
   const handlePurchasePack = async (pack: TokenPack) => {
     setProcessingPackId(pack.id);
     sound.playClick();
-    trackClarityEvent('initiate_token_checkout', { packId: pack.id, price: pack.priceUsd });
+    trackClarityEvent('initiate_token_checkout');
 
     try {
       const checkoutResult = await createDodoCheckout({
-        productId: pack.id,
-        productName: `PET SLAM - ${pack.name} (${pack.coins.toLocaleString()} Coins)`,
-        amountCents: pack.priceCents,
+        passType: 'credits_5000',
         returnUrl: `${window.location.origin}/?payment_success=true&pack=${pack.id}`,
       });
 
-      if (checkoutResult.checkoutUrl && !checkoutResult.sandbox) {
+      if (checkoutResult && checkoutResult.checkoutUrl && !checkoutResult.simulated) {
         // Redirect to live Dodo Checkout page
         window.location.href = checkoutResult.checkoutUrl;
       } else {
@@ -126,7 +124,7 @@ export const TokenRefillModal: React.FC<TokenRefillModalProps> = ({
         sound.playVictory();
         triggerVictoryExplosion();
         setPurchaseToast(`🎉 +${pack.coins.toLocaleString()} Coins Added to your Balance!`);
-        trackClarityEvent('token_pack_granted_sandbox', { packId: pack.id, coins: pack.coins });
+        trackClarityEvent('token_pack_granted_sandbox');
         setTimeout(() => setPurchaseToast(null), 4500);
       }
     } catch (err) {

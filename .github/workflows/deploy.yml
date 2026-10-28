@@ -32,7 +32,7 @@ jobs:
         run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
       - name: Typecheck TypeScript
-        run: npx tsc --noEmit
+        run: npm run lint
 
       - name: Build production site
         run: npm run build
