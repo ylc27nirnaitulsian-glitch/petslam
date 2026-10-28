@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import DodoPayments from 'dodopayments';
+import Exa from 'exa-js';
 import { authoritativeCombatServer } from './src/server/authoritativeCombatServer';
 
 dotenv.config();
@@ -75,6 +76,20 @@ if (dodoApiKey && dodoApiKey !== 'your_dodo_api_key_here' && dodoApiKey.trim().l
     console.log(`[DodoPayments] Initialized official SDK in ${dodoEnv}`);
   } catch (err: any) {
     console.warn('[DodoPayments] Client initialization warning:', err?.message || err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Exa API Client (Semantic Real-World Pet Lore & Breed Retrieval)
+// ---------------------------------------------------------------------------
+const exaApiKey = process.env.EXA_API_KEY;
+let exaClient: Exa | null = null;
+if (exaApiKey && exaApiKey !== 'your_exa_api_key_here' && exaApiKey.trim().length > 0) {
+  try {
+    exaClient = new Exa(exaApiKey.trim());
+    console.log('[Exa] Initialized Exa SDK for real-time pet lore search');
+  } catch (err: any) {
+    console.warn('[Exa] Exa SDK initialization warning:', err?.message || err);
   }
 }
 
@@ -798,6 +813,53 @@ Return ONLY valid JSON matching this schema:
       avatar: fallback,
       source: 'procedural_fallback_error',
       note: error?.message || 'Generated via high-fidelity procedural avatar synthesis',
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Exa Real-World Pet Lore & Breed Research Endpoint
+// Canonical API shape from build-with-exa: query + type: "auto" + contents: { highlights: true }
+// ---------------------------------------------------------------------------
+app.post('/api/pet/lore-search', async (req, res) => {
+  try {
+    const { query, breedName, species } = req.body;
+    const targetQuery =
+      query ||
+      `${breedName || ''} ${species || ''} breed history temperament fun facts origin`.trim() ||
+      'pet dog cat breed origins';
+
+    if (!exaClient) {
+      const freshKey = process.env.EXA_API_KEY;
+      if (freshKey && freshKey.trim().length > 0) {
+        exaClient = new Exa(freshKey.trim());
+      }
+    }
+
+    if (!exaClient) {
+      res.status(503).json({
+        success: false,
+        error: 'EXA_API_KEY is not configured on the server.',
+      });
+      return;
+    }
+
+    const searchResponse = await exaClient.search(targetQuery, {
+      type: 'auto',
+      contents: { highlights: true },
+    });
+
+    res.json({
+      success: true,
+      query: targetQuery,
+      results: searchResponse.results,
+      cost: searchResponse.costDollars,
+    });
+  } catch (error: any) {
+    console.error('[Exa] Search error:', error);
+    res.status(500).json({
+      success: false,
+      error: error?.message || 'Failed to search Exa pet lore',
     });
   }
 });
