@@ -15,9 +15,17 @@
 | **LinkedIn Post & Carousel** | [`social/linkedin_post.md`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/social/linkedin_post.md) | Text + 5-Slide Document | Audited & Ready |
 | **Twitter / X Thread** | [`social/twitter_thread.md`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/social/twitter_thread.md) | 5-Tweet Viral Thread | Audited & Ready |
 | **Newsletter / Announcement**| [`copy/newsletter_or_blog.md`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/copy/newsletter_or_blog.md) | Long-Form Email / Blog | Audited & Ready |
-| **AI Image Briefs** | [`media/image_prompts.md`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/media/image_prompts.md) | Midjourney & Flux Prompts | Ready |
-| **Carousel Layout Spec** | [`media/carousel_spec.json`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/media/carousel_spec.json) | Canva / Figma Layout Spec | Ready |
-| **Short-Form Video Script** | [`video/short_form_script.md`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/video/short_form_script.md) | 35s TikTok / Reels Script | Storyboarded |
+| **Visual Carousel Viewer** | [`media/carousel_viewer.html`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/media/carousel_viewer.html) | Interactive 1080×1350 Studio & PNG Exporter | Generated |
+| **Visual Slide 1 (SVG)** | [`media/carousel_slide_1.svg`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/media/carousel_slide_1.svg) | 1080×1350 Vector Graphic (Cover: 1996 vs 2026) | Generated |
+| **Visual Slide 2 (SVG)** | [`media/carousel_slide_2.svg`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/media/carousel_slide_2.svg) | 1080×1350 Vector Graphic (Screen Fatigue) | Generated |
+| **Visual Slide 3 (SVG)** | [`media/carousel_slide_3.svg`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/media/carousel_slide_3.svg) | 1080×1350 Vector Graphic (AI Photo Scan Engine) | Generated |
+| **Visual Slide 4 (SVG)** | [`media/carousel_slide_4.svg`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/media/carousel_slide_4.svg) | 1080×1350 Vector Graphic (Dual Life: Fighter + Coworker) | Generated |
+| **Visual Slide 5 (SVG)** | [`media/carousel_slide_5.svg`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/media/carousel_slide_5.svg) | 1080×1350 Vector Graphic (CTA: Play Free) | Generated |
+| **Hero Arena Artwork** | [`media/petslam_launch_hero.jpg`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/media/petslam_launch_hero.jpg) | 16:9 4K Cinematic Colosseum Battle Art | Generated |
+| **Interactive Launch Video** | [`video/launch_video_player.html`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/video/launch_video_player.html) | 60 FPS Canvas Player + MP4/WebM Exporter | Generated |
+| **Remotion Video Component** | [`video/PetSlamLaunchVideo.tsx`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/video/PetSlamLaunchVideo.tsx) | Programmatic Video React Component | Ready |
+| **AI Video Generation Prompts**| [`video/ai_video_prompts.md`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/video/ai_video_prompts.md) | Veo 3 / Runway Gen-4 / Kling Prompts | Ready |
+| **Short-Form Video Script** | [`video/short_form_script.md`](file:///C:/Users/Nirnai/antigravity/Remix-Remix-Remix-PET-SLAM/day-1/video/short_form_script.md) | 35s TikTok / Reels Storyboard | Storyboarded |
 
 ---
 

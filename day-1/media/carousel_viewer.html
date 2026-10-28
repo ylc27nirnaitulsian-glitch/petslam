@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PET SLAM — Carousel Visual Slides Studio (1080×1350)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #060810;
+      color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      max-width: 800px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid #00F0FF;
+      color: #00F0FF;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #FFFFFF, #94A3B8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    p {
+      color: #94A3B8;
+      font-size: 16px;
+    }
+
+    /* Carousel Controls */
+    .controls-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      background: #1E293B;
+      color: #FFF;
+      border: 1px solid #334155;
+      padding: 10px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: #334155;
+      border-color: #00F0FF;
+      transform: translateY(-1px);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #00F0FF, #CCFF00);
+      color: #060810;
+      border: none;
+      font-weight: 900;
+    }
+    .btn-primary:hover {
+      opacity: 0.95;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+    }
+
+    /* Stage */
+    .stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      max-width: 600px;
+      width: 100%;
+    }
+    .slide-frame {
+      width: 100%;
+      aspect-ratio: 4/5;
+      background: #0B1120;
+      border: 2px solid #1E293B;
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      overflow: hidden;
+      position: relative;
+    }
+    .slide-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Thumbnails */
+    .thumbs {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 10px 0;
+      max-width: 100%;
+    }
+    .thumb {
+      width: 80px;
+      aspect-ratio: 4/5;
+      border-radius: 8px;
+      border: 2px solid #1E293B;
+      cursor: pointer;
+      overflow: hidden;
+      opacity: 0.6;
+      transition: all 0.2s ease;
+    }
+    .thumb:hover, .thumb.active {
+      opacity: 1;
+      border-color: #00F0FF;
+      transform: scale(1.05);
+    }
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">PET SLAM CAROUSEL STUDIO</div>
+    <h1>Visual Carousel Slides (1080 × 1350)</h1>
+    <p>High-resolution vector slides designed for LinkedIn PDF Carousels and Instagram 4:5 swipe decks.</p>
+  </header>
+
+  <div class="controls-bar">
+    <button class="btn" onclick="prevSlide()">← Previous Slide</button>
+    <button class="btn" onclick="nextSlide()">Next Slide →</button>
+    <button class="btn btn-primary" onclick="exportCurrentSlidePNG()">📥 Download Current Slide as PNG</button>
+    <button class="btn" onclick="downloadAllPNGs()">💾 Download All 5 PNGs</button>
+  </div>
+
+  <div class="stage">
+    <div class="slide-frame">
+      <img id="mainSlide" src="carousel_slide_1.svg" alt="PET SLAM Carousel Slide">
+    </div>
+
+    <div class="thumbs" id="thumbsContainer">
+      <div class="thumb active" onclick="setSlide(1)"><img src="carousel_slide_1.svg"></div>
+      <div class="thumb" onclick="setSlide(2)"><img src="carousel_slide_2.svg"></div>
+      <div class="thumb" onclick="setSlide(3)"><img src="carousel_slide_3.svg"></div>
+      <div class="thumb" onclick="setSlide(4)"><img src="carousel_slide_4.svg"></div>
+      <div class="thumb" onclick="setSlide(5)"><img src="carousel_slide_5.svg"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 5;
+
+    function setSlide(num) {
+      currentSlide = num;
+      document.getElementById('mainSlide').src = `carousel_slide_${num}.svg`;
+      const thumbs = document.querySelectorAll('.thumb');
+      thumbs.forEach((t, i) => {
+        if (i + 1 === num) t.classList.add('active');
+        else t.classList.remove('active');
+      });
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) setSlide(currentSlide - 1);
+      else setSlide(totalSlides);
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) setSlide(currentSlide + 1);
+      else setSlide(1);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') prevSlide();
+      if (e.key === 'ArrowRight') nextSlide();
+    });
+
+    async function exportCurrentSlidePNG() {
+      const svgUrl = `carousel_slide_${currentSlide}.svg`;
+      const resp = await fetch(svgUrl);
+      const svgText = await resp.text();
+
+      const img = new Image();
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1350;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, 1080, 1350);
+
+        const pngUrl = canvas.toDataURL('image/png');
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pngUrl;
+        downloadLink.download = `petslam_carousel_slide_${currentSlide}.png`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    }
+
+    async function downloadAllPNGs() {
+      for (let i = 1; i <= totalSlides; i++) {
+        currentSlide = i;
+        await exportCurrentSlidePNG();
+        await new Promise(r => setTimeout(r, 400));
+      }
+      setSlide(1);
+    }
+  </script>
+</body>
+</html>

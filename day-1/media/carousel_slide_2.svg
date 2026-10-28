@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <defs>
+    <linearGradient id="bgGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070A12"/>
+      <stop offset="50%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#060810"/>
+    </linearGradient>
+    <linearGradient id="alertGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#EF4444"/>
+    </linearGradient>
+    <filter id="glow2" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1080" height="1350" fill="url(#bgGrad2)"/>
+
+  <!-- Brand / Tag Header -->
+  <rect x="80" y="80" width="180" height="42" rx="21" fill="#1E293B" stroke="#F59E0B" stroke-width="1.5"/>
+  <text x="170" y="106" fill="#F59E0B" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" text-anchor="middle" letter-spacing="3">THE PROBLEM</text>
+  <text x="1000" y="108" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" text-anchor="end">02 / 05</text>
+
+  <!-- Headline -->
+  <text x="80" y="230" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="60" font-weight="900" letter-spacing="-1">THE 9-HOUR SCREEN</text>
+  <text x="80" y="305" fill="url(#alertGrad)" font-family="system-ui, -apple-system, sans-serif" font-size="60" font-weight="900" letter-spacing="-1">FATIGUE EPIDEMIC</text>
+
+  <text x="80" y="375" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="500">
+    <tspan x="80" dy="0">Millions of students &amp; professionals spend all day staring</tspan>
+    <tspan x="80" dy="38">at empty, sterile screens. Virtual pets are trending again—</tspan>
+    <tspan x="80" dy="38" fill="#F8FAFC">but why do people uninstall them after 3 days?</tspan>
+  </text>
+
+  <!-- 3 Problem Blocks -->
+  <g transform="translate(80, 520)">
+    <!-- Block 1 -->
+    <rect width="920" height="150" rx="20" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+    <circle cx="70" cy="75" r="32" fill="#EF4444" opacity="0.15"/>
+    <text x="70" y="83" fill="#EF4444" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="900" text-anchor="middle">✕</text>
+    <text x="130" y="60" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800">Zero Personal Attachment</text>
+    <text x="130" y="100" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="19" font-weight="500">You didn’t choose a generic pixel frog or space slime. Novelty fades in 48 hours.</text>
+
+    <!-- Block 2 -->
+    <g transform="translate(0, 180)">
+      <rect width="920" height="150" rx="20" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+      <circle cx="70" cy="75" r="32" fill="#EF4444" opacity="0.15"/>
+      <text x="70" y="83" fill="#EF4444" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="900" text-anchor="middle">✕</text>
+      <text x="130" y="60" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800">No Real Gameplay Loop</text>
+      <text x="130" y="100" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="19" font-weight="500">You click food, click clean, and close it. No combat, no progression, no excitement.</text>
+    </g>
+
+    <!-- Block 3 -->
+    <g transform="translate(0, 360)">
+      <rect width="920" height="150" rx="20" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+      <circle cx="70" cy="75" r="32" fill="#EF4444" opacity="0.15"/>
+      <text x="70" y="83" fill="#EF4444" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="900" text-anchor="middle">✕</text>
+      <text x="130" y="60" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800">50GB Bloat &amp; Annoying Ads</text>
+      <text x="130" y="100" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="19" font-weight="500">Most modern pet games demand heavy installs, forced logins, or aggressive micro-transactions.</text>
+    </g>
+  </g>
+
+  <!-- Bottom Insight Card -->
+  <g transform="translate(80, 1100)">
+    <rect width="920" height="96" rx="24" fill="#0B1B36" stroke="#00F0FF" stroke-width="2"/>
+    <text x="40" y="56" fill="#00F0FF" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="800">THE UNLOCK:</text>
+    <text x="195" y="56" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="600">What if your actual dog or cat was your coworker &amp; champion?</text>
+  </g>
+
+  <text x="80" y="1260" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600">PET SLAM • Problem Breakdown</text>
+  <text x="1000" y="1260" fill="#00F0FF" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="800" text-anchor="end">petslam.app</text>
+</svg>

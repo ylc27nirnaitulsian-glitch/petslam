@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <defs>
+    <linearGradient id="bgGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070A12"/>
+      <stop offset="50%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#060810"/>
+    </linearGradient>
+    <linearGradient id="purpleViolet" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1080" height="1350" fill="url(#bgGrad4)"/>
+
+  <!-- Brand / Tag Header -->
+  <rect x="80" y="80" width="180" height="42" rx="21" fill="#1E293B" stroke="#A855F7" stroke-width="1.5"/>
+  <text x="170" y="106" fill="#A855F7" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" text-anchor="middle" letter-spacing="3">DUAL LIFE</text>
+  <text x="1000" y="108" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" text-anchor="end">04 / 05</text>
+
+  <!-- Headline -->
+  <text x="80" y="230" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="58" font-weight="900" letter-spacing="-1">FIGHTER BY NIGHT.</text>
+  <text x="80" y="305" fill="url(#purpleViolet)" font-family="system-ui, -apple-system, sans-serif" font-size="58" font-weight="900" letter-spacing="-1">COWORKER BY DAY.</text>
+
+  <text x="80" y="375" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="500">
+    <tspan x="80" dy="0">PET SLAM isn't locked inside a closed tab. Your pet seamlessly</tspan>
+    <tspan x="80" dy="38">moves between competitive fighting and desktop companionship.</tspan>
+  </text>
+
+  <!-- Two Split Panels -->
+  <!-- Panel Left: Active Esports Combat -->
+  <g transform="translate(80, 480)">
+    <rect width="440" height="580" rx="24" fill="#0F172A" stroke="#38BDF8" stroke-width="2"/>
+    <rect x="24" y="24" width="160" height="34" rx="8" fill="#0284C7"/>
+    <text x="104" y="46" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" text-anchor="middle" letter-spacing="1">MODE 1: ACTIVE</text>
+
+    <!-- Arena Graphic Mockup -->
+    <rect x="24" y="80" width="392" height="230" rx="16" fill="#020617" stroke="#1E293B" stroke-width="2"/>
+    <text x="220" y="170" fill="#00F0FF" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="900" text-anchor="middle">60 FPS BATTLE ARENA</text>
+    <text x="220" y="210" fill="#CCFF00" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" text-anchor="middle">⚡ OVERDRIVE SLAM READY</text>
+
+    <text x="34" y="360" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800">Competitive Battles</text>
+    <text x="34" y="405" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">• 4-Pet Squad Tag-In Mechanics</text>
+    <text x="34" y="445" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">• Sonic Barks, Hisses &amp; Iron Guards</text>
+    <text x="34" y="485" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">• Cyber Colosseum &amp; Moonlight Dojo</text>
+    <text x="34" y="525" fill="#38BDF8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700">• Real-time leaderboard climbing</text>
+  </g>
+
+  <!-- Panel Right: Passive Chrome Companion -->
+  <g transform="translate(560, 480)">
+    <rect width="440" height="580" rx="24" fill="#0F172A" stroke="#A855F7" stroke-width="2"/>
+    <rect x="24" y="24" width="170" height="34" rx="8" fill="#7C3AED"/>
+    <text x="109" y="46" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" text-anchor="middle" letter-spacing="1">MODE 2: DESKTOP</text>
+
+    <!-- Browser Mockup -->
+    <rect x="24" y="80" width="392" height="230" rx="16" fill="#020617" stroke="#1E293B" stroke-width="2"/>
+    <rect x="40" y="96" width="10" height="10" rx="5" fill="#EF4444"/>
+    <rect x="56" y="96" width="10" height="10" rx="5" fill="#F59E0B"/>
+    <rect x="72" y="96" width="10" height="10" rx="5" fill="#10B981"/>
+    <rect x="100" y="92" width="200" height="18" rx="6" fill="#1E293B"/>
+
+    <!-- Floating Pet Dialogue -->
+    <rect x="120" y="150" width="200" height="46" rx="12" fill="#1E1B4B" stroke="#A855F7" stroke-width="1.5"/>
+    <text x="220" y="179" fill="#E0E7FF" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="700" text-anchor="middle">"Woof! Drink water!"</text>
+    <circle cx="220" cy="235" r="28" fill="#7C3AED"/>
+
+    <text x="34" y="360" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800">Chrome Companion</text>
+    <text x="34" y="405" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">• Roams your browser while working</text>
+    <text x="34" y="445" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">• Speech mimicry with pet voice FX</text>
+    <text x="34" y="485" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">• Laptop battery charging reactions</text>
+    <text x="34" y="525" fill="#A855F7" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700">• Posture &amp; hydration check-ins</text>
+  </g>
+
+  <!-- Bottom Strip -->
+  <g transform="translate(80, 1100)">
+    <rect width="920" height="96" rx="24" fill="#1E1B4B" stroke="#A855F7" stroke-width="1.5"/>
+    <text x="40" y="56" fill="#CCFF00" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="800">PLUS:</text>
+    <text x="120" y="56" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="600">The Chimera Breeding Lab lets you cross-breed rare hybrid champions.</text>
+  </g>
+
+  <text x="80" y="1260" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600">PET SLAM • Gameplay Modes</text>
+  <text x="1000" y="1260" fill="#00F0FF" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="800" text-anchor="end">petslam.app</text>
+</svg>

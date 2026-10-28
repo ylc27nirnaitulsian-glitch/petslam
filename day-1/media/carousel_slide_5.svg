@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <defs>
+    <linearGradient id="bgGrad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070A12"/>
+      <stop offset="50%" stop-color="#0D182E"/>
+      <stop offset="100%" stop-color="#060810"/>
+    </linearGradient>
+    <linearGradient id="cyanLime5" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00F0FF"/>
+      <stop offset="100%" stop-color="#CCFF00"/>
+    </linearGradient>
+    <filter id="glow5" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1350" fill="url(#bgGrad5)"/>
+
+  <!-- Glowing Aura Center -->
+  <circle cx="540" cy="520" r="300" fill="#00F0FF" opacity="0.1" filter="url(#glow5)"/>
+
+  <!-- Brand / Tag Header -->
+  <rect x="80" y="80" width="180" height="42" rx="21" fill="#1E293B" stroke="#CCFF00" stroke-width="1.5"/>
+  <text x="170" y="106" fill="#CCFF00" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" text-anchor="middle" letter-spacing="3">GET STARTED</text>
+  <text x="1000" y="108" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" text-anchor="end">05 / 05</text>
+
+  <!-- Big Hero CTA Text -->
+  <text x="540" y="240" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="58" font-weight="900" text-anchor="middle" letter-spacing="-1">WHAT ARE YOUR PET'S</text>
+  <text x="540" y="315" fill="url(#cyanLime5)" font-family="system-ui, -apple-system, sans-serif" font-size="58" font-weight="900" text-anchor="middle" letter-spacing="-1">COMBAT POWER &amp; STATS?</text>
+
+  <text x="540" y="380" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="500" text-anchor="middle">
+    Find out in under 10 seconds. Free in any browser.
+  </text>
+
+  <!-- Big Action Card -->
+  <g transform="translate(140, 450)">
+    <rect width="800" height="520" rx="28" fill="#0F172A" stroke="#00F0FF" stroke-width="2.5" filter="url(#glow5)"/>
+    <rect width="800" height="520" rx="28" fill="#0F172A" stroke="#00F0FF" stroke-width="2.5"/>
+
+    <!-- Step 1 -->
+    <g transform="translate(60, 60)">
+      <circle cx="35" cy="35" r="30" fill="#00F0FF"/>
+      <text x="35" y="44" fill="#070A12" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="900" text-anchor="middle">1</text>
+      <text x="90" y="32" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800">Visit petslam.app</text>
+      <text x="90" y="60" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">Instant load. Zero downloads. Zero accounts required.</text>
+    </g>
+
+    <line x1="60" y1="170" x2="740" y2="170" stroke="#1E293B" stroke-width="1.5"/>
+
+    <!-- Step 2 -->
+    <g transform="translate(60, 210)">
+      <circle cx="35" cy="35" r="30" fill="#CCFF00"/>
+      <text x="35" y="44" fill="#070A12" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="900" text-anchor="middle">2</text>
+      <text x="90" y="32" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800">Upload Any Pet Photo</text>
+      <text x="90" y="60" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">Gemini vision extracts their DNA, coat colors, and moveset.</text>
+    </g>
+
+    <line x1="60" y1="320" x2="740" y2="320" stroke="#1E293B" stroke-width="1.5"/>
+
+    <!-- Step 3 -->
+    <g transform="translate(60, 360)">
+      <circle cx="35" cy="35" r="30" fill="#A855F7"/>
+      <text x="35" y="44" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="900" text-anchor="middle">3</text>
+      <text x="90" y="32" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800">Enter the Arena &amp; Export Companion</text>
+      <text x="90" y="60" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500">Battle in the Colosseum or let them roam your Chrome desktop.</text>
+    </g>
+  </g>
+
+  <!-- Big Launch Button -->
+  <g transform="translate(190, 1030)">
+    <rect width="700" height="84" rx="42" fill="url(#cyanLime5)"/>
+    <text x="350" y="52" fill="#070A12" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="900" text-anchor="middle" letter-spacing="1">PLAY FREE AT PETSLAM.APP →</text>
+  </g>
+
+  <!-- Bottom Comment Trigger -->
+  <text x="540" y="1170" fill="#E2E8F0" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" text-anchor="middle">
+    Or drop your pet’s photo below and I’ll generate their fighter card! 👇
+  </text>
+
+  <text x="80" y="1260" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600">PET SLAM • Start Playing</text>
+  <text x="1000" y="1260" fill="#00F0FF" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="800" text-anchor="end">petslam.app</text>
+</svg>

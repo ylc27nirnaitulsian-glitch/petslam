@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" width="1080" height="1350">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070A12"/>
+      <stop offset="50%" stop-color="#0B1120"/>
+      <stop offset="100%" stop-color="#060810"/>
+    </linearGradient>
+    <linearGradient id="cyanLime" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00F0FF"/>
+      <stop offset="100%" stop-color="#CCFF00"/>
+    </linearGradient>
+    <linearGradient id="purplePink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#EC4899"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1080" height="1350" fill="url(#bgGrad)"/>
+
+  <!-- Cyber Grid Lines -->
+  <g stroke="#1E293B" stroke-width="1" opacity="0.4">
+    <line x1="80" y1="0" x2="80" y2="1350"/>
+    <line x1="1000" y1="0" x2="1000" y2="1350"/>
+    <line x1="0" y1="120" x2="1080" y2="120"/>
+    <line x1="0" y1="1230" x2="1080" y2="1230"/>
+  </g>
+
+  <!-- Glowing Accent Orbs -->
+  <circle cx="200" cy="180" r="160" fill="#00F0FF" opacity="0.12" filter="url(#glow)"/>
+  <circle cx="880" cy="900" r="220" fill="#CCFF00" opacity="0.08" filter="url(#glow)"/>
+
+  <!-- Brand / Tag Header -->
+  <rect x="80" y="80" width="220" height="42" rx="21" fill="#1E293B" stroke="#00F0FF" stroke-width="1.5"/>
+  <text x="190" y="106" fill="#00F0FF" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" text-anchor="middle" letter-spacing="3">RETROSPECTIVE</text>
+
+  <text x="1000" y="108" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" text-anchor="end">01 / 05</text>
+
+  <!-- Main Headlines -->
+  <text x="80" y="240" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="900" letter-spacing="-1">TAMAGOTCHIS IN 1996</text>
+  <text x="80" y="320" fill="url(#cyanLime)" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="900" letter-spacing="-1">VS. PET SLAM IN 2026</text>
+
+  <text x="80" y="390" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="500">
+    <tspan x="80" dy="0">Why generic pixel pets are dead—and what happens</tspan>
+    <tspan x="80" dy="38">when your real dog or cat enters the 60 FPS arena.</tspan>
+  </text>
+
+  <!-- Split Comparison Cards -->
+  <!-- 1996 Card -->
+  <g transform="translate(80, 480)">
+    <rect width="430" height="580" rx="24" fill="#0F172A" stroke="#334155" stroke-width="2"/>
+    <rect x="24" y="24" width="130" height="34" rx="8" fill="#334155"/>
+    <text x="89" y="46" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" text-anchor="middle" letter-spacing="1">1996 VINTAGE</text>
+
+    <!-- Retro Egg Graphic -->
+    <ellipse cx="215" cy="210" rx="90" ry="110" fill="#1E293B" stroke="#475569" stroke-width="4"/>
+    <rect x="155" y="150" width="120" height="80" rx="8" fill="#94A3B8" stroke="#334155" stroke-width="2"/>
+    <!-- 8 bit pixel blob -->
+    <rect x="195" y="175" width="40" height="30" fill="#1E293B"/>
+
+    <text x="215" y="360" fill="#F1F5F9" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800" text-anchor="middle">Generic Pixel Blob</text>
+    <text x="215" y="405" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" text-anchor="middle">Black &amp; white 32×16 LCD</text>
+    <text x="215" y="445" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" text-anchor="middle">Eat, poop, sleep loop</text>
+    <text x="215" y="485" fill="#EF4444" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" text-anchor="middle">Permanently dies if ignored</text>
+  </g>
+
+  <!-- 2026 PET SLAM Card -->
+  <g transform="translate(570, 480)">
+    <rect width="430" height="580" rx="24" fill="#0B1528" stroke="#00F0FF" stroke-width="2.5" filter="url(#glow)"/>
+    <rect width="430" height="580" rx="24" fill="#0B1528" stroke="#00F0FF" stroke-width="2.5"/>
+    <rect x="24" y="24" width="150" height="34" rx="8" fill="#0284C7"/>
+    <text x="99" y="46" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="800" text-anchor="middle" letter-spacing="1">2026 PET SLAM</text>
+
+    <!-- Glowing Fighter Badge -->
+    <circle cx="215" cy="210" r="100" fill="#0F172A" stroke="#CCFF00" stroke-width="4"/>
+    <text x="215" y="195" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="900" text-anchor="middle">YOUR PET</text>
+    <text x="215" y="235" fill="#CCFF00" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" text-anchor="middle">620 CP • MYTHIC</text>
+
+    <text x="215" y="360" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="800" text-anchor="middle">Real Photo AI Scan</text>
+    <text x="215" y="405" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" text-anchor="middle">60 FPS Canvas Battles</text>
+    <text x="215" y="445" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="500" text-anchor="middle">Procedural Chimera Lab</text>
+    <text x="215" y="485" fill="#CCFF00" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" text-anchor="middle">Chrome Desktop Companion</text>
+  </g>
+
+  <!-- Bottom Action Bar -->
+  <g transform="translate(80, 1120)">
+    <rect width="920" height="74" rx="37" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+    <text x="50" y="46" fill="#F8FAFC" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700">SWIPE TO SEE HOW IT WORKS</text>
+    <circle cx="865" cy="37" r="24" fill="#00F0FF"/>
+    <path d="M860 27 L870 37 L860 47" stroke="#070A12" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Footer Link -->
+  <text x="80" y="1260" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600">PET SLAM • Esports Animal Battle &amp; Desktop Companion</text>
+  <text x="1000" y="1260" fill="#00F0FF" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="800" text-anchor="end">petslam.app</text>
+</svg>

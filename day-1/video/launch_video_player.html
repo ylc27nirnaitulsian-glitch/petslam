@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PET SLAM — Official Launch Video Studio (Interactive & Exportable)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #060810;
+      color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+      max-width: 900px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid #00F0FF;
+      color: #00F0FF;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #00F0FF, #CCFF00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    p { color: #94A3B8; font-size: 15px; }
+
+    /* Video Player Canvas Frame */
+    .player-container {
+      position: relative;
+      width: 854px;
+      max-width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border: 2px solid #1E293B;
+      border-radius: 20px;
+      box-shadow: 0 25px 60px rgba(0, 240, 255, 0.15);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Subtitle Overlay */
+    .subtitle-overlay {
+      position: absolute;
+      bottom: 24px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      pointer-events: none;
+      padding: 0 30px;
+    }
+    .subtitle-box {
+      display: inline-block;
+      background: rgba(7, 10, 18, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      padding: 10px 24px;
+      border-radius: 12px;
+      color: #FFFFFF;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    /* Controls Bar */
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+    .btn {
+      background: #1E293B;
+      color: #FFF;
+      border: 1px solid #334155;
+      padding: 12px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: #334155;
+      border-color: #00F0FF;
+    }
+    .btn-record {
+      background: linear-gradient(135deg, #EF4444, #F43F5E);
+      border: none;
+      font-weight: 900;
+    }
+    .btn-record:hover {
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #00F0FF, #CCFF00);
+      color: #060810;
+      border: none;
+      font-weight: 900;
+    }
+    .status-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: #00F0FF;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">PET SLAM LAUNCH VIDEO</div>
+    <h1>Official Launch Teaser (60 FPS Canvas & Web Audio)</h1>
+    <p>A dynamic 35-second launch commercial showcasing AI Photo Scanning, 60 FPS Colosseum Combat, and Desktop Companionship.</p>
+  </header>
+
+  <div class="player-container">
+    <canvas id="videoCanvas" width="1280" height="720"></canvas>
+    <div class="subtitle-overlay">
+      <div class="subtitle-box" id="subtitles">Press "Play Launch Video" to start</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="playBtn" onclick="togglePlay()">▶ Play Launch Video</button>
+    <button class="btn" onclick="restartVideo()">↺ Restart</button>
+    <button class="btn btn-record" id="recordBtn" onclick="toggleRecord()">⏺ Record to Video File (MP4/WebM)</button>
+    <span class="status-text" id="timeDisplay">00:00 / 00:35</span>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('videoCanvas');
+    const ctx = canvas.getContext('2d');
+    const subtitleEl = document.getElementById('subtitles');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const playBtn = document.getElementById('playBtn');
+    const recordBtn = document.getElementById('recordBtn');
+
+    let isPlaying = false;
+    let isRecording = false;
+    let startTime = 0;
+    let elapsedTime = 0;
+    const TOTAL_DURATION = 35; // 35 seconds
+
+    // Audio Context
+    let audioCtx = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.2, gainVal = 0.1) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playBark() {
+      playTone(180, 'sawtooth', 0.15, 0.15);
+      setTimeout(() => playTone(120, 'triangle', 0.2, 0.2), 50);
+    }
+
+    function togglePlay() {
+      initAudio();
+      if (isPlaying) {
+        isPlaying = false;
+        playBtn.innerText = '▶ Resume Launch Video';
+      } else {
+        isPlaying = true;
+        startTime = performance.now() - (elapsedTime * 1000);
+        playBtn.innerText = '⏸ Pause Video';
+        requestAnimationFrame(renderLoop);
+      }
+    }
+
+    function restartVideo() {
+      elapsedTime = 0;
+      if (isPlaying) startTime = performance.now();
+      drawScene(0);
+    }
+
+    function toggleRecord() {
+      initAudio();
+      if (!isRecording) {
+        startRecording();
+      } else {
+        stopRecording();
+      }
+    }
+
+    function startRecording() {
+      recordedChunks = [];
+      const stream = canvas.captureStream(60);
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+      mediaRecorder.onstop = saveRecording;
+      mediaRecorder.start();
+      isRecording = true;
+      recordBtn.innerText = '⏹ Stop & Download Video';
+      recordBtn.style.background = '#10B981';
+      restartVideo();
+      if (!isPlaying) togglePlay();
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      isRecording = false;
+      recordBtn.innerText = '⏺ Record to Video File (MP4/WebM)';
+      recordBtn.style.background = 'linear-gradient(135deg, #EF4444, #F43F5E)';
+    }
+
+    function saveRecording() {
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'PET_SLAM_Official_Launch_Trailer.webm';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Animation Loop
+    function renderLoop(now) {
+      if (!isPlaying) return;
+      elapsedTime = (now - startTime) / 1000;
+
+      if (elapsedTime >= TOTAL_DURATION) {
+        elapsedTime = TOTAL_DURATION;
+        isPlaying = false;
+        playBtn.innerText = '↺ Replay Launch Video';
+        if (isRecording) stopRecording();
+      }
+
+      const mins = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+      const secs = Math.floor(elapsedTime % 60).toString().padStart(2, '0');
+      timeDisplay.innerText = `${mins}:${secs} / 00:35`;
+
+      drawScene(elapsedTime);
+
+      if (isPlaying) {
+        requestAnimationFrame(renderLoop);
+      }
+    }
+
+    function drawScene(t) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (t < 7) {
+        // SCENE 1: The Couch Champion (0 - 7s)
+        drawScene1(t);
+      } else if (t < 16) {
+        // SCENE 2: The Gemini AI Vision Scan (7 - 16s)
+        drawScene2(t - 7);
+      } else if (t < 27) {
+        // SCENE 3: The 60 FPS Arena Slam (16 - 27s)
+        drawScene3(t - 16);
+      } else {
+        // SCENE 4: The Desktop Companion & CTA (27 - 35s)
+        drawScene4(t - 27);
+      }
+    }
+
+    // --- Scene 1: The Couch Champion ---
+    function drawScene1(t) {
+      // Warm room background
+      const grad = ctx.createLinearGradient(0, 0, 0, 720);
+      grad.addColorStop(0, '#1E1B4B');
+      grad.addColorStop(1, '#0F172A');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Cozy floor rug
+      ctx.fillStyle = '#312E81';
+      ctx.beginPath();
+      ctx.ellipse(640, 480, 360, 140, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sleeping Pet Illustration
+      const breath = Math.sin(t * 3) * 6;
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.ellipse(640, 460 - breath, 110, 75 + breath, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Head
+      ctx.beginPath();
+      ctx.arc(560, 420 - breath, 55, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Floppy Ear
+      ctx.fillStyle = '#D97706';
+      ctx.beginPath();
+      ctx.ellipse(540, 435 - breath, 25, 45, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sleeping Zzz
+      ctx.fillStyle = '#CCFF00';
+      ctx.font = 'bold 28px sans-serif';
+      const zOffset = (t * 50) % 80;
+      ctx.fillText('Zzz...', 670 + zOffset * 0.4, 380 - zOffset);
+
+      subtitleEl.innerText = "You think your pet is just sleeping on the couch...";
+    }
+
+    // --- Scene 2: Gemini AI Vision Scan ---
+    function drawScene2(t) {
+      ctx.fillStyle = '#070A12';
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Grid
+      ctx.strokeStyle = '#1E293B';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < 1280; x += 60) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 720); ctx.stroke();
+      }
+
+      // Scanner Container Frame
+      ctx.strokeStyle = '#00F0FF';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(390, 100, 500, 500);
+
+      // Pet Silhouette inside
+      ctx.fillStyle = '#D97706';
+      ctx.beginPath();
+      ctx.arc(640, 320, 100, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Scanning Laser Beam
+      const laserY = 120 + ((t * 220) % 460);
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.25)';
+      ctx.fillRect(390, laserY - 10, 500, 20);
+      ctx.strokeStyle = '#CCFF00';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(390, laserY); ctx.lineTo(890, laserY);
+      ctx.stroke();
+
+      // Extracted Data Badges
+      if (t > 2) {
+        ctx.fillStyle = '#0284C7';
+        ctx.fillRect(100, 200, 240, 60);
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('DNA: Golden Pedigree', 120, 238);
+      }
+      if (t > 4) {
+        ctx.fillStyle = '#7C3AED';
+        ctx.fillRect(100, 300, 240, 60);
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('Power: 620 CP (Mythic)', 120, 338);
+      }
+      if (t > 6) {
+        ctx.fillStyle = '#10B981';
+        ctx.fillRect(100, 400, 240, 60);
+        ctx.fillStyle = '#FFF';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('Move: Sonic Overdrive', 120, 438);
+      }
+
+      subtitleEl.innerText = "Until Gemini scans their photo into an esports fighting champion.";
+    }
+
+    // --- Scene 3: 60 FPS Colosseum Combat ---
+    function drawScene3(t) {
+      // Neon Arena Stadium
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 720);
+      bgGrad.addColorStop(0, '#0F172A');
+      bgGrad.addColorStop(0.6, '#020617');
+      bgGrad.addColorStop(1, '#052E16');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Arena Floor
+      ctx.fillStyle = '#064E3B';
+      ctx.beginPath();
+      ctx.ellipse(640, 600, 600, 200, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Energy Sparks
+      for (let i = 0; i < 20; i++) {
+        const sx = (Math.sin(t * 10 + i) * 600) + 640;
+        const sy = (Math.cos(t * 8 + i * 2) * 200) + 480;
+        ctx.fillStyle = i % 2 === 0 ? '#00F0FF' : '#CCFF00';
+        ctx.fillRect(sx, sy, 5, 5);
+      }
+
+      // Player Fighter Pet (Golden Retriever)
+      const leapX = 350 + Math.sin(t * 5) * 80;
+      const leapY = 480 - Math.abs(Math.sin(t * 5)) * 140;
+
+      // Aura
+      ctx.fillStyle = 'rgba(204, 255, 0, 0.25)';
+      ctx.beginPath();
+      ctx.arc(leapX, leapY, 90, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Body
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.arc(leapX, leapY, 65, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Head with battle visor
+      ctx.fillStyle = '#D97706';
+      ctx.beginPath();
+      ctx.arc(leapX + 45, leapY - 20, 40, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#00F0FF';
+      ctx.fillRect(leapX + 50, leapY - 25, 25, 10);
+
+      // Opponent Cat
+      const oppX = 900;
+      const oppY = 480;
+      ctx.fillStyle = '#8B5CF6';
+      ctx.beginPath();
+      ctx.arc(oppX, oppY, 55, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Big Attack Text
+      if (t > 4) {
+        ctx.fillStyle = '#CCFF00';
+        ctx.font = '900 48px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('CRITICAL SLAM! 980 DMG', 640, 200);
+        ctx.textAlign = 'start';
+      }
+
+      subtitleEl.innerText = "Real-time 60 FPS combat right in your browser. Zero downloads.";
+    }
+
+    // --- Scene 4: Desktop Companion Coworker & CTA ---
+    function drawScene4(t) {
+      // Dark Workstation background
+      ctx.fillStyle = '#0B0F19';
+      ctx.fillRect(0, 0, 1280, 720);
+
+      // Browser Window Frame
+      ctx.fillStyle = '#1E293B';
+      ctx.fillRect(160, 60, 960, 560);
+      ctx.fillStyle = '#0F172A';
+      ctx.fillRect(162, 110, 956, 506);
+
+      // Window controls
+      ctx.fillStyle = '#EF4444'; ctx.beginPath(); ctx.arc(190, 85, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#F59E0B'; ctx.beginPath(); ctx.arc(215, 85, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#10B981'; ctx.beginPath(); ctx.arc(240, 85, 8, 0, Math.PI * 2); ctx.fill();
+
+      // Browser content placeholder (Google docs / Code)
+      ctx.fillStyle = '#1E293B';
+      for (let y = 160; y < 500; y += 40) {
+        ctx.fillRect(220, y, 500 + (Math.sin(y) * 120), 16);
+      }
+
+      // Roaming Desktop Companion Pet
+      const petX = 850 + Math.sin(t * 3) * 50;
+      const petY = 540;
+
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.arc(petX, petY, 45, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Speech bubble
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(petX - 80, petY - 95, 160, 42);
+      ctx.fillStyle = '#070A12';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText('Woof! Drink water!', petX - 65, petY - 68);
+
+      // Big Ending Banner
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.95)';
+      ctx.fillRect(280, 220, 720, 140);
+      ctx.fillStyle = '#060810';
+      ctx.font = '900 44px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PLAY FREE AT PETSLAM.APP', 640, 280);
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText('Turn Your Pet Into A Champion Today', 640, 325);
+      ctx.textAlign = 'start';
+
+      subtitleEl.innerText = "Export them as your desktop coworker. Play free at petslam.app!";
+    }
+
+    // Initial Frame
+    drawScene(0);
+  </script>
+</body>
+</html>
