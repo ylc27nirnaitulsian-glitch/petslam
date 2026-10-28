@@ -63,25 +63,25 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
       </div>
 
       {/* Clean Top Bar (No random developer junk) */}
-      <header className="relative z-20 w-full px-4 sm:px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] shadow-[0_0_10px_#CCFF00]" />
-          <span className="font-display font-black text-sm tracking-wider text-white uppercase">
+      <header className="relative z-20 w-full px-3 sm:px-8 py-3 sm:py-4 flex items-center justify-between max-w-full overflow-hidden">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-[#CCFF00] shadow-[0_0_10px_#CCFF00]" />
+          <span className="font-display font-black text-xs sm:text-sm tracking-wider text-white uppercase">
             PET SLAM ARENA
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Sound Toggle */}
           <button
             onClick={toggleSound}
-            className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-neutral-300 hover:text-white transition-all cursor-pointer backdrop-blur-md shadow-sm"
+            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-neutral-300 hover:text-white transition-all cursor-pointer backdrop-blur-md shadow-sm"
             title={soundEnabled ? 'Mute Sound' : 'Unmute Sound'}
           >
             {soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-[#CCFF00]" />
+              <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#CCFF00]" />
             ) : (
-              <VolumeX className="w-4 h-4 text-neutral-400" />
+              <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400" />
             )}
           </button>
 
@@ -91,30 +91,30 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
               sound.playClick();
               setAuthOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all cursor-pointer text-xs font-mono backdrop-blur-md shadow-sm font-bold"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all cursor-pointer text-[11px] sm:text-xs font-mono backdrop-blur-md shadow-sm font-bold truncate max-w-[150px] sm:max-w-none"
           >
-            <User className="w-3.5 h-3.5 text-[#CCFF00]" />
-            <span>{connectedAccount.isLoggedIn ? trainerName : 'Account Login'}</span>
+            <User className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#CCFF00] shrink-0" />
+            <span className="truncate">{connectedAccount.isLoggedIn ? trainerName : 'Account Login'}</span>
           </button>
         </div>
       </header>
 
       {/* Main Center Stage */}
-      <main className="relative z-20 flex-1 flex flex-col items-center justify-center px-4 text-center my-auto">
+      <main className="relative z-20 flex-1 flex flex-col items-center justify-center px-3 sm:px-4 text-center my-auto w-full max-w-full overflow-hidden">
         {/* Championship Tag */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-[#CCFF00]/40 text-xs font-mono uppercase tracking-widest text-[#CCFF00] mb-3 shadow-[0_0_20px_rgba(204,255,0,0.2)]">
-          <Sparkles className="w-3.5 h-3.5 text-[#CCFF00] animate-spin" />
-          <span>REAL-TIME ANIMAL COMBAT ARENA</span>
+        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 rounded-full bg-white/10 border border-[#CCFF00]/40 text-[10px] sm:text-xs font-mono uppercase tracking-wider sm:tracking-widest text-[#CCFF00] mb-2 sm:mb-3 shadow-[0_0_20px_rgba(204,255,0,0.2)] max-w-[94vw] text-center">
+          <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#CCFF00] animate-spin shrink-0" />
+          <span className="truncate">REAL-TIME ANIMAL COMBAT ARENA</span>
         </div>
 
         {/* Epic Title Display */}
         <div className="relative flex flex-col items-center">
-          <h1 className="font-display font-black text-6xl sm:text-7xl md:text-8xl uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-100 to-neutral-400 drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]">
+          <h1 className="font-display font-black text-5xl sm:text-7xl md:text-8xl uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-neutral-100 to-neutral-400 drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]">
             PET <span className="text-[#CCFF00] drop-shadow-[0_0_35px_rgba(204,255,0,0.7)]">SLAM</span>
           </h1>
 
           {/* Dynamic Laser Accent Bar */}
-          <div className="relative w-48 sm:w-72 h-1 bg-gradient-to-r from-transparent via-[#CCFF00] to-transparent my-2 shadow-[0_0_15px_#CCFF00]">
+          <div className="relative w-40 sm:w-72 h-1 bg-gradient-to-r from-transparent via-[#CCFF00] to-transparent my-1.5 sm:my-2 shadow-[0_0_15px_#CCFF00]">
             <div
               className={`absolute inset-0 bg-white transition-opacity duration-700 ${
                 glowPulse ? 'opacity-100' : 'opacity-30'
@@ -124,7 +124,7 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
         </div>
 
         {/* Guaranteed Crisp Active Beast Showcase Card */}
-        <div className="mt-6 w-full max-w-xs bg-gradient-to-b from-[#131926]/95 to-[#0E121B]/95 border-2 border-[#CCFF00]/40 rounded-2xl p-3.5 flex items-center gap-3.5 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.7)]">
+        <div className="mt-4 sm:mt-6 w-full max-w-xs bg-gradient-to-b from-[#131926]/95 to-[#0E121B]/95 border-2 border-[#CCFF00]/40 rounded-2xl p-3 sm:p-3.5 flex items-center gap-3 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.7)]">
           <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-[#CCFF00] shadow-md shrink-0 bg-black">
             <img
               src={activeBeast.image}

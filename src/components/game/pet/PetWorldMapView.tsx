@@ -16,6 +16,8 @@ import {
   LocateFixed,
   Layers,
   Info,
+  Key,
+  Check,
 } from 'lucide-react';
 import { WildPetEncounter, CompanionPet } from '../../../types/pet';
 import { ANIMALS_DATA, Animal } from '../../../data/animals';
@@ -73,8 +75,58 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
   });
   const [gpsStatus, setGpsStatus] = useState<'locating' | 'live_gps' | 'simulated'>('locating');
   const [accuracyMeters, setAccuracyMeters] = useState<number>(30);
-  const [mapTheme, setMapTheme] = useState<'dark' | 'voyager' | 'osm'>('dark');
+  const [mapTheme, setMapTheme] = useState<
+    'dark' | 'google_roadmap' | 'google_hybrid' | 'voyager' | 'osm'
+  >('dark');
   const [isScanning, setIsScanning] = useState<boolean>(false);
+
+  // Maps API Key (Google Maps Platform or Mapbox)
+  const [mapsApiKey, setMapsApiKey] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return (
+        (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string) ||
+        localStorage.getItem('petslam_maps_api_key') ||
+        ''
+      );
+    }
+    return '';
+  });
+  const [showKeyModal, setShowKeyModal] = useState<boolean>(false);
+  const [tempApiKey, setTempApiKey] = useState<string>('');
+
+  const getTileConfig = (theme: typeof mapTheme, apiKey: string) => {
+    if (theme === 'google_roadmap') {
+      const url = apiKey
+        ? `https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=${apiKey}`
+        : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+      return { url, subdomains: '0123', maxZoom: 20 };
+    }
+    if (theme === 'google_hybrid') {
+      const url = apiKey
+        ? `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&key=${apiKey}`
+        : 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+      return { url, subdomains: '0123', maxZoom: 20 };
+    }
+    if (theme === 'voyager') {
+      return {
+        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      };
+    }
+    if (theme === 'osm') {
+      return {
+        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        subdomains: 'abc',
+        maxZoom: 19,
+      };
+    }
+    return {
+      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    };
+  };
 
   // Active pet spawns around user
   const [geoPetSpawns, setGeoPetSpawns] = useState<GeoPetMarker[]>([]);
@@ -225,17 +277,11 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
     // Add zoom controls at top-right
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Initial Tile Layer: CartoDB Dark Matter for sleek radar aesthetics
-    const tileUrl =
-      mapTheme === 'dark'
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : mapTheme === 'voyager'
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-    const tileLayer = L.tileLayer(tileUrl, {
-      maxZoom: 19,
-      subdomains: 'abcd',
+    // Initial Tile Layer
+    const tileConfig = getTileConfig(mapTheme, mapsApiKey);
+    const tileLayer = L.tileLayer(tileConfig.url, {
+      maxZoom: tileConfig.maxZoom,
+      subdomains: tileConfig.subdomains,
     }).addTo(map);
     tileLayerRef.current = tileLayer;
 
@@ -281,26 +327,20 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
     };
   }, []);
 
-  // 3. Switch Tile Layer when theme changes
+  // 3. Switch Tile Layer when theme or API key changes
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     if (tileLayerRef.current) {
       mapInstanceRef.current.removeLayer(tileLayerRef.current);
     }
 
-    const tileUrl =
-      mapTheme === 'dark'
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : mapTheme === 'voyager'
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-    const newLayer = L.tileLayer(tileUrl, {
-      maxZoom: 19,
-      subdomains: 'abcd',
+    const tileConfig = getTileConfig(mapTheme, mapsApiKey);
+    const newLayer = L.tileLayer(tileConfig.url, {
+      maxZoom: tileConfig.maxZoom,
+      subdomains: tileConfig.subdomains,
     }).addTo(mapInstanceRef.current);
     tileLayerRef.current = newLayer;
-  }, [mapTheme]);
+  }, [mapTheme, mapsApiKey]);
 
   // 4. Render & Update Player & Pet Markers on Leaflet Layer
   useEffect(() => {
@@ -425,10 +465,10 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md select-none">
-      <div className="relative w-full max-w-lg bg-[#090D16] border border-white/20 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[700px] max-h-[94vh] text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md select-none">
+      <div className="relative w-full h-full sm:h-[700px] max-w-lg bg-[#090D16] border-0 sm:border border-white/20 rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col text-white">
         {/* TOP BAR */}
-        <div className="p-3 border-b border-white/10 bg-[#101726] flex items-center justify-between shrink-0">
+        <div className="p-2.5 sm:p-3 border-b border-white/10 bg-[#101726] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shadow shrink-0">
               <Compass className={`w-4 h-4 ${isScanning ? 'animate-spin' : ''}`} />
@@ -455,14 +495,40 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
+            {/* Configure Maps API Key (Google Maps / Mapbox) */}
+            <button
+              onClick={() => {
+                sound.playClick();
+                setTempApiKey(mapsApiKey);
+                setShowKeyModal(true);
+              }}
+              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white cursor-pointer transition-colors relative"
+              title="Configure Maps API Key (Google Maps)"
+            >
+              <Key className="w-3.5 h-3.5 text-[#CCFF00]" />
+              {mapsApiKey && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#CCFF00] shadow-[0_0_6px_#CCFF00]" />
+              )}
+            </button>
+
             {/* Tile Layer Selector */}
             <button
               onClick={() => {
                 sound.playClick();
-                setMapTheme((prev) => (prev === 'dark' ? 'voyager' : prev === 'voyager' ? 'osm' : 'dark'));
+                setMapTheme((prev) =>
+                  prev === 'dark'
+                    ? 'google_roadmap'
+                    : prev === 'google_roadmap'
+                    ? 'google_hybrid'
+                    : prev === 'google_hybrid'
+                    ? 'voyager'
+                    : prev === 'voyager'
+                    ? 'osm'
+                    : 'dark'
+                );
               }}
               className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white cursor-pointer transition-colors"
-              title="Toggle Map Style (Dark / Light / Street)"
+              title="Toggle Map Style (Dark / Google Maps / Satellite / Voyager / OSM)"
             >
               <Layers className="w-3.5 h-3.5" />
             </button>
@@ -511,14 +577,28 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
           {/* Map Controls Floating Badge */}
           <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/15 text-[9px] font-mono text-neutral-300 flex items-center gap-1.5 shadow-lg">
             <span className="w-2 h-2 rounded-full bg-[#CCFF00] animate-ping" />
-            <span>REAL-TIME OPENSTREETMAP</span>
+            <span>
+              {mapTheme.startsWith('google')
+                ? 'GOOGLE MAPS'
+                : mapTheme === 'osm'
+                ? 'OPENSTREETMAP'
+                : mapTheme === 'voyager'
+                ? 'CARTO VOYAGER'
+                : 'CARTO DARK'}
+            </span>
             <span className="text-neutral-500">|</span>
-            <span className="text-emerald-400 font-bold uppercase">{mapTheme}</span>
+            <span className="text-[#CCFF00] font-bold uppercase">
+              {mapTheme === 'google_roadmap'
+                ? 'Roadmap'
+                : mapTheme === 'google_hybrid'
+                ? 'Satellite'
+                : mapTheme}
+            </span>
           </div>
         </div>
 
         {/* BOTTOM DRAWER: SELECTED PET DETAILS & CATCH TRIGGER */}
-        <div className="p-3 bg-[#101624] border-t border-white/10 shrink-0">
+        <div className="p-3 bg-[#101624] border-t border-white/10 shrink-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           {selectedPin ? (
             <div className="bg-[#141C2E] border border-white/15 rounded-2xl p-2.5 sm:p-3 flex items-center justify-between shadow-lg animate-in fade-in gap-2">
               <div className="flex items-center gap-2.5 min-w-0">
@@ -591,6 +671,75 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
             setGeoPetSpawns((prev) => prev.filter((p) => p.id !== activeCatchEncounter.id));
           }}
         />
+      )}
+
+      {/* Google Maps / Mapbox Key Configuration Modal */}
+      {showKeyModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+          <div className="w-full max-w-sm bg-[#0E1320] border-2 border-[#CCFF00]/40 rounded-3xl p-5 shadow-2xl text-white space-y-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Key className="w-4 h-4 text-[#CCFF00]" />
+                <h4 className="font-display font-black text-base uppercase tracking-wider text-white">Maps API Key</h4>
+              </div>
+              <button
+                onClick={() => setShowKeyModal(false)}
+                className="text-neutral-400 hover:text-white p-1 rounded-xl hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-neutral-300 font-mono leading-relaxed">
+              Connect your Google Maps Platform API key or Mapbox Access Token to unlock high-definition satellite and roadmap views in Pet Radar.
+            </p>
+            <div className="space-y-1">
+              <label className="text-[10px] font-mono uppercase text-[#CCFF00] font-bold">API Key or Token</label>
+              <input
+                type="text"
+                placeholder="AIzaSy... or pk.eyJ1..."
+                value={tempApiKey}
+                onChange={(e) => setTempApiKey(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-black/70 border border-white/20 font-mono text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#CCFF00]"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => {
+                  sound.playVictory();
+                  const trimmed = tempApiKey.trim();
+                  setMapsApiKey(trimmed);
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('petslam_maps_api_key', trimmed);
+                  }
+                  if (trimmed) {
+                    setMapTheme('google_roadmap');
+                  }
+                  setShowKeyModal(false);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-[#CCFF00] text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer hover:bg-[#b8e600] active:scale-95 transition-all shadow-md"
+              >
+                Save & Apply Map
+              </button>
+              {mapsApiKey && (
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    setMapsApiKey('');
+                    setTempApiKey('');
+                    if (typeof window !== 'undefined') {
+                      localStorage.removeItem('petslam_maps_api_key');
+                    }
+                    setMapTheme('dark');
+                    setShowKeyModal(false);
+                  }}
+                  className="px-3 py-2.5 rounded-xl bg-red-500/20 text-red-300 hover:bg-red-500/30 text-xs font-mono cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

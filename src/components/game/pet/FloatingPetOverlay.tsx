@@ -34,11 +34,14 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const { pet, isOverlayActive, toggleOverlay, feedPet, strokePet, availableBerries } =
     usePetCompanion();
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   const [position, setPosition] = useState<{ x: number; y: number }>(() => {
     if (typeof window !== 'undefined') {
+      const mobileInit = window.innerWidth < 768;
       return {
-        x: Math.max(20, window.innerWidth - 240),
-        y: Math.max(30, window.innerHeight - 270),
+        x: mobileInit ? Math.max(10, window.innerWidth - 170) : Math.max(20, window.innerWidth - 240),
+        y: mobileInit ? Math.max(50, window.innerHeight - 130) : Math.max(30, window.innerHeight - 270),
       };
     }
     return { x: 100, y: 100 };
@@ -48,24 +51,30 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const [talkingVolume, setTalkingVolume] = useState<number>(0);
   const [showRadialMenu, setShowRadialMenu] = useState(false);
   const [speechBubble, setSpeechBubble] = useState<string | null>(null);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
   const [petScaleMode, setPetScaleMode] = useState<'normal' | 'large'>('normal');
 
   // Keep pet inside screen bounds on window resize
   useEffect(() => {
     const handleResize = () => {
+      const mobile = window.innerWidth < 768;
       setPosition((prev) => {
-        const petW = petScaleMode === 'large' ? 200 : 160;
-        const petH = petScaleMode === 'large' ? 200 : 160;
+        const petW = isMinimized ? 150 : (mobile ? 130 : (petScaleMode === 'large' ? 200 : 160));
+        const petH = isMinimized ? 50 : (mobile ? 130 : (petScaleMode === 'large' ? 200 : 160));
         return {
           x: Math.max(10, Math.min(window.innerWidth - petW - 10, prev.x)),
-          y: Math.max(10, Math.min(window.innerHeight - petH - 10, prev.y)),
+          y: Math.max(10, Math.min(window.innerHeight - petH - (mobile ? 75 : 10), prev.y)),
         };
       });
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [petScaleMode]);
+  }, [petScaleMode, isMinimized]);
 
   // Laptop Battery & Charging Detector
   const [isCharging, setIsCharging] = useState(false);
@@ -451,8 +460,8 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
               stage={pet.stage || 2}
               animationState={animState}
               talkingVolume={talkingVolume}
-              width={petScaleMode === 'large' ? 200 : 160}
-              height={petScaleMode === 'large' ? 200 : 160}
+              width={isMobile ? 130 : petScaleMode === 'large' ? 200 : 160}
+              height={isMobile ? 130 : petScaleMode === 'large' ? 200 : 160}
               interactive={false}
               renderMode="cute"
             />
