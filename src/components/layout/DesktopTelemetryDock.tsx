@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Shield,
   Zap,
-  Gavel,
+  Home,
   Tv,
   Sparkles,
   Crown,
@@ -56,10 +56,10 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
     .map((id) => ownedBeasts.find((b) => b.id === id))
     .filter((b): b is Animal => Boolean(b));
 
-  // Simulated live auctions ticker
+  // Simulated live sanctuary adoption ticker
   const liveTickers = [
     { pet: 'Cyber Bengal Cat', bid: '1,850 CR', time: '2m left', rare: 'EPIC' },
-    { pet: 'Apex Husky Alpha', bid: '$2.99 Buyout', time: '5m left', rare: 'LEGENDARY' },
+    { pet: 'Apex Husky Alpha', bid: '2,500 CR', time: '5m left', rare: 'LEGENDARY' },
     { pet: 'Titan Rottweiler', bid: '950 CR', time: '12m left', rare: 'RARE' },
   ];
 
@@ -195,12 +195,12 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
         </button>
       </div>
 
-      {/* 3. Live Auction House Ticker */}
+      {/* 3. Sanctuary Pet Adoption Ticker */}
       <div className="bg-slate-100/90 dark:bg-[#0E1424] border border-slate-200 dark:border-white/15 rounded-2xl p-3.5 shadow-md dark:shadow-lg">
         <div className="flex items-center justify-between mb-2.5">
           <span className="text-xs font-mono font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-            <Gavel className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-            Live Auction Stream
+            <Home className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+            Adoption Shelter Stream
           </span>
           <button
             onClick={onOpenAuctions}

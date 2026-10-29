@@ -38,33 +38,40 @@ export async function onRequestGet(context: EventContext): Promise<Response> {
   const isLive = apiKey.startsWith('dodo_live_') || env.DODO_PAYMENTS_ENVIRONMENT === 'live_mode';
 
   const products = {
-    auction: {
-      id: env.DODO_PRODUCT_AUCTION_PASS || 'pdt_0NqgJlisZzb8svxO90gL0',
-      title: 'Auction House VIP License',
-      price: '$1.99',
-      amountCents: 199,
-      description: 'Permanent unlock for high-stakes live player pet auctions and bidding.',
+    extension: {
+      id: env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0NqgJtNVeIeTlUsEMZ3C1',
+      title: 'PET SLAM Desktop & Browser Companion (Lifetime License)',
+      price: '$2.99',
+      amountCents: 299,
+      description: 'Standalone Chrome extension & desktop productivity companion with posture/hydration alerts and voice mimicry.',
     },
     avatar: {
       id: env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0NqgJPS04QMUNn6vlOUrI',
-      title: 'Custom Pet DNA Avatar Pass',
+      title: 'AI Pet Photo Studio Scanner Pass',
       price: '$0.99',
       amountCents: 99,
-      description: 'Upload your pet photos to generate high-res stylized fighting avatars.',
+      description: 'Generative AI photo utility converting real dog & cat photos into stylized 2D digital trading cards.',
     },
-    extension: {
-      id: env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0NqgJtNVeIeTlUsEMZ3C1',
-      title: 'Browser Extension Lifetime Pass',
-      price: '$1.99',
-      amountCents: 199,
-      description: 'Lifetime interactive browser companion overlay with real-time feeding & voice mimicry.',
+    supporter: {
+      id: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
+      title: 'Genesis Founder Supporter Pack',
+      price: '$4.99',
+      amountCents: 499,
+      description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
     },
     bundle: {
       id: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
-      title: 'All-Access Genesis VIP Bundle',
+      title: 'Genesis Founder Supporter Pack',
       price: '$4.99',
       amountCents: 499,
-      description: 'Unlocks Auction Pass, Avatar Studio Pass, Extension Pass + 5,000 Bonus Credits.',
+      description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
+    },
+    auction: {
+      id: env.DODO_PRODUCT_AUCTION_PASS || 'pdt_0NqgJlisZzb8svxO90gL0',
+      title: 'Sanctuary Supporter License',
+      price: '$1.99',
+      amountCents: 199,
+      description: 'Supporter pass for sanctuary cosmetic customizations and adoption shelter flair.',
     },
     credits_5000: {
       id: env.DODO_PRODUCT_CREDITS_5K || 'pdt_0NqgJznwnQjxDNNAydOuK',

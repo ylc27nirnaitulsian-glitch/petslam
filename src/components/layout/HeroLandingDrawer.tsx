@@ -94,12 +94,12 @@ export const HeroLandingDrawer: React.FC<HeroLandingDrawerProps> = ({
               </div>
 
               <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10">
-                <div className="flex items-center gap-2 text-amber-400 font-bold text-xs font-display uppercase">
-                  <Gavel className="w-4 h-4" />
-                  <span>Live Pet Auctions</span>
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs font-display uppercase">
+                  <Heart className="w-4 h-4" />
+                  <span>Sanctuary Pet Adoption</span>
                 </div>
                 <p className="text-[11px] text-neutral-400 mt-1 leading-snug">
-                  Bid and buyout pedigree pets with credits or USD via official Dodo Payments gateway.
+                  Adopt or re-home companion pets with 100% free earned in-game Slam Berries and Credits.
                 </p>
               </div>
 

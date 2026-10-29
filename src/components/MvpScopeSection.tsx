@@ -68,11 +68,11 @@ export const MvpScopeSection: React.FC<MvpScopeSectionProps> = ({ onJoinWaitlist
       rationale: 'Deferred to allow player base to train and condition their starter beasts to competitive baseline levels, and complete netcode load stress tests.',
     },
     {
-      title: 'Live Weekly Player Auctions',
-      category: 'Player Marketplace',
-      target: 'Week 16 (Secondary Exchange)',
-      detail: 'Consensus-backed credit bidding for high-tier trained beasts between authenticated trainers.',
-      rationale: 'Requires sufficient active trained beasts in circulation to establish balanced liquidity and fair market pricing.',
+      title: 'Sanctuary Community Adoption Shelter',
+      category: 'Community Pet Re-Homing',
+      target: 'Week 16 (Full Open Adoption)',
+      detail: 'Free in-game token adoption and rescue requests for high-tier trained companion pets between trainers.',
+      rationale: 'Requires active sanctuary pets in circulation to establish balanced adoption availability and fair community exchanges.',
     },
     {
       title: 'Sanctioned Global Esports Leaderboard',

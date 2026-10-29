@@ -93,35 +93,42 @@ if (exaApiKey && exaApiKey !== 'your_exa_api_key_here' && exaApiKey.trim().lengt
   }
 }
 
-// Product Catalog definition for PET SLAM Monetization
+// Product Catalog definition for PET SLAM Monetization (Software & AI Utilities)
 const DODO_PRODUCTS = {
-  auction: {
-    id: process.env.DODO_PRODUCT_AUCTION_PASS || 'pdt_0NqgJlisZzb8svxO90gL0',
-    title: 'Auction House VIP License',
-    price: '$1.99',
-    amountCents: 199,
-    description: 'Permanent unlock for high-stakes live player pet auctions and bidding.',
+  extension: {
+    id: process.env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0NqgJtNVeIeTlUsEMZ3C1',
+    title: 'PET SLAM Desktop & Browser Companion (Lifetime License)',
+    price: '$2.99',
+    amountCents: 299,
+    description: 'Standalone Chrome extension & desktop productivity companion with posture/hydration alerts and voice mimicry.',
   },
   avatar: {
     id: process.env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0NqgJPS04QMUNn6vlOUrI',
-    title: 'Custom Pet DNA Avatar Pass',
+    title: 'AI Pet Photo Studio Scanner Pass',
     price: '$0.99',
     amountCents: 99,
-    description: 'Upload your pet photos to generate high-res stylized fighting avatars.',
+    description: 'Generative AI photo utility converting real dog & cat photos into stylized 2D digital trading cards.',
   },
-  extension: {
-    id: process.env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0NqgJtNVeIeTlUsEMZ3C1',
-    title: 'Browser Extension Lifetime Pass',
-    price: '$1.99',
-    amountCents: 199,
-    description: 'Lifetime interactive browser companion overlay with real-time feeding & voice mimicry.',
+  supporter: {
+    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
+    title: 'Genesis Founder Supporter Pack',
+    price: '$4.99',
+    amountCents: 499,
+    description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
   },
   bundle: {
     id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
-    title: 'All-Access Genesis VIP Bundle',
+    title: 'Genesis Founder Supporter Pack',
     price: '$4.99',
     amountCents: 499,
-    description: 'Unlocks Auction Pass, Avatar Studio Pass, Extension Pass + 5,000 Bonus Credits.',
+    description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
+  },
+  auction: {
+    id: process.env.DODO_PRODUCT_AUCTION_PASS || 'pdt_0NqgJlisZzb8svxO90gL0',
+    title: 'Sanctuary Supporter License',
+    price: '$1.99',
+    amountCents: 199,
+    description: 'Supporter pass for sanctuary cosmetic customizations and adoption shelter flair.',
   },
   credits_5000: {
     id: process.env.DODO_PRODUCT_CREDITS_5K || 'pdt_0NqgJznwnQjxDNNAydOuK',
@@ -261,7 +268,7 @@ We have received your application for the PET SLAM waitlist!
 As an early applicant, you have officially been granted:
 • 10,000 Arena Credits (credited to your competitor registry for beast acquisitions and training)
 • Exclusive Founder Beast Badge (permanent cosmetic honor for your arena profile)
-• Priority Closed Alpha Feature Testing Access (first-hand testing of PvP battles, weekly auctions, and IRL proximity matchmaking)
+• Priority Closed Alpha Feature Testing Access (first-hand testing of PvP battles, Sanctuary Adoption Shelter, and IRL proximity matchmaking)
 
 Registration Voucher: ${entryId}
 
@@ -506,7 +513,7 @@ We have received your application for the PET SLAM waitlist!
 As an early applicant, you have officially been granted:
 • 10,000 Arena Credits (credited to your competitor registry for beast acquisitions and training)
 • Exclusive Founder Beast Badge (permanent cosmetic honor for your arena profile)
-• Priority Closed Alpha Feature Testing Access (first-hand testing of PvP battles, weekly auctions, and IRL proximity matchmaking)
+• Priority Closed Alpha Feature Testing Access (first-hand testing of PvP battles, Sanctuary Adoption Shelter, and IRL proximity matchmaking)
 
 Registration Voucher: ${sampleId}
 

@@ -6,6 +6,7 @@ import {
   Check,
   Flame,
   Award,
+  Crown,
   Coins,
   CreditCard,
   Gavel,
@@ -25,13 +26,13 @@ import { trackClarityEvent } from '../../utils/clarity';
 interface VipPassesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultPass?: 'auction' | 'avatar' | 'extension' | 'bundle';
+  defaultPass?: 'extension' | 'avatar' | 'bundle';
 }
 
 export const VipPassesModal: React.FC<VipPassesModalProps> = ({
   isOpen,
   onClose,
-  defaultPass = 'bundle',
+  defaultPass = 'extension',
 }) => {
   const {
     credits,
@@ -42,7 +43,7 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
   } = useGame();
 
   const [paymentMethod, setPaymentMethod] = useState<'usd' | 'credits'>('usd');
-  const [selectedPass, setSelectedPass] = useState<'auction' | 'avatar' | 'extension' | 'bundle'>(defaultPass);
+  const [selectedPass, setSelectedPass] = useState<'extension' | 'avatar' | 'bundle'>(defaultPass);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
@@ -50,48 +51,14 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
 
   const passes = [
     {
-      id: 'auction' as const,
-      title: 'Auction House VIP License',
-      priceUsd: '$1.99',
-      creditsCost: 1500,
-      icon: Gavel,
-      color: 'amber',
-      accentBorder: 'border-amber-400',
-      badge: 'Trading Hub',
-      isOwned: hasAuctionPass,
-      features: [
-        'Place live bids on rare pedigree cats & dogs',
-        'List your trained sanctuary pets for global auction',
-        'Set custom starting bids & instant buyout valuations',
-        'Zero commission trading fee rebate',
-      ],
-    },
-    {
-      id: 'avatar' as const,
-      title: 'Custom Pet DNA Avatar Pass',
-      priceUsd: '$0.99',
-      creditsCost: 1000,
-      icon: Camera,
-      color: 'cyan',
-      accentBorder: 'border-cyan-400',
-      badge: 'Personal Pet',
-      isOwned: hasAvatarStudioPass,
-      features: [
-        'Turn your real dog or cat photo into a 2D avatar',
-        'Extract coat colors, ears, and personality traits',
-        'Deploy your real pet directly into the Battle Arena',
-        'Custom signature move & battle stats generator',
-      ],
-    },
-    {
       id: 'extension' as const,
-      title: 'Browser Extension Lifetime Pass',
-      priceUsd: '$1.99',
+      title: 'Desktop & Browser Companion License',
+      priceUsd: '$2.99',
       creditsCost: 1500,
       icon: Tv,
       color: 'lime',
       accentBorder: 'border-[#CCFF00]',
-      badge: 'Desktop Companion',
+      badge: 'Software Utility',
       isOwned: hasExtensionPass,
       features: [
         'Screen-roaming companion on bottom & sidebars',
@@ -102,26 +69,43 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
       ],
     },
     {
+      id: 'avatar' as const,
+      title: 'AI Pet Photo Studio Scanner Pass',
+      priceUsd: '$0.99',
+      creditsCost: 1000,
+      icon: Camera,
+      color: 'cyan',
+      accentBorder: 'border-cyan-400',
+      badge: 'Generative AI Tool',
+      isOwned: hasAvatarStudioPass,
+      features: [
+        'Turn your real dog or cat photo into a 2D avatar',
+        'Extract coat colors, ears, and personality traits',
+        'Deploy your real pet directly into the Battle Arena',
+        'Custom signature move & battle stats generator',
+      ],
+    },
+    {
       id: 'bundle' as const,
-      title: 'All-Access Genesis VIP Bundle',
+      title: 'Genesis Founder Supporter Pack',
       priceUsd: '$4.99',
       creditsCost: 4000,
-      icon: CrownIcon,
+      icon: Crown,
       color: 'fuchsia',
       accentBorder: 'border-fuchsia-400',
-      badge: 'BEST VALUE · 40% OFF',
-      isOwned: hasAuctionPass && hasAvatarStudioPass && hasExtensionPass,
+      badge: 'Best Value · Supporter',
+      isOwned: hasExtensionPass && hasAvatarStudioPass,
       features: [
-        'Instant unlock for Auction License ($2.99 value)',
+        'Instant unlock for Browser Extension Lifetime ($2.99 value)',
         'Instant unlock for Custom Avatar Pass ($0.99 value)',
-        'Instant unlock for Browser Extension Lifetime ($1.99 value)',
-        '+5,000 Bonus Slam Credits credited instantly',
-        'Exclusive Genesis Gold Call-Sign arena emblem',
+        'Exclusive Genesis Gold profile card & arena theme',
+        '+5,000 Bonus In-Game Slam Credits',
+        '100% Fair Play: Cosmetic flair only, 0% stat advantage',
       ],
     },
   ];
 
-  const handlePurchase = async (passId: 'auction' | 'avatar' | 'extension' | 'bundle') => {
+  const handlePurchase = async (passId: 'extension' | 'avatar' | 'bundle') => {
     setIsProcessing(true);
     sound.playClick();
     trackClarityEvent(`pass_unlock_attempt_${passId}_${paymentMethod}`);
@@ -188,11 +172,17 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
         </div>
 
         <h2 className="font-display font-black text-2xl uppercase tracking-tight text-white">
-          Pet Slam VIP Passes
+          Software & AI Passes
         </h2>
         <p className="text-xs text-neutral-400 mt-0.5 leading-relaxed">
-          Unlock the global live Auction House, transform your real pet into an arena fighter, or unleash the desktop browser extension.
+          Upgrade your experience with the Chrome companion extension, generative AI pet photo scans, and exclusive cosmetic supporter flair.
         </p>
+
+        {/* 100% Fair Play Non-Wagering Badge */}
+        <div className="mt-3 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2 text-[11px] text-emerald-300">
+          <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span><strong>Fair-Play Pledge:</strong> 100% non-wagering. No real-money auctions. Zero pay-to-win stat advantages.</span>
+        </div>
 
         {/* Currency Switcher: USD or Credits */}
         <div className="mt-4 p-1 rounded-2xl bg-[#141A28] border border-white/10 grid grid-cols-2 gap-1">

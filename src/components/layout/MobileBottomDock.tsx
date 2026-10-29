@@ -1,5 +1,5 @@
 import React from 'react';
-import { Swords, Heart, Camera, Gavel, PawPrint, Compass } from 'lucide-react';
+import { Swords, Heart, Camera, Home, PawPrint, Compass } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { MainNavId } from './DesktopNavRail';
 
@@ -17,7 +17,7 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
     { id: 'sanctuary' as const, label: 'Sanctuary', icon: Heart },
     { id: 'radar' as const, label: 'Map', icon: Compass },
     { id: 'studio' as const, label: 'Studio', icon: Camera },
-    { id: 'auctions' as const, label: 'Auctions', icon: Gavel },
+    { id: 'auctions' as const, label: 'Adoption', icon: Home },
     { id: 'beasts' as const, label: 'Squad', icon: PawPrint },
   ];
 

@@ -248,10 +248,10 @@ export const GameGuideModal: React.FC<GameGuideModalProps> = ({
                   </div>
                   <div>
                     <h4 className="font-display font-bold text-white text-xs">
-                      Trade in Live Real-Time Auction House
+                      Sanctuary Pet Adoption Shelter
                     </h4>
                     <p className="text-[11px] text-neutral-400 mt-0.5 leading-snug">
-                      Bid against rival trainers for apex purebreds and legendary animals, or list your trained champions for instant credit buyouts.
+                      Adopt or sponsor sanctuary pets using earned in-game credits, or re-home your trained champions into other trainers' kennels.
                     </p>
                   </div>
                 </div>
@@ -445,27 +445,27 @@ export const GameGuideModal: React.FC<GameGuideModalProps> = ({
           {activeTab === 'market' && (
             <div className="space-y-3">
               <div className="bg-[#141722] border border-amber-500/20 rounded-2xl p-3.5">
-                <div className="flex items-center gap-2 text-amber-400 font-black uppercase text-xs">
+                <div className="flex items-center gap-2 text-emerald-400 font-black uppercase text-xs">
                   <ShoppingCart className="w-4 h-4" />
-                  <span>Direct Market & Weekly Live Auctions</span>
+                  <span>Direct Market & Community Adoption Shelter</span>
                 </div>
                 <p className="mt-1 text-neutral-300 leading-relaxed">
-                  Expand your roster across 16 authentic real-world animal species:
+                  Expand your roster across authentic real-world canine & feline breeds:
                 </p>
               </div>
 
               <div className="space-y-2">
                 <div className="p-3 bg-[#161822] rounded-xl border border-white/5">
-                  <div className="font-bold text-white text-xs">Direct Buy Market</div>
+                  <div className="font-bold text-white text-xs">Direct Sanctuary Adoption</div>
                   <p className="text-[11px] text-neutral-400 mt-0.5">
-                    Instant acquisition of available animals (Bengal Cats, Eagles, Grey Wolves, Gorillas, Rottweilers) using battle credits.
+                    Instant adoption of available pets (Bengal Cats, Huskies, Shiba Inus, Rottweilers) using earned battle credits.
                   </p>
                 </div>
 
                 <div className="p-3 bg-[#161822] rounded-xl border border-white/5">
-                  <div className="font-bold text-amber-300 text-xs">Weekly Live Auctions</div>
+                  <div className="font-bold text-emerald-300 text-xs">Community Adoption Shelter</div>
                   <p className="text-[11px] text-neutral-400 mt-0.5">
-                    Bid in simulated real-time against rival AI trainers for apex specimens (African Lions, Nile Crocodiles, King Cobras). If your bid is highest when the hammer drops, the beast joins your kennel!
+                    Sponsor and adopt companion pets with 100% free earned in-game credits from community trainers and sanctuary shelters.
                   </p>
                 </div>
               </div>

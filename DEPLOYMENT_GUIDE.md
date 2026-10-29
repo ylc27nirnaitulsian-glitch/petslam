@@ -71,6 +71,6 @@ GitHub Actions will automatically run `.github/workflows/deploy.yml` and publish
 - **Clash Royale 1v1 Battle Arena**: Elixir bar (0-10), dynamic cards (Pounce, Bark/Hiss, Guard, Bite/Slash, SLAM Overdrive), floating damage numbers, and tag-in squad mechanics.
 - **Pokémon GO Interactive Map & Catch Radar**: Vector map radar with pulsing sonar, real meters distance, and ball-throw encounter screen.
 - **Fair Play Dojo & Micro-Shop ($0.49 / 50¢)**: Free daily supply drops (kibble, workout drill, vitamin chew), cosmetic accessories (crown, shades, detective cap, party hat), and zero pay-to-win mechanics.
-- **VIP Auction House ($1.99)**: Live bids, asks, buyouts, and pet listings.
+- **Sanctuary Pet Adoption Shelter**: Free-to-play community re-homing & adoption using earned in-game credits. Zero real-money bidding.
 - **Custom Pet Photo Avatar**: Upload your personal dog or cat photo to fight in the arena, live in the sanctuary, and roam across all browser tabs.
 - **Talking Tom Browser Extension**: Complete multi-tab screen companion with voice repeater, battery charging reaction, and bubble bath.

@@ -13,12 +13,11 @@
 - **What it does:** PET SLAM is a next-gen web and desktop gaming experience that bridges real-world pet ownership with 60 FPS procedural esports fighting, Tamagotchi-style pet care, a Gemini-powered AI Pet Photo Studio, procedural Chimera breeding, a real-world GPS rescue radar, and an exportable Talking Tom-style Chrome browser companion extension.
 - **Product category:** Web3-grade Casual Gaming, Virtual Pet Simulator, Browser Companion, Esports Arcade.
 - **Product type:** Web Application (React 19 / Canvas 60 FPS) + Chrome Browser Extension (Manifest V3) + Mobile Responsive Web Game.
-- **Business model & pricing (via Dodo Payments):**
-  - **Free Tier:** Core sanctuary feeding, casual radar encounters, starter battle arena.
-  - **Pet Avatar Studio Pass:** $0.99 (Gemini multimodal photo scan transforms real pet photos into combatants).
-  - **Browser Extension Lifetime Pass:** $1.99 (Downloadable Chrome extension companion with audio repeat & health alerts).
-  - **Auction House VIP License:** $1.99 (P2P pet trading and bidding).
-  - **All-Access Genesis VIP Bundle:** $4.99 (Unlocks all premium features + 5,000 Slam Credits).
+- **Business model & pricing (Software Utilities & Freemium):**
+  - **Free Tier:** 100% Free Arena Battles, Sanctuary feeding, GPS Radar, and Sanctuary Pet Adoption Shelter.
+  - **Pet Avatar Studio Pass ($0.99):** Generative AI photo utility converting real dog & cat photos into stylized 2D digital combat cards via Gemini vision.
+  - **Browser Extension Lifetime License ($2.99):** Standalone downloadable Chrome Web Extension companion with screen wellness alerts, battery reaction & voice mimicry.
+  - **Genesis Founder Supporter Pack ($4.99):** Extension software license, AI photo studio passes, and exclusive cosmetic stadium livery (100% cosmetic, zero stat advantage).
 
 ---
 
@@ -48,7 +47,7 @@
 3. **Breeding Lab & Chimera Fusion:** Dual-parent genetic breeding system combining 6-tone color palettes, facial traits (rosettes, muzzle masks, eyebrow dots), and a 5-tier weighted rarity ascension ladder (Common → Rare → Epic → Legendary → Mythic).
 4. **Pet Radar (GPS World Map):** Powered by Geoapify maps with dark/bright vector tiles; allows players to explore real-world radar sweeps and rescue wild pets with physics-based swipe capture.
 5. **Exportable Chrome Companion Extension (Manifest V3):** One-click JSZip download of a desktop companion with screen-roaming pet, pitch-shifted Web Audio voice mimicry, contextual Bark 🐶 & Meow 🐱 triggers, laptop battery reactions, and posture/hydration reminders.
-6. **Live P2P Auction House:** Real-time kennel bidding, listings, and pedigree trading.
+6. **Sanctuary Pet Adoption Shelter:** Free-to-play community pet adoption and re-homing using earned in-game Slam Berries.
 7. **Production Stack:** Dodo Payments (MoR checkout), Google Search Console, Microsoft Clarity telemetry, Cloudflare Pages hosting (`https://www.petslam.app`).
 
 ---

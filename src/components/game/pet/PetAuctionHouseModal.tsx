@@ -5,10 +5,10 @@ import { PetAuctionItem, CompanionPet } from '../../../types/pet';
 import { getPetPhoto, getPetBreedName } from '../../../utils/petVisuals';
 import { sound } from '../../../utils/audio';
 import { triggerConfetti, triggerVictoryExplosion } from '../../../utils/confetti';
-import { createDodoCheckout } from '../../../services/dodo';
 import { trackClarityEvent } from '../../../utils/clarity';
 import {
-  Gavel,
+  Home,
+  Heart,
   X,
   Clock,
   Coins,
@@ -20,7 +20,6 @@ import {
   Sparkles,
   AlertCircle,
   Tag,
-  Lock,
   Crown,
 } from 'lucide-react';
 
@@ -31,13 +30,12 @@ interface PetAuctionHouseModalProps {
 export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onClose }) => {
   const { auctions, placeAuctionBid, buyoutAuction, listPetForAuction, kennelPets, cancelUserAuction } =
     usePetCompanion();
-  const { credits, addCredits, hasAuctionPass, unlockPass } = useGame();
+  const { credits, addCredits } = useGame();
 
   const [activeTab, setActiveTab] = useState<'live' | 'create' | 'my_listings'>('live');
   const [selectedAuction, setSelectedAuction] = useState<PetAuctionItem | null>(null);
   const [bidAmountInput, setBidAmountInput] = useState<number>(0);
   const [toastMessage, setToastMessage] = useState<{ text: string; isError?: boolean } | null>(null);
-  const [showLicenseModal, setShowLicenseModal] = useState<boolean>(false);
 
   // Create listing form state
   const [selectedKennelPetId, setSelectedKennelPetId] = useState<string>(
@@ -81,7 +79,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
         if (wasUserWinning) {
           sound.playLightHit();
           setLiveOutbidAlert(
-            `⚠️ Outbid Alert! ${rival} just outbid you on ${target.pet.name} with ${newBid.toLocaleString()} CR!`
+            `⚠️ New Sponsor Alert! ${rival} just sponsored ${target.pet.name} with ${newBid.toLocaleString()} Credits!`
           );
           setTimeout(() => setLiveOutbidAlert(null), 4000);
         }
@@ -97,23 +95,15 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
   };
 
   const handleOpenBidModal = (item: PetAuctionItem) => {
-    if (!hasAuctionPass) {
-      setShowLicenseModal(true);
-      return;
-    }
     setSelectedAuction(item);
     setBidAmountInput(item.minNextBid);
   };
 
   const handleConfirmBid = () => {
-    if (!hasAuctionPass) {
-      setShowLicenseModal(true);
-      return;
-    }
     if (!selectedAuction) return;
 
     if (credits < bidAmountInput) {
-      showToast('Insufficient Credits in your wallet to place this bid!', true);
+      showToast('Insufficient Credits in your wallet to sponsor this pet!', true);
       sound.playClick();
       return;
     }
@@ -131,13 +121,9 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
   };
 
   const handleBuyout = (item: PetAuctionItem) => {
-    if (!hasAuctionPass) {
-      setShowLicenseModal(true);
-      return;
-    }
     if (credits < item.buyoutPrice) {
       showToast(
-        `Insufficient Credits! You need ${item.buyoutPrice.toLocaleString()} Credits for Buyout.`,
+        `Insufficient Credits! You need ${item.buyoutPrice.toLocaleString()} Credits for Instant Adoption.`,
         true
       );
       sound.playClick();
@@ -149,7 +135,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
       addCredits(-item.buyoutPrice);
       sound.playVictory();
       triggerVictoryExplosion();
-      showToast(`🎉 Buyout Complete! ${item.pet.name} is now in your Kennel!`);
+      showToast(`🎉 Adoption Complete! ${item.pet.name} has joined your Sanctuary Kennel!`);
     } else {
       showToast(res.message, true);
     }
@@ -157,17 +143,13 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
 
   const handleCreateListing = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!hasAuctionPass) {
-      setShowLicenseModal(true);
-      return;
-    }
     if (!selectedKennelPetId) {
-      showToast('Please select a pet from your kennel to auction!', true);
+      showToast('Please select a pet from your kennel to offer for adoption!', true);
       return;
     }
 
     if (buyoutPrice <= startBid) {
-      showToast('Buyout price must be higher than starting bid!', true);
+      showToast('Instant adoption price must be higher than starting sponsorship!', true);
       return;
     }
 
@@ -188,18 +170,18 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
         {/* Header */}
         <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[#151C2C]">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
-              <Gavel className="w-5 h-5" />
+            <span className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400">
+              <Home className="w-5 h-5" />
             </span>
             <div>
               <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                <span>Pet Auction House</span>
-                <span className="text-[10px] bg-[#CCFF00] text-black font-mono px-2 py-0.5 rounded-full font-black">
-                  Live Market
+                <span>Sanctuary Adoption Shelter</span>
+                <span className="text-[10px] bg-emerald-400 text-black font-mono px-2 py-0.5 rounded-full font-black">
+                  100% Free-to-Play
                 </span>
               </h2>
               <p className="text-[11px] text-neutral-400">
-                Bid, trade, and auction rare cats, dogs & pedigree companions
+                Adopt, re-home & sponsor companion pets using earned Slam Credits
               </p>
             </div>
           </div>
@@ -218,28 +200,16 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
           </div>
         </div>
 
-        {/* VIP Trading License Status Banner */}
-        {!hasAuctionPass ? (
-          <div className="bg-gradient-to-r from-amber-500/20 via-amber-600/10 to-transparent border-b border-amber-500/30 px-4 py-2.5 flex items-center justify-between text-xs font-mono">
-            <div className="flex items-center gap-2 text-amber-300">
-              <Lock className="w-4 h-4 shrink-0 text-amber-400" />
-              <span>Free to browse! Active bidding & listing requires the <strong>$1.99 VIP License</strong>.</span>
-            </div>
-            <button
-              onClick={() => setShowLicenseModal(true)}
-              className="bg-amber-400 hover:bg-amber-300 text-black px-2.5 py-1 rounded-lg font-bold text-[11px] shrink-0 cursor-pointer shadow-sm transition-all"
-            >
-              Unlock ($1.99)
-            </button>
+        {/* 100% Free Community Shelter Banner */}
+        <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-4 py-2 flex items-center justify-between text-xs font-mono text-emerald-300">
+          <div className="flex items-center gap-2">
+            <Heart className="w-4 h-4 shrink-0 text-emerald-400" />
+            <span>Community Shelter: Adopt companion pets using earned gameplay tokens!</span>
           </div>
-        ) : (
-          <div className="bg-emerald-500/10 border-b border-emerald-500/30 px-4 py-1.5 flex items-center justify-between text-[11px] font-mono text-emerald-300">
-            <span className="flex items-center gap-1.5">
-              <Crown className="w-3.5 h-3.5 text-emerald-400" />
-              <span>VIP Auction Trading License: <strong>ACTIVE</strong> (0% Commission)</span>
-            </span>
-          </div>
-        )}
+          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">
+            Fair Play
+          </span>
+        </div>
 
         {/* Navigation Tabs + Rival AI Switch */}
         <div className="flex items-center justify-between border-b border-white/10 bg-[#0B0E17] px-4 pt-2 gap-2 text-xs font-mono font-bold overflow-x-auto">
@@ -252,7 +222,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                   : 'border-transparent text-neutral-400 hover:text-white'
               }`}
             >
-              Live Auctions ({auctions.length})
+              Adoptable Pets ({auctions.length})
             </button>
             <button
               onClick={() => setActiveTab('create')}
@@ -262,7 +232,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                   : 'border-transparent text-neutral-400 hover:text-white'
               }`}
             >
-              + List Pet
+              + Offer Pet
             </button>
             <button
               onClick={() => setActiveTab('my_listings')}
@@ -272,7 +242,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                   : 'border-transparent text-neutral-400 hover:text-white'
               }`}
             >
-              My Listings ({userListings.length})
+              My Re-Homed ({userListings.length})
             </button>
           </div>
 
@@ -284,9 +254,9 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                 ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300'
                 : 'bg-white/5 border-white/10 text-neutral-400'
             }`}
-            title="Toggle simulated rival AI bidder floor"
+            title="Toggle simulated community shelter activity"
           >
-            <span>🤖 Rival Bots:</span>
+            <span>🤖 Shelter Bots:</span>
             <span className={rivalBiddersEnabled ? 'text-[#CCFF00]' : 'text-neutral-500'}>
               {rivalBiddersEnabled ? 'ON' : 'OFF'}
             </span>
@@ -588,72 +558,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                 onClick={handleConfirmBid}
                 className="w-full py-2 bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black uppercase text-xs rounded-xl cursor-pointer"
               >
-                Confirm Bid ({bidAmountInput.toLocaleString()} Credits)
-              </button>
-            </div>
-          </div>
-        )}
-        {/* License Purchase Modal */}
-        {showLicenseModal && (
-          <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-            <div className="bg-[#121728] border border-amber-400/40 rounded-3xl p-5 max-w-sm w-full shadow-2xl text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-                <Gavel className="w-6 h-6" />
-              </div>
-              <h3 className="font-display font-black text-lg uppercase text-white">
-                VIP Auction Trading License
-              </h3>
-              <p className="text-xs text-neutral-300">
-                Unlock lifetime live bidding and listing for rare pedigree pets in the global Auction House!
-              </p>
-              <div className="p-2.5 bg-black/40 rounded-xl border border-white/10 text-xs font-mono font-bold text-amber-300">
-                $1.99 USD or 1,500 Slam Credits
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <button
-                  onClick={async () => {
-                    try {
-                      trackClarityEvent('auction_pass_dodo_click');
-                      const checkout = await createDodoCheckout({ passType: 'auction' });
-                      if (checkout.checkoutUrl && !checkout.simulated) {
-                        window.location.href = checkout.checkoutUrl;
-                      } else if (checkout.simulated && checkout.mode === 'test_sandbox') {
-                        unlockPass('auction', false);
-                        setShowLicenseModal(false);
-                        showToast('⚡ [Dodo Test Sandbox] VIP Auction License Activated!');
-                      } else if (checkout.checkoutUrl) {
-                        window.location.href = checkout.checkoutUrl;
-                      }
-                    } catch (e: any) {
-                      alert(e?.message || 'Failed to connect to Dodo Payments');
-                    }
-                  }}
-                  className="py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-bold text-xs uppercase cursor-pointer"
-                >
-                  Pay $1.99 (Dodo)
-                </button>
-                <button
-                  onClick={() => {
-                    const res = unlockPass('auction', true);
-                    if (res.success) {
-                      setShowLicenseModal(false);
-                      showToast(res.message);
-                    } else {
-                      alert(res.message);
-                    }
-                  }}
-                  className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase cursor-pointer border border-white/15"
-                >
-                  1,500 Credits
-                </button>
-              </div>
-
-              <button
-                onClick={() => setShowLicenseModal(false)}
-                className="text-[11px] text-neutral-400 hover:text-white underline cursor-pointer mt-1"
-              >
-                Cancel
+                Confirm Sponsorship ({bidAmountInput.toLocaleString()} Credits)
               </button>
             </div>
           </div>
