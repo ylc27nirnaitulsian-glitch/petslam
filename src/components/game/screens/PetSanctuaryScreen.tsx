@@ -181,9 +181,8 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     }, 1800);
   };
 
-  // Interactive Care: Petting (Stroke)
+  // Interactive Care: Petting (Stroke) - Silent visual feedback
   const handlePetTheBeast = (e: React.MouseEvent) => {
-    sound.playGiggle();
     setAnimState('pet');
     spawnHearts(e.clientX, e.clientY);
     strokePet();
@@ -192,9 +191,8 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     setTimeout(() => setAnimState('idle'), 1600);
   };
 
-  // Interactive Care: Feeding
+  // Interactive Care: Feeding - Silent visual feedback
   const handleFeedKibble = (treatName = 'kibble', bonus = 20) => {
-    sound.playChew();
     setAnimState('eat');
     setHungerLevel((prev) => Math.min(100, prev + bonus));
     feedPet(BERRIES[0]);
@@ -203,9 +201,8 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     setTimeout(() => setAnimState('idle'), 2000);
   };
 
-  // Interactive Care: Bubble Bath
+  // Interactive Care: Bubble Bath - Silent visual feedback
   const handleBubbleBath = () => {
-    sound.playBubblePop();
     setAnimState('bath');
     spawnBubblesAt(50, 50, 10);
     setCleanlinessLevel(100);
@@ -213,21 +210,36 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
     setTimeout(() => setAnimState('idle'), 2400);
   };
 
-  // Interactive Care: Milk / Water Bowl
+  // Interactive Care: Milk / Water Bowl - Silent visual feedback
   const handlePourMilk = () => {
-    sound.playMilkSlurp();
     setAnimState('drink_milk');
     setHungerLevel((prev) => Math.min(100, prev + 15));
     showSpeech(`*Slurp slurp* Fresh cold milk! Satiety +15! 🥛`);
     setTimeout(() => setAnimState('idle'), 2200);
   };
 
-  // Interactive Care: Prank / Playful Sound
+  // Interactive Care: Prank / Playful
   const handlePlayfulToot = () => {
-    sound.playToot();
     setAnimState('fart');
     showSpeech(`Oops! Excuse me! Hehehe! 💨😹`);
     setTimeout(() => setAnimState('idle'), 1800);
+  };
+
+  // Interactive Care: Pet Tricks & Acrobatics
+  const handlePerformTrick = (trick: PetAnimationState) => {
+    setAnimState(trick);
+    const trickMessages: Record<string, string> = {
+      backflip: `🤸 Look at that somersault backflip! High agility!`,
+      zoomies: `⚡ ZOOMIES! Running at supersonic speed!`,
+      rollover: `🔄 Belly up! Rolling over playfully!`,
+      dance: `💃 Tapping paws to the rhythm! Let's dance!`,
+      beg: `🐾 Sitting up and waving paws! So cute!`,
+      spin: `💫 360-degree whirlwind spin! Whoosh!`,
+    };
+    showSpeech(trickMessages[trick] || `Ta-da! Amazing trick! ✨`, 3200);
+    setTimeout(() => {
+      setAnimState('idle');
+    }, 3200);
   };
 
   // --- DRAGGABLE TOOLS TOUCH & POINTER PHYSICS ---
@@ -266,7 +278,6 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
         const relY = ((e.clientY - rect.top) / rect.height) * 100;
         if (Math.random() < 0.4) {
           spawnBubblesAt(relX, relY, 2);
-          sound.playBubblePop();
           setCleanlinessLevel((prev) => Math.min(100, prev + 2));
         }
       }
@@ -293,7 +304,6 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
       } else if (tool.type === 'milk') {
         handlePourMilk();
       } else if (tool.type === 'sponge') {
-        sound.playBubblePop();
         setAnimState('bath');
         setCleanlinessLevel(100);
         showSpeech(`✨ Super clean! ${activeBeast.name} is squeaky clean and sparkling!`);
@@ -565,7 +575,13 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
             <div
               className="relative cursor-pointer flex flex-col items-center group"
               onClick={handlePetTheBeast}
-              title="Tap to pet & purr!"
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                const tricks: PetAnimationState[] = ['backflip', 'zoomies', 'rollover', 'dance', 'beg', 'spin'];
+                const picked = tricks[Math.floor(Math.random() * tricks.length)];
+                handlePerformTrick(picked);
+              }}
+              title="Tap to pet · Double-click to perform trick! 🤸"
             >
               {/* Pedestal Glow Shadow */}
               <div
@@ -583,15 +599,12 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
                 height={175}
                 interactive={true}
                 onStroke={() => {
-                  sound.playGiggle();
                   showSpeech(`*Purrrrr!* Keep petting! ❤️`);
                 }}
                 onPokeHead={() => {
-                  sound.playToot();
                   showSpeech(`Ouch! Dizzy stars! ⭐😵`);
                 }}
                 onTickleBelly={() => {
-                  sound.playGiggle();
                   showSpeech(`*Tee-hee-hee!* That tickles! 😸`);
                 }}
                 renderMode="cute"
@@ -692,6 +705,66 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
             <span className="text-[9px] font-mono font-bold leading-none mt-0.5">
               {isRecordingVoice ? 'Echoing' : 'Mimic'}
             </span>
+          </button>
+        </div>
+
+        {/* Interactive Tricks & Acrobatics Row */}
+        <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 px-1 pt-1">
+          <span className="flex items-center gap-1 font-bold text-[#CCFF00]">
+            <span>🤸 Pet Tricks & Acrobatics</span>
+            <span className="text-[9px] text-neutral-400 font-normal">(Tap trick or double-click buddy)</span>
+          </span>
+        </div>
+
+        {/* Tricks Grid */}
+        <div className="grid grid-cols-6 gap-1 sm:gap-1.5">
+          <button
+            onClick={() => handlePerformTrick('backflip')}
+            className="h-9 rounded-xl border border-yellow-400/30 bg-yellow-400/10 hover:bg-yellow-400 hover:text-black text-yellow-300 flex flex-col items-center justify-center p-0.5 transition-all cursor-pointer active:scale-95 shadow-xs"
+            title="Perform Backflip"
+          >
+            <span className="text-sm leading-none">🤸</span>
+            <span className="text-[9px] font-mono font-bold leading-none mt-0.5">Flip</span>
+          </button>
+          <button
+            onClick={() => handlePerformTrick('zoomies')}
+            className="h-9 rounded-xl border border-cyan-400/30 bg-cyan-400/10 hover:bg-cyan-400 hover:text-black text-cyan-300 flex flex-col items-center justify-center p-0.5 transition-all cursor-pointer active:scale-95 shadow-xs"
+            title="Zoomies Sprint"
+          >
+            <span className="text-sm leading-none">⚡</span>
+            <span className="text-[9px] font-mono font-bold leading-none mt-0.5">Zoom</span>
+          </button>
+          <button
+            onClick={() => handlePerformTrick('rollover')}
+            className="h-9 rounded-xl border border-pink-400/30 bg-pink-400/10 hover:bg-pink-400 hover:text-black text-pink-300 flex flex-col items-center justify-center p-0.5 transition-all cursor-pointer active:scale-95 shadow-xs"
+            title="Roll Over"
+          >
+            <span className="text-sm leading-none">🔄</span>
+            <span className="text-[9px] font-mono font-bold leading-none mt-0.5">Roll</span>
+          </button>
+          <button
+            onClick={() => handlePerformTrick('dance')}
+            className="h-9 rounded-xl border border-purple-400/30 bg-purple-400/10 hover:bg-purple-400 hover:text-black text-purple-300 flex flex-col items-center justify-center p-0.5 transition-all cursor-pointer active:scale-95 shadow-xs"
+            title="Dance"
+          >
+            <span className="text-sm leading-none">💃</span>
+            <span className="text-[9px] font-mono font-bold leading-none mt-0.5">Dance</span>
+          </button>
+          <button
+            onClick={() => handlePerformTrick('beg')}
+            className="h-9 rounded-xl border border-amber-400/30 bg-amber-400/10 hover:bg-amber-400 hover:text-black text-amber-300 flex flex-col items-center justify-center p-0.5 transition-all cursor-pointer active:scale-95 shadow-xs"
+            title="Beg & Paw Wave"
+          >
+            <span className="text-sm leading-none">🐾</span>
+            <span className="text-[9px] font-mono font-bold leading-none mt-0.5">Beg</span>
+          </button>
+          <button
+            onClick={() => handlePerformTrick('spin')}
+            className="h-9 rounded-xl border border-emerald-400/30 bg-emerald-400/10 hover:bg-emerald-400 hover:text-black text-emerald-300 flex flex-col items-center justify-center p-0.5 transition-all cursor-pointer active:scale-95 shadow-xs"
+            title="360 Spin"
+          >
+            <span className="text-sm leading-none">💫</span>
+            <span className="text-[9px] font-mono font-bold leading-none mt-0.5">Spin</span>
           </button>
         </div>
       </div>

@@ -258,6 +258,21 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
     }, 600);
   };
 
+  const handleDoubleClick = () => {
+    if (!interactive) return;
+    const tricks: PetAnimationState[] = ['backflip', 'zoomies', 'rollover', 'dance', 'beg', 'spin'];
+    const randomTrick = tricks[Math.floor(Math.random() * tricks.length)];
+    stateRef.current.currentAnimation = randomTrick;
+    for (let i = 0; i < 6; i++) {
+      spawnParticle('star', width / 2 + (Math.random() - 0.5) * 60, height * 0.35);
+    }
+    setTimeout(() => {
+      if (stateRef.current.currentAnimation === randomTrick) {
+        stateRef.current.currentAnimation = animationState;
+      }
+    }, 2800);
+  };
+
   // Main 60 FPS Canvas Drawing Engine
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -308,6 +323,8 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       let squashY = 1;
       let headTilt = Math.sin(s.time * 1.4) * 0.05;
       let mouthHeight = 0;
+      let bodyRotation = 0;
+      let offsetX = 0;
 
       const curPalette = customPaletteRef.current || customPalette;
       const curFeatures = customFeaturesRef.current || customFeatures;
@@ -414,6 +431,78 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         squashY = 1.04;
         squashX = 0.97;
         s.bounceY = -10;
+      } else if (anim === 'backflip') {
+        // High acrobatic gymnastics backflip!
+        const flipSpeed = 3.6;
+        const progress = (s.time * flipSpeed) % (Math.PI * 2);
+        const arc = Math.sin(progress * 0.5);
+        s.bounceY = -Math.max(0, arc) * 48;
+        bodyRotation = -progress; // Full 360 rotation
+        squashY = arc > 0.8 ? 1.18 : arc < 0.2 ? 0.86 : 1.0;
+        squashX = arc > 0.8 ? 0.86 : arc < 0.2 ? 1.18 : 1.0;
+        wagAngle = Math.sin(s.time * 16) * 0.45;
+        if (Math.random() < 0.3) {
+          spawnParticle('star', width / 2 + (Math.random() - 0.5) * 60, height / 2 - 20, '#FACC15');
+        }
+      } else if (anim === 'zoomies') {
+        // Supercharged excitement zoomies!
+        s.walkCycle += dt * 26;
+        offsetX = Math.sin(s.time * 8) * 36;
+        walkBob = Math.abs(Math.sin(s.walkCycle)) * 12;
+        s.bounceY = -walkBob;
+        headTilt = Math.sin(s.time * 8) * 0.18;
+        wagAngle = Math.sin(s.time * 30) * 0.75;
+        squashX = 1 + Math.sin(s.walkCycle) * 0.07;
+        squashY = 1 - Math.sin(s.walkCycle) * 0.07;
+        if (Math.random() < 0.3) {
+          spawnParticle('sparkle', width / 2 - offsetX * 0.5 + (Math.random() - 0.5) * 25, height / 2 + 20, '#CCFF00');
+        }
+      } else if (anim === 'rollover') {
+        // Playful ground roll & belly-up!
+        const rollSpeed = 2.6;
+        const rollCycle = Math.sin(s.time * rollSpeed);
+        bodyRotation = rollCycle * Math.PI; // Rolls smoothly side to side
+        s.bounceY = 8 + Math.abs(rollCycle) * 4;
+        headTilt = rollCycle * 0.2;
+        wagAngle = Math.sin(s.time * 14) * 0.5;
+        squashX = 1.06;
+        squashY = 0.94;
+        if (Math.random() < 0.2) {
+          spawnParticle('heart', width / 2 + (Math.random() - 0.5) * 40, height / 2 - 10, '#EC4899');
+        }
+      } else if (anim === 'dance') {
+        // Rhythmic funky paw-step groove!
+        const beat = Math.sin(s.time * 9);
+        s.bounceY = -Math.abs(beat) * 16;
+        bodyRotation = Math.sin(s.time * 4.5) * 0.15;
+        headTilt = Math.sin(s.time * 4.5) * 0.14;
+        squashY = 1 + beat * 0.08;
+        squashX = 1 - beat * 0.06;
+        wagAngle = Math.sin(s.time * 14) * 0.6;
+        if (Math.random() < 0.25) {
+          spawnParticle('sparkle', width / 2 + (Math.random() - 0.5) * 60, height / 2 - 30, '#A855F7');
+        }
+      } else if (anim === 'beg') {
+        // Sit pretty, paws raised waving!
+        s.bounceY = -8 + Math.sin(s.time * 5) * 3;
+        squashY = 1.14;
+        squashX = 0.9;
+        headTilt = 0.14 + Math.sin(s.time * 3) * 0.06;
+        wagAngle = Math.sin(s.time * 16) * 0.45;
+        if (Math.random() < 0.2) {
+          spawnParticle('heart', width / 2 + (Math.random() - 0.5) * 30, height / 2 - 35, '#F43F5E');
+        }
+      } else if (anim === 'spin') {
+        // Rapid 360 twirl chasing tail!
+        const spinProgress = (s.time * 7) % (Math.PI * 2);
+        bodyRotation = spinProgress;
+        s.bounceY = -Math.abs(Math.sin(s.time * 14)) * 6;
+        squashX = 0.94;
+        squashY = 1.06;
+        wagAngle = 0.65;
+        if (Math.random() < 0.25) {
+          spawnParticle('sparkle', width / 2 + Math.cos(spinProgress) * 35, height / 2 + Math.sin(spinProgress) * 20, '#38BDF8');
+        }
       }
 
       // RESET DPR TRANSFORM AND CLEAR CANVAS
@@ -432,16 +521,17 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       // CENTER OF CREATURE
       const cx = width / 2;
       const cy = height * 0.53 + s.bounceY * uniformScale;
+      const petRenderX = cx + offsetX * uniformScale;
 
       // 1. SHADOW UNDER CREATURE
       const shadowWidth = 52 * uniformScale * squashX;
       const shadowHeight = 12 * uniformScale * squashY;
       const shadowY = cy + 42 * uniformScale;
       const shadowGrad = ctx.createRadialGradient(
-        cx,
+        petRenderX,
         shadowY,
         0,
-        cx,
+        petRenderX,
         shadowY,
         shadowWidth
       );
@@ -449,7 +539,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = shadowGrad;
       ctx.beginPath();
-      ctx.ellipse(cx, shadowY, shadowWidth, shadowHeight, 0, 0, Math.PI * 2);
+      ctx.ellipse(petRenderX, shadowY, shadowWidth, shadowHeight, 0, 0, Math.PI * 2);
       ctx.fill();
 
       // 2. AURA (FOR TITAN STAGE, MYTHIC RARITY, CHIMERA OR BUFFED)
@@ -457,7 +547,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       if (stage === 3 || showAura || curFeatures?.isChimera) {
         ctx.save();
         const auraRadius = 85 * uniformScale;
-        const auraGrad = ctx.createRadialGradient(cx, cy - 8 * uniformScale, 20 * uniformScale, cx, cy - 8 * uniformScale, auraRadius);
+        const auraGrad = ctx.createRadialGradient(petRenderX, cy - 8 * uniformScale, 20 * uniformScale, petRenderX, cy - 8 * uniformScale, auraRadius);
         const auraColor = curFeatures?.isChimera
           ? 'rgba(217, 70, 239, ' // Fuchsia Celestial Chimera Aura
           : isCat
@@ -471,16 +561,16 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         auraGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = auraGrad;
         ctx.beginPath();
-        ctx.arc(cx, cy - 8 * uniformScale, auraRadius, 0, Math.PI * 2);
+        ctx.arc(petRenderX, cy - 8 * uniformScale, auraRadius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
 
       // 3. DRAW PET BODY (REALISTIC PHOTO PORTRAIT OR PROCEDURAL FALLBACK)
       ctx.save();
-      ctx.translate(cx, cy);
+      ctx.translate(petRenderX, cy);
       ctx.scale(totalScaleX, totalScaleY);
-      ctx.rotate(headTilt);
+      ctx.rotate(bodyRotation + headTilt);
 
       if (renderMode === 'photo' && imgRef.current && imgLoaded) {
         // --- REALISTIC HIGH-FIDELITY PHOTO AVATAR ---
@@ -1328,17 +1418,40 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
       }
 
       // I. FRONT PAWS (RESTING ON FRONT)
+      let leftPawY = 28;
+      let rightPawY = 28;
+      let leftPawX = -20;
+      let rightPawX = 20;
+      let pawScale = 1;
+
+      if (anim === 'beg') {
+        // Paws up waving cute
+        leftPawY = -4 + Math.sin(s.time * 12) * 8;
+        rightPawY = -4 - Math.sin(s.time * 12) * 8;
+        leftPawX = -16;
+        rightPawX = 16;
+        pawScale = 1.15;
+      } else if (anim === 'dance') {
+        // Tapping paws to rhythm
+        leftPawY = 28 - Math.max(0, Math.sin(s.time * 9)) * 12;
+        rightPawY = 28 - Math.max(0, -Math.sin(s.time * 9)) * 12;
+      } else if (anim === 'rollover') {
+        // Paws stick up in the air
+        leftPawY = 12 + Math.sin(s.time * 10) * 4;
+        rightPawY = 12 - Math.sin(s.time * 10) * 4;
+      }
+
       ctx.fillStyle = secondaryColor;
       ctx.beginPath();
-      ctx.ellipse(-20, 28, 12, 10, -0.1, 0, Math.PI * 2);
-      ctx.ellipse(20, 28, 12, 10, 0.1, 0, Math.PI * 2);
+      ctx.ellipse(leftPawX, leftPawY, 12 * pawScale, 10 * pawScale, -0.1, 0, Math.PI * 2);
+      ctx.ellipse(rightPawX, rightPawY, 12 * pawScale, 10 * pawScale, 0.1, 0, Math.PI * 2);
       ctx.fill();
 
       // Pad details
       ctx.fillStyle = bellyColor;
       ctx.beginPath();
-      ctx.arc(-20, 30, 4.5, 0, Math.PI * 2);
-      ctx.arc(20, 30, 4.5, 0, Math.PI * 2);
+      ctx.arc(leftPawX, leftPawY + 2, 4.5 * pawScale, 0, Math.PI * 2);
+      ctx.arc(rightPawX, rightPawY + 2, 4.5 * pawScale, 0, Math.PI * 2);
       ctx.fill();
 
       // Milk Bowl (if drinking milk)
@@ -1550,6 +1663,7 @@ export const ProceduralPetCanvas: React.FC<ProceduralPetCanvasProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onDoubleClick={handleDoubleClick}
         className={`touch-none ${
           interactive ? 'cursor-grab active:cursor-grabbing' : 'pointer-events-none'
         }`}

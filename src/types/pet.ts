@@ -43,7 +43,13 @@ export type PetAnimationState =
   | 'laugh'      // Tickle belly laugh
   | 'drink_milk' // Hydration / milk bowl
   | 'bath'       // Soap bubbles & wash
-  | 'fart';      // Funny cartoon prank
+  | 'fart'       // Funny cartoon prank
+  | 'backflip'   // 360 Gymnast Somersault trick
+  | 'zoomies'    // High-speed zigzag sprint trick
+  | 'rollover'   // Playful roll on floor trick
+  | 'dance'      // Rhythmic paw tap groove trick
+  | 'beg'        // Sit pretty & wave paws trick
+  | 'spin';      // Rapid 360 tail chase trick
 
 export interface PetStats {
   attack: number;

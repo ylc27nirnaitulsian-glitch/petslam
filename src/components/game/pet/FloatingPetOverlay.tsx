@@ -105,13 +105,13 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const showSpeech = useCallback((text: string, duration = 3500) => {
     if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
     setSpeechBubble(text);
-    kokoroTTS.speak(text);
+    // Silent speech bubble without loud TTS audio interruptions
     speechTimerRef.current = setTimeout(() => {
       setSpeechBubble(null);
     }, duration);
   }, []);
 
-  // 1. Laptop Battery & Charging Detector API
+  // 1. Laptop Battery & Charging Detector API (Silent State Tracking)
   useEffect(() => {
     let batteryObj: any = null;
 
@@ -121,13 +121,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
       const level = Math.round(batteryObj.level * 100);
       setIsCharging(charging);
       setBatteryLevel(level);
-
-      if (charging) {
-        sound.playLevelUp();
-        setAnimState('celebrate');
-        showSpeech(`⚡ Laptop plugged in! Supercharging energy! 🔋 (${level}%)`);
-        setTimeout(() => setAnimState('idle'), 2500);
-      }
+      // No sound effects or voice announcements on charging
     };
 
     if (typeof navigator !== 'undefined' && (navigator as any).getBattery) {
@@ -145,14 +139,14 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
         batteryObj.removeEventListener?.('levelchange', handleBatteryUpdate);
       }
     };
-  }, [showSpeech]);
+  }, []);
 
-  // 2. Screen-Time Activity & Posture Reminders
+  // 2. Screen-Time Activity & Posture Reminders (Silent Visual Reminders)
   useEffect(() => {
     const timer = setInterval(() => {
       setScreenSeconds((prev) => {
         const next = prev + 1;
-        // Trigger reminder every 15 minutes (900 seconds)
+        // Trigger visual reminder every 15 minutes (900 seconds)
         if (next % 900 === 0) {
           triggerHealthReminder();
         }
@@ -171,13 +165,12 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
       '🏃 Time for a quick stretch! Roll your shoulders!',
     ];
     const picked = reminders[Math.floor(Math.random() * reminders.length)];
-    sound.playBell();
     setAnimState('celebrate');
     showSpeech(picked, 5000);
     setTimeout(() => setAnimState('idle'), 2000);
   };
 
-  // 3. Autonomous Roaming AI: subtle drift around current hover coordinates
+  // 3. Autonomous Roaming AI with Playful Tricks
   useEffect(() => {
     if (!isOverlayActive || isMinimized || isDragging) return;
 
@@ -201,15 +194,21 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
         setTimeout(() => {
           setAnimState('idle');
         }, 1800);
-      } else if (roll < 0.55) {
+      } else if (roll < 0.65) {
+        // Playful spontaneous animated trick!
+        const tricks: PetAnimationState[] = ['backflip', 'dance', 'beg', 'spin', 'zoomies', 'rollover'];
+        const chosenTrick = tricks[Math.floor(Math.random() * tricks.length)];
+        setAnimState(chosenTrick);
+        setTimeout(() => setAnimState('idle'), 3200);
+      } else if (roll < 0.85) {
         setAnimState('celebrate');
         showSpeech(`*happy ${pet.name} chirp* ❤️`, 2000);
         setTimeout(() => setAnimState('idle'), 1500);
-      } else if (roll < 0.75 && pet.hunger < 50) {
+      } else if (pet.hunger < 50) {
         setAnimState('idle');
-        showSpeech(`I'm getting hungry! Feed me a berry! 🍓`, 3000);
+        showSpeech(`I'm getting hungry! Feed me a treat! 🍓`, 3000);
       }
-    }, 12000);
+    }, 10000);
 
     return () => clearInterval(roamInterval);
   }, [isOverlayActive, isMinimized, isDragging, showRadialMenu, pet.name, pet.hunger, showSpeech, petScaleMode]);
@@ -254,35 +253,47 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     const moveDist = Math.hypot(dragRef.current.vx, dragRef.current.vy);
     // If it was just a click (low movement), toggle radial menu
     if (moveDist < 40) {
-      sound.playClick();
       setShowRadialMenu((prev) => !prev);
       setAnimState('idle');
       return;
     }
 
-    // Free hover: pet remains gracefully hovering right where placed!
-    sound.playPoke();
+    // Free hover: pet remains gracefully hovering right where placed (silent)
     setAnimState('celebrate');
     setTimeout(() => setAnimState('idle'), 800);
   };
 
-  // Talking Tom Reactions
+  // Playful Animated Tricks
+  const handlePerformTrick = (trick: PetAnimationState) => {
+    setAnimState(trick);
+    const quotes: Record<string, string> = {
+      backflip: '🤸 Backflip! Ta-da!',
+      zoomies: '⚡ ZOOMIES! Super fast!',
+      rollover: '🔄 Roll over! Belly rub time!',
+      dance: '💃 Dance party groove! 🎵',
+      beg: '🐾 Paw wave! High five!',
+      spin: '💫 360 Spin! Wheee!',
+    };
+    if (quotes[trick]) {
+      showSpeech(quotes[trick], 2500);
+    }
+    setTimeout(() => setAnimState('idle'), 3200);
+  };
+
+  // Silent Tactile Pet Reactions
   const handlePokeHead = () => {
-    sound.playPoke();
     setAnimState('dizzy');
     showSpeech(`Ouch! My head is spinning! ⭐`);
     setTimeout(() => setAnimState('idle'), 2200);
   };
 
   const handleTickleBelly = () => {
-    sound.playGiggle();
     setAnimState('laugh');
     showSpeech(`Hahaha! That tickles so much! ❤️`);
     setTimeout(() => setAnimState('idle'), 2000);
   };
 
   const handleBath = () => {
-    sound.playBubblePop();
     setAnimState('bath');
     showSpeech(`Squeaky clean! Pop the bubbles! 🧼✨`);
     setTimeout(() => setAnimState('idle'), 2600);
@@ -291,14 +302,12 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const isChimera = Boolean(pet.isChimera || pet.customFeatures?.isChimera);
 
   const handleBark = () => {
-    sound.playBark();
     setAnimState('celebrate');
     showSpeech(`Woof woof! Arf! 🐶🐾`, 2200);
     setTimeout(() => setAnimState('idle'), 1500);
   };
 
   const handleMeow = () => {
-    sound.playMeow();
     setAnimState('celebrate');
     showSpeech(`Meow meow! Purrrr~ 🐱✨`, 2200);
     setTimeout(() => setAnimState('idle'), 1500);
@@ -352,108 +361,119 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
         </div>
       )}
 
-      {/* Enhanced Electric Charging Aura Indicator */}
-      {isCharging && !isMinimized && (
-        <div className="absolute -inset-4 rounded-full border-2 border-cyan-400/80 bg-gradient-to-r from-cyan-500/20 via-emerald-400/20 to-cyan-500/20 blur-md shadow-[0_0_40px_rgba(0,240,255,0.6)] animate-pulse pointer-events-none z-0">
-          <div className="absolute inset-0 rounded-full border border-[#CCFF00]/60 animate-ping opacity-35" />
-        </div>
-      )}
-
-      {/* Radial Menu */}
+      {/* Radial Menu & Tricks Hub */}
       {showRadialMenu && !isMinimized && (
-        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-48 h-32 pointer-events-auto z-40 animate-in fade-in zoom-in-90">
+        <div className="absolute -top-36 left-1/2 -translate-x-1/2 w-64 h-36 pointer-events-auto z-40 animate-in fade-in zoom-in-90">
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* Top: Feed Berry */}
+            {/* Top: Feed Treat (Silent) */}
             <button
               onClick={() => {
                 const b = availableBerries[0];
                 if (b) {
                   feedPet(b);
-                  sound.playChew();
                   setAnimState('eat');
-                  showSpeech(`Yummy ${b.name}! 🍓`);
+                  showSpeech(`*Nom nom* Loved that ${b.name}! 🍓`);
                   setTimeout(() => setAnimState('idle'), 2000);
                 }
                 setShowRadialMenu(false);
               }}
               className="absolute top-0 left-1/2 -translate-x-1/2 bg-amber-500 hover:bg-amber-400 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
-              title="Feed Berry"
+              title="Feed Treat"
             >
               <Utensils className="w-4 h-4" />
             </button>
 
-            {/* Left: Tickle Belly */}
+            {/* Top-Left: Backflip Trick */}
             <button
               onClick={() => {
-                handleTickleBelly();
+                handlePerformTrick('backflip');
                 setShowRadialMenu(false);
               }}
-              className="absolute left-0 top-1/2 -translate-x-2 -translate-y-1/2 bg-pink-500 hover:bg-pink-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
-              title="Tickle Belly"
+              className="absolute top-2 left-6 bg-yellow-400 hover:bg-yellow-300 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
+              title="Trick: Backflip 🤸"
             >
-              <Heart className="w-4 h-4 fill-current" />
+              🤸
             </button>
 
-            {/* Right: Bubble Bath */}
+            {/* Top-Right: Dance Trick */}
+            <button
+              onClick={() => {
+                handlePerformTrick('dance');
+                setShowRadialMenu(false);
+              }}
+              className="absolute top-2 right-6 bg-purple-500 hover:bg-purple-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
+              title="Trick: Dance 💃"
+            >
+              💃
+            </button>
+
+            {/* Far Left: Roll Over */}
+            <button
+              onClick={() => {
+                handlePerformTrick('rollover');
+                setShowRadialMenu(false);
+              }}
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-pink-500 hover:bg-pink-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
+              title="Trick: Roll Over 🔄"
+            >
+              🔄
+            </button>
+
+            {/* Far Right: Zoomies */}
+            <button
+              onClick={() => {
+                handlePerformTrick('zoomies');
+                setShowRadialMenu(false);
+              }}
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-lime-400 hover:bg-lime-300 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
+              title="Trick: Zoomies ⚡"
+            >
+              ⚡
+            </button>
+
+            {/* Bottom-Left: Beg / Paw Wave */}
+            <button
+              onClick={() => {
+                handlePerformTrick('beg');
+                setShowRadialMenu(false);
+              }}
+              className="absolute bottom-2 left-6 bg-rose-500 hover:bg-rose-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
+              title="Trick: Paw Wave 🐾"
+            >
+              🐾
+            </button>
+
+            {/* Bottom-Right: 360 Spin */}
+            <button
+              onClick={() => {
+                handlePerformTrick('spin');
+                setShowRadialMenu(false);
+              }}
+              className="absolute bottom-2 right-6 bg-cyan-400 hover:bg-cyan-300 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
+              title="Trick: 360 Spin 💫"
+            >
+              💫
+            </button>
+
+            {/* Bottom Center: Bath */}
             <button
               onClick={() => {
                 handleBath();
                 setShowRadialMenu(false);
               }}
-              className="absolute right-0 top-1/2 translate-x-2 -translate-y-1/2 bg-blue-500 hover:bg-blue-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
+              className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-blue-500 hover:bg-blue-400 text-white p-2 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
               title="Bubble Bath"
             >
-              <Bath className="w-4 h-4" />
+              <Bath className="w-3.5 h-3.5" />
             </button>
-
-            {/* Bottom: Voice Mimic */}
-            <button
-              onClick={() => {
-                handleVoiceMimic();
-                setShowRadialMenu(false);
-              }}
-              className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-purple-600 hover:bg-purple-500 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
-              title="Voice Mimic"
-            >
-              <Mic className="w-4 h-4" />
-            </button>
-
-            {/* Top-Left: Bark (Dogs & Chimeras) */}
-            {(pet.category === 'dog' || isChimera) && (
-              <button
-                onClick={() => {
-                  handleBark();
-                  setShowRadialMenu(false);
-                }}
-                className="absolute top-2 left-2 bg-amber-500 hover:bg-amber-400 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
-                title="Bark 🐶"
-              >
-                🐶
-              </button>
-            )}
-
-            {/* Top-Right: Meow (Cats & Chimeras) */}
-            {(pet.category === 'cat' || isChimera) && (
-              <button
-                onClick={() => {
-                  handleMeow();
-                  setShowRadialMenu(false);
-                }}
-                className="absolute top-2 right-2 bg-pink-500 hover:bg-pink-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
-                title="Meow 🐱"
-              >
-                🐱
-              </button>
-            )}
 
             {/* Center: Open Sanctuary */}
             <button
               onClick={() => {
-                sound.playClick();
                 setShowRadialMenu(false);
                 onOpenSanctuary?.();
               }}
-              className="bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
+              className="bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold p-3 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
               title="Open Sanctuary"
             >
               <Home className="w-4 h-4" />
@@ -482,27 +502,22 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            const tricks: PetAnimationState[] = ['backflip', 'zoomies', 'rollover', 'dance', 'beg', 'spin'];
+            const picked = tricks[Math.floor(Math.random() * tricks.length)];
+            handlePerformTrick(picked);
+          }}
           className="relative group cursor-grab active:cursor-grabbing flex flex-col items-center"
         >
           {/* Status Badge */}
           <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/85 backdrop-blur-sm text-xs font-mono px-2.5 py-1 rounded-full border border-white/15 text-neutral-300 flex items-center gap-1.5 mb-1 pointer-events-none shadow-lg">
             <span className="text-[#CCFF00] font-black">{activeBeast.name}</span>
-            {isCharging && <span className="text-cyan-400 font-bold">⚡ CHARGING</span>}
-            <span className="text-neutral-400">· Drag anywhere to hover 🐾</span>
+            <span className="text-neutral-400">· Drag anywhere · Double-click for trick 🐾</span>
           </div>
 
           {/* Cute Animated Screen Companion Buddy (Bigger Size: 160px or 200px) */}
           <div className={`relative group/canvas flex flex-col items-center ${!isDragging ? 'animate-hover-float' : ''}`}>
-            {/* Enhanced Electric Cyan Charging Aura Ring */}
-            {isCharging && (
-              <div className="absolute -inset-3 rounded-full border-2 border-cyan-400 shadow-[0_0_25px_rgba(0,240,255,0.7),inset_0_0_15px_rgba(0,240,255,0.4)] animate-pulse pointer-events-none">
-                <div className="absolute -inset-2 rounded-full border border-cyan-300 animate-ping opacity-40 pointer-events-none" />
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-[9px] bg-cyan-950/90 text-cyan-300 font-mono font-black px-2 py-0.2 rounded-full border border-cyan-400 shadow-md whitespace-nowrap">
-                  ⚡ POWER CHARGING
-                </div>
-              </div>
-            )}
-
             {/* Ambient Base Shadow */}
             <div className="absolute bottom-1 inset-x-3 h-5 bg-black/60 rounded-full blur-md pointer-events-none" />
 
@@ -520,6 +535,69 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
 
           {/* Mini Control Dock on hover */}
           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 mt-1 bg-black/85 backdrop-blur-md px-3 py-1 rounded-full border border-white/15 shadow-xl">
+            {/* Quick Interactive Tricks */}
+            <div className="flex items-center gap-1 border-r border-white/15 pr-1.5">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePerformTrick('backflip');
+                }}
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#CCFF00]/20 hover:bg-[#CCFF00] hover:text-black text-[#CCFF00] border border-[#CCFF00]/40 transition-colors cursor-pointer"
+                title="Backflip"
+              >
+                🤸 Flip
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePerformTrick('zoomies');
+                }}
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500/20 hover:bg-cyan-400 hover:text-black text-cyan-300 border border-cyan-500/30 transition-colors cursor-pointer"
+                title="Zoomies"
+              >
+                ⚡ Zoom
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePerformTrick('dance');
+                }}
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/20 hover:bg-purple-400 hover:text-black text-purple-300 border border-purple-500/30 transition-colors cursor-pointer"
+                title="Dance"
+              >
+                💃 Dance
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePerformTrick('rollover');
+                }}
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-pink-500/20 hover:bg-pink-400 hover:text-black text-pink-300 border border-pink-500/30 transition-colors cursor-pointer"
+                title="Roll Over"
+              >
+                🔄 Roll
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePerformTrick('beg');
+                }}
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 hover:bg-amber-400 hover:text-black text-amber-300 border border-amber-500/30 transition-colors cursor-pointer"
+                title="Beg / Paw Wave"
+              >
+                🐾 Beg
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePerformTrick('spin');
+                }}
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 hover:bg-emerald-400 hover:text-black text-emerald-300 border border-emerald-500/30 transition-colors cursor-pointer"
+                title="360 Spin"
+              >
+                💫 Spin
+              </button>
+            </div>
             {/* Context-Aware Voice Triggers */}
             {(pet.category === 'dog' || isChimera) && (
               <button
