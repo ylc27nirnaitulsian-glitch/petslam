@@ -41,6 +41,11 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
   }, []);
 
   const handleStart = () => {
+    if (!connectedAccount.isLoggedIn) {
+      sound.playClick();
+      setAuthOpen(true);
+      return;
+    }
     sound.playVictory();
     onEnterGame();
   };
@@ -212,6 +217,7 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
           currentTrainerName={trainerName}
           onUpdateTrainerName={setTrainerName}
           onClose={() => setAuthOpen(false)}
+          onAuthSuccess={onEnterGame}
         />
       )}
 
