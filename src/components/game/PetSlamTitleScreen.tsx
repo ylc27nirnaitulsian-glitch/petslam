@@ -43,28 +43,26 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
   }, []);
 
   const handleStart = () => {
+    if (!connectedAccount.isLoggedIn) {
+      sound.playClick();
+      setAuthOpen(true);
+      return;
+    }
     sound.playVictory();
     onEnterGame();
   };
 
   const handleGoogleSignInDirect = async () => {
     sound.playClick();
-    try {
+    if (isSupabaseConfigured) {
       const res = await signInWithGoogle();
       if (res?.error) {
-        // Fallback: 1-click Google Cloud account sync
-        const googleUser = `Trainer_${Math.floor(1000 + Math.random() * 9000)}`;
-        loginAccount('Google', 'google.trainer@petslam.app', googleUser);
-        setTrainerName(googleUser);
-        sound.playLevelUp();
-        onEnterGame();
+        // Show auth modal with the real error message so user knows Google OAuth needs setup
+        setAuthOpen(true);
       }
-    } catch {
-      const googleUser = `Trainer_${Math.floor(1000 + Math.random() * 9000)}`;
-      loginAccount('Google', 'google.trainer@petslam.app', googleUser);
-      setTrainerName(googleUser);
-      sound.playLevelUp();
-      onEnterGame();
+      // If enabled in Supabase, browser automatically redirects to accounts.google.com
+    } else {
+      setAuthOpen(true);
     }
   };
 

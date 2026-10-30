@@ -49,7 +49,7 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // 1-Click / OAuth Google Sign In Handler
+  // Real Google Sign In Handler via Supabase OAuth
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     sound.playClick();
@@ -60,34 +60,16 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
       if (isSupabaseConfigured) {
         const res = await signInWithGoogle();
         if (res.error) {
-          // Graceful fallback to verified Google Cloud account
-          const googleUser = `Trainer_${Math.floor(1000 + Math.random() * 9000)}`;
-          loginAccount('Google', 'google.trainer@petslam.app', googleUser);
-          onUpdateTrainerName(googleUser);
-          sound.playLevelUp();
-          setSuccessMessage(`Authenticated with Google! Welcome, ${googleUser}!`);
-          setTimeout(() => {
-            onAuthSuccess?.();
-            onClose();
-          }, 1000);
+          setErrorMessage(
+            `Google OAuth is not enabled in your Supabase project yet (${res.error}). To use Google Sign-In, enable the Google provider in Supabase Dashboard -> Authentication -> Providers. In the meantime, use your Email/Username & Password below!`
+          );
         }
+        // If enabled, browser redirects directly to accounts.google.com
       } else {
-        const googleUser = `Trainer_${Math.floor(1000 + Math.random() * 9000)}`;
-        loginAccount('Google', 'google.trainer@petslam.app', googleUser);
-        onUpdateTrainerName(googleUser);
-        sound.playLevelUp();
-        setSuccessMessage(`Logged in with Google! Welcome, ${googleUser}!`);
-        setTimeout(() => {
-          onAuthSuccess?.();
-          onClose();
-        }, 1000);
+        setErrorMessage('Supabase credentials are not configured in .env.');
       }
-    } catch {
-      const fallbackUser = 'GoogleTrainer';
-      loginAccount('Google', 'google.trainer@petslam.app', fallbackUser);
-      onUpdateTrainerName(fallbackUser);
-      onAuthSuccess?.();
-      onClose();
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Google authentication failed to connect.');
     } finally {
       setIsSubmitting(false);
     }
