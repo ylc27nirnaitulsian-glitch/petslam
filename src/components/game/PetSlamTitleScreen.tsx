@@ -29,7 +29,7 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
   const { trainerName, setTrainerName, activeBeast, soundEnabled, toggleSound, connectedAccount } = useGame();
   const { pet } = usePetCompanion();
   const [guideOpen, setGuideOpen] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(() => !connectedAccount.isLoggedIn);
   const [showIntroSplash, setShowIntroSplash] = useState(false);
   const [glowPulse, setGlowPulse] = useState(true);
 

@@ -38,6 +38,28 @@ export interface PlayerProfile {
 }
 
 /**
+ * Sign in player using Google OAuth via Supabase
+ */
+export async function signInWithGoogle(): Promise<{ error?: string }> {
+  if (!supabase) {
+    return { error: 'Supabase credentials are not configured.' };
+  }
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/`,
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return {};
+}
+
+/**
  * Register a new player with Email, Password & Username
  */
 export async function registerPlayerWithSupabase(
