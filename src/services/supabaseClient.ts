@@ -1,8 +1,13 @@
 import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
 
-const rawUrl = (import.meta.env.VITE_SUPABASE_URL as string) || '';
+const DEFAULT_SUPABASE_URL = 'https://yqrppwcvidjiekqzhyyg.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxcnBwd2N2aWRqaWVrcXpoeXlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNTE4ODYsImV4cCI6MjEwODkyNzg4Nn0.FYjX_z_A4agYj2hqjPjQ66eOofuo5tC8ZQL-vPrlm8I';
+
+const rawUrl = (import.meta.env.VITE_SUPABASE_URL as string) || DEFAULT_SUPABASE_URL;
 const cleanUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || '';
+const supabaseAnonKey =
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || DEFAULT_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(
   cleanUrl &&

@@ -47,8 +47,10 @@ export async function submitWaitlist(email: string): Promise<WaitlistSubmissionR
     };
   }
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://yqrppwcvidjiekqzhyyg.supabase.co';
+  const supabaseAnonKey =
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxcnBwd2N2aWRqaWVrcXpoeXlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNTE4ODYsImV4cCI6MjEwODkyNzg4Nn0.FYjX_z_A4agYj2hqjPjQ66eOofuo5tC8ZQL-vPrlm8I';
 
   // 1. Supabase Edge Function Path (Production on GitHub Pages)
   if (supabaseUrl && supabaseAnonKey) {
@@ -174,8 +176,10 @@ export async function submitWaitlist(email: string): Promise<WaitlistSubmissionR
 
 export async function getWaitlistStats(): Promise<{ totalSignups: number; provider: string }> {
   // Check Supabase count if configured
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://yqrppwcvidjiekqzhyyg.supabase.co';
+  const supabaseAnonKey =
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxcnBwd2N2aWRqaWVrcXpoeXlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMzNTE4ODYsImV4cCI6MjEwODkyNzg4Nn0.FYjX_z_A4agYj2hqjPjQ66eOofuo5tC8ZQL-vPrlm8I';
 
   if (supabaseUrl && supabaseAnonKey) {
     try {
