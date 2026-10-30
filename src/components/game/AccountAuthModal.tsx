@@ -39,6 +39,7 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
   const { loginAccount, connectedAccount, logoutAccount, trainerName } = useGame();
 
   const [activeTab, setActiveTab] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const [showSwitchAccount, setShowSwitchAccount] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('');
   const [username, setUsername] = useState<string>(currentTrainerName !== 'Trainer' ? currentTrainerName : '');
   const [password, setPassword] = useState<string>('');
@@ -272,7 +273,7 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
         </div>
 
         {/* Auth Mode Tabs */}
-        {!connectedAccount.isLoggedIn && (
+        {(!connectedAccount.isLoggedIn || showSwitchAccount) && (
           <div className="flex border-b border-white/10 bg-[#0a0d14]">
             <button
               onClick={() => {
@@ -321,7 +322,7 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
 
         <div className="p-5 sm:p-6 overflow-y-auto space-y-4">
           {/* Active Logged In Card */}
-          {connectedAccount.isLoggedIn ? (
+          {connectedAccount.isLoggedIn && !showSwitchAccount ? (
             <div className="space-y-4">
               <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-2xl p-4 flex items-center gap-3.5">
                 <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xl shrink-0">
@@ -343,26 +344,38 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2">
                 <button
-                  onClick={() => {
-                    logoutAccount();
-                    onUpdateTrainerName('Trainer');
-                    setSuccessMessage('Logged out successfully.');
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 font-bold text-xs transition cursor-pointer"
+                  type="button"
+                  onClick={() => setShowSwitchAccount(true)}
+                  className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs transition cursor-pointer"
                 >
-                  Log Out
+                  Switch / Sign In with Another Account or Google
                 </button>
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    onClose();
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-[#CCFF00] text-black font-black text-xs transition hover:brightness-110 cursor-pointer"
-                >
-                  Return to Game
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logoutAccount();
+                      onUpdateTrainerName('Trainer');
+                      setShowSwitchAccount(true);
+                    }}
+                    className="flex-1 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 font-bold text-xs transition cursor-pointer"
+                  >
+                    Log Out
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sound.playClick();
+                      onClose();
+                      onAuthSuccess?.();
+                    }}
+                    className="flex-1 py-2 rounded-xl bg-[#CCFF00] text-black font-black text-xs transition hover:brightness-110 cursor-pointer"
+                  >
+                    Enter Arena
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
