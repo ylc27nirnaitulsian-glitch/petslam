@@ -3,6 +3,7 @@ import { Animal, ANIMALS_DATA } from '../data/animals';
 import { GearItem, GEAR_ITEMS } from '../data/armory';
 import { sound } from '../utils/audio';
 import { trackClarityEvent, setClarityTag } from '../utils/clarity';
+import { supabase } from '../services/supabaseClient';
 
 export interface MatchHistoryEntry {
   id: string;
@@ -236,7 +237,50 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       localStorage.removeItem('petslam_auth_account');
     } catch {}
+    if (supabase) {
+      supabase.auth.signOut().catch(() => {});
+    }
   };
+
+  // Sync Supabase Auth State (OAuth Redirect & Session Restoration)
+  useEffect(() => {
+    if (!supabase) return;
+
+    // Check active session on initial page mount (e.g. returning from Google OAuth)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const u = session.user;
+        const gName =
+          u.user_metadata?.full_name ||
+          u.user_metadata?.name ||
+          u.user_metadata?.username ||
+          u.email?.split('@')[0] ||
+          'Trainer';
+        const gAvatar = u.user_metadata?.avatar_url || u.user_metadata?.picture;
+        loginAccount('Google', u.email, gName, gAvatar, u.id);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const u = session.user;
+        const gName =
+          u.user_metadata?.full_name ||
+          u.user_metadata?.name ||
+          u.user_metadata?.username ||
+          u.email?.split('@')[0] ||
+          'Trainer';
+        const gAvatar = u.user_metadata?.avatar_url || u.user_metadata?.picture;
+        loginAccount('Google', u.email, gName, gAvatar, u.id);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const [credits, setCredits] = useState<number>(24500);
   const addCredits = (amount: number) => {
