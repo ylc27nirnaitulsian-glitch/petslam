@@ -18,7 +18,7 @@ import { sound } from '../../utils/audio';
 import { GameGuideModal } from './GameGuideModal';
 import { AccountAuthModal } from './AccountAuthModal';
 import { PetSlamIntroSplash } from './PetSlamIntroSplash';
-import { signInWithGoogle } from '../../services/supabaseClient';
+import { signInWithGoogle, isSupabaseConfigured } from '../../services/supabaseClient';
 
 interface PetSlamTitleScreenProps {
   onEnterGame: () => void;
