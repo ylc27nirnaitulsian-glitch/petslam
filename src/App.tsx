@@ -8,11 +8,22 @@ import { AlphaQueueModal } from './components/game/AlphaQueueModal';
 import { PetSlamIntroSplash } from './components/game/PetSlamIntroSplash';
 
 export default function App() {
-  const [showIntro, setShowIntro] = useState<boolean>(true);
+  const [showIntro, setShowIntro] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const hasEntered = localStorage.getItem('petslam_has_entered_game') === 'true';
+      const remember = localStorage.getItem('petslam_remember_me') !== 'false';
+      if (hasEntered && remember) return false;
+    }
+    return true;
+  });
+
   const [hasEnteredGame, setHasEnteredGame] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#game' || hash === '#arena') return true;
+      const hasEntered = localStorage.getItem('petslam_has_entered_game') === 'true';
+      const remember = localStorage.getItem('petslam_remember_me') !== 'false';
+      if (hasEntered && remember) return true;
     }
     return false;
   });
@@ -72,12 +83,22 @@ export default function App() {
           </>
         ) : !hasEnteredGame ? (
           <PetSlamTitleScreen
-            onEnterGame={() => setHasEnteredGame(true)}
+            onEnterGame={() => {
+              try {
+                localStorage.setItem('petslam_has_entered_game', 'true');
+              } catch {}
+              setHasEnteredGame(true);
+            }}
             onOpenSystemDetails={() => setShowSystemDetailsDirect(true)}
           />
         ) : (
           <DualOrientationShell
-            onReturnToTitle={() => setHasEnteredGame(false)}
+            onReturnToTitle={() => {
+              try {
+                localStorage.removeItem('petslam_has_entered_game');
+              } catch {}
+              setHasEnteredGame(false);
+            }}
             onOpenSystemDetails={() => setShowSystemDetailsDirect(true)}
           />
         )}

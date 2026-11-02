@@ -57,6 +57,68 @@ function calculateDistanceMeters(
   return Math.round(R * c);
 }
 
+// Purebred candidate animals for radar spawns
+const purebredCatalog = ANIMALS_DATA.filter(
+  (a) => a.category === 'Canines' || a.category === 'Felines'
+);
+
+// Helper to generate geo spawns centered around given coordinates
+const generateSpawnsAround = (centerLat: number, centerLng: number): GeoPetMarker[] => {
+  const spawnAngles = [25, 75, 135, 195, 250, 310, 345];
+  const distances = [45, 80, 115, 160, 210, 270, 320];
+
+  const metersPerLat = 111000;
+  const metersPerLng = 111000 * Math.cos((centerLat * Math.PI) / 180);
+
+  return spawnAngles.map((angleDeg, idx) => {
+    const dist = distances[idx % distances.length];
+    const rad = (angleDeg * Math.PI) / 180;
+
+    const offsetLat = (dist * Math.cos(rad)) / metersPerLat;
+    const offsetLng = (dist * Math.sin(rad)) / metersPerLng;
+
+    const petLat = centerLat + offsetLat;
+    const petLng = centerLng + offsetLng;
+
+    const animal = purebredCatalog[idx % purebredCatalog.length] || purebredCatalog[0];
+    const isCat = animal.category === 'Felines';
+    const rarityRoll = Math.random();
+    const rarity: WildPetEncounter['rarity'] =
+      rarityRoll > 0.85 ? 'legendary' : rarityRoll > 0.6 ? 'epic' : rarityRoll > 0.3 ? 'rare' : 'common';
+
+    const baseCp = Math.round(animal.damage * 4.5 + animal.health * 0.35);
+
+    return {
+      id: `radar_spawn_${Date.now()}_${idx}`,
+      lat: petLat,
+      lng: petLng,
+      liveDistanceMeters: dist,
+      animalRef: animal,
+      species: animal.breed.toLowerCase().replace(/\s+/g, '') as any,
+      category: isCat ? 'cat' : 'dog',
+      name: animal.name,
+      title: `Wild ${animal.breed}`,
+      cp: baseCp + Math.floor(Math.random() * 80) - 30,
+      level: Math.floor(Math.random() * 15) + 5,
+      rarity,
+      baseCatchRate: rarity === 'legendary' ? 0.35 : rarity === 'epic' ? 0.5 : rarity === 'rare' ? 0.65 : 0.8,
+      distanceMeters: dist,
+      spawnTimeRemaining: 900,
+      stats: {
+        attack: animal.damage,
+        defense: 60,
+        agility: 75,
+        stamina: 85,
+        cp: baseCp,
+        hunger: 80,
+        energy: 90,
+        happiness: 85,
+        hygiene: 80,
+      },
+    };
+  });
+};
+
 export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => {
   const { addKennelPet } = usePetCompanion();
 
@@ -76,7 +138,7 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
   const [gpsStatus, setGpsStatus] = useState<'locating' | 'live_gps' | 'simulated'>('locating');
   const [accuracyMeters, setAccuracyMeters] = useState<number>(30);
   const [mapTheme, setMapTheme] = useState<
-    'dark' | 'openfreemap_bright' | 'openfreemap_liberty' | 'osm' | 'geoapify_dark'
+    'dark' | 'voyager' | 'positron' | 'satellite' | 'osm' | 'geoapify_dark'
   >('dark');
   const [isScanning, setIsScanning] = useState<boolean>(false);
 
@@ -88,7 +150,7 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
     if (theme === 'geoapify_dark' && apiKey) {
       return {
         url: `https://maps.geoapify.com/v1/tile/dark-matter-purple-roads/{z}/{x}/{y}.png?apiKey=${apiKey}`,
-        subdomains: '',
+        subdomains: 'abcd',
         maxZoom: 20,
         attribution:
           'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
@@ -96,24 +158,35 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
     }
 
     // 2. OpenFreeMap Bright (100% Free, Zero Key, No Limits)
-    if (theme === 'openfreemap_bright') {
+    if (theme === 'voyager') {
       return {
-        url: 'https://tiles.openfreemap.org/styles/bright/{z}/{x}/{y}.png',
-        subdomains: '',
+        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        subdomains: 'abcd',
         maxZoom: 19,
         attribution:
-          '&copy; <a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+          '&copy; <a href="https://www.esri.com/" target="_blank">Esri</a>, Earthstar Geographics',
       };
     }
 
     // 3. OpenFreeMap Liberty (100% Free, Zero Key, No Limits)
-    if (theme === 'openfreemap_liberty') {
+    if (theme === 'satellite') {
       return {
-        url: 'https://tiles.openfreemap.org/styles/liberty/{z}/{x}/{y}.png',
-        subdomains: '',
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        subdomains: 'abcd',
         maxZoom: 19,
         attribution:
-          '&copy; <a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+          '&copy; <a href="https://www.esri.com/" target="_blank">Esri</a>, Earthstar Geographics',
+      };
+    }
+
+    // 3. Carto Positron (Clean Light Theme, 100% Free, Zero Key)
+    if (theme === 'positron') {
+      return {
+        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        subdomains: 'abcd',
+        maxZoom: 19,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
       };
     }
 
@@ -139,72 +212,11 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
   };
 
   // Active pet spawns around user
-  const [geoPetSpawns, setGeoPetSpawns] = useState<GeoPetMarker[]>([]);
+  const [geoPetSpawns, setGeoPetSpawns] = useState<GeoPetMarker[]>(() =>
+    generateSpawnsAround(37.7749, -122.4194)
+  );
   const [selectedPin, setSelectedPin] = useState<GeoPetMarker | null>(null);
   const [activeCatchEncounter, setActiveCatchEncounter] = useState<WildPetEncounter | null>(null);
-
-  // Purebred candidate animals for radar spawns
-  const purebredCatalog = ANIMALS_DATA.filter(
-    (a) => a.category === 'Canines' || a.category === 'Felines'
-  );
-
-  // Helper to generate geo spawns centered around given coordinates
-  const generateSpawnsAround = (centerLat: number, centerLng: number): GeoPetMarker[] => {
-    // 6 to 8 realistic spawns at distances between 35m and 320m
-    const spawnAngles = [25, 75, 135, 195, 250, 310, 345];
-    const distances = [45, 80, 115, 160, 210, 270, 320];
-
-    const metersPerLat = 111000;
-    const metersPerLng = 111000 * Math.cos((centerLat * Math.PI) / 180);
-
-    return spawnAngles.map((angleDeg, idx) => {
-      const dist = distances[idx % distances.length];
-      const rad = (angleDeg * Math.PI) / 180;
-
-      const offsetLat = (dist * Math.cos(rad)) / metersPerLat;
-      const offsetLng = (dist * Math.sin(rad)) / metersPerLng;
-
-      const petLat = centerLat + offsetLat;
-      const petLng = centerLng + offsetLng;
-
-      const animal = purebredCatalog[idx % purebredCatalog.length] || purebredCatalog[0];
-      const isCat = animal.category === 'Felines';
-      const rarityRoll = Math.random();
-      const rarity: WildPetEncounter['rarity'] =
-        rarityRoll > 0.85 ? 'legendary' : rarityRoll > 0.6 ? 'epic' : rarityRoll > 0.3 ? 'rare' : 'common';
-
-      const baseCp = Math.round(animal.damage * 4.5 + animal.health * 0.35);
-
-      return {
-        id: `radar_spawn_${Date.now()}_${idx}`,
-        lat: petLat,
-        lng: petLng,
-        liveDistanceMeters: dist,
-        animalRef: animal,
-        species: animal.breed.toLowerCase().replace(/\s+/g, '') as any,
-        category: isCat ? 'cat' : 'dog',
-        name: animal.name,
-        title: `Wild ${animal.breed}`,
-        cp: baseCp + Math.floor(Math.random() * 80) - 30,
-        level: Math.floor(Math.random() * 15) + 5,
-        rarity,
-        baseCatchRate: rarity === 'legendary' ? 0.35 : rarity === 'epic' ? 0.5 : rarity === 'rare' ? 0.65 : 0.8,
-        distanceMeters: dist,
-        spawnTimeRemaining: 900,
-        stats: {
-          attack: animal.damage,
-          defense: 60,
-          agility: 75,
-          stamina: 85,
-          cp: baseCp,
-          hunger: 80,
-          energy: 90,
-          happiness: 85,
-          hygiene: 80,
-        },
-      };
-    });
-  };
 
   // 1. Initialize Real GPS Geolocation
   useEffect(() => {
@@ -319,19 +331,24 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
     mapInstanceRef.current = map;
 
     // Trigger invalidateSize to prevent grey tiles inside modal containers
-    const invalidateTimer = setTimeout(() => {
-      map.invalidateSize();
-    }, 150);
+    const timers = [
+      setTimeout(() => map.invalidateSize(), 60),
+      setTimeout(() => map.invalidateSize(), 250),
+      setTimeout(() => map.invalidateSize(), 600),
+    ];
+
+
+
 
     const resizeObserver = new ResizeObserver(() => {
-      map.invalidateSize();
+
     });
     if (mapContainerRef.current) {
       resizeObserver.observe(mapContainerRef.current);
     }
 
     return () => {
-      clearTimeout(invalidateTimer);
+      timers.forEach(clearTimeout);
       resizeObserver.disconnect();
       map.remove();
       mapInstanceRef.current = null;
@@ -541,9 +558,10 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
               onClick={() => {
                 sound.playClick();
                 setMapTheme((prev) => {
-                  if (prev === 'dark') return 'openfreemap_bright';
-                  if (prev === 'openfreemap_bright') return 'openfreemap_liberty';
-                  if (prev === 'openfreemap_liberty') return 'osm';
+                  if (prev === 'dark') return 'voyager';
+                  if (prev === 'voyager') return 'satellite';
+                  if (prev === 'satellite') return 'positron';
+                  if (prev === 'positron') return 'osm';
                   if (prev === 'osm') return mapsApiKey ? 'geoapify_dark' : 'dark';
                   return 'dark';
                 });
@@ -617,8 +635,8 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
             <span>
               {mapTheme === 'geoapify_dark'
                 ? 'GEOAPIFY'
-                : mapTheme === 'openfreemap_bright' || mapTheme === 'openfreemap_liberty'
-                ? 'OPENFREEMAP'
+                : mapTheme === 'satellite'
+                ? 'SATELLITE (ESRI)'
                 : mapTheme === 'osm'
                 ? 'OPENSTREETMAP'
                 : 'CARTO'}
@@ -627,10 +645,12 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
             <span className="text-[#CCFF00] font-bold uppercase">
               {mapTheme === 'geoapify_dark'
                 ? 'Cyber Dark'
-                : mapTheme === 'openfreemap_bright'
-                ? 'Bright'
-                : mapTheme === 'openfreemap_liberty'
-                ? 'Liberty'
+                : mapTheme === 'voyager'
+                ? 'Voyager Streets'
+                : mapTheme === 'satellite'
+                ? 'Satellite 🛰️'
+                : mapTheme === 'positron'
+                ? 'Clean Light'
                 : mapTheme === 'osm'
                 ? 'Standard'
                 : 'Dark Matter'}

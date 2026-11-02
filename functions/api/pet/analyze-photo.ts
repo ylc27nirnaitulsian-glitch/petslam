@@ -173,7 +173,7 @@ Return ONLY valid JSON matching this schema:
   }
 }`;
 
-    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
 
     const geminiRes = await fetch(geminiEndpoint, {
       method: 'POST',
@@ -185,8 +185,8 @@ Return ONLY valid JSON matching this schema:
           {
             parts: [
               {
-                inline_data: {
-                  mime_type: detectedMime,
+                inlineData: {
+                  mimeType: detectedMime,
                   data: cleanBase64,
                 },
               },
@@ -202,19 +202,34 @@ Return ONLY valid JSON matching this schema:
       }),
     });
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
+    let activeRes = geminiRes;
+    if (!activeRes.ok) {
+      try {
+        const fbRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ inlineData: { mimeType: detectedMime, data: cleanBase64 } }, { text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' },
+          }),
+        });
+        if (fbRes.ok) activeRes = fbRes;
+      } catch {}
+    }
+
+    if (!activeRes.ok) {
+      const errText = await activeRes.text();
       console.error('[Gemini Cloudflare Edge] API error:', geminiRes.status, errText);
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Gemini AI analysis error (${geminiRes.status}): ${errText || geminiRes.statusText}`,
+          error: `Gemini AI analysis error (${activeRes.status}): ${errText || activeRes.statusText}`,
         }),
-        { status: geminiRes.status, headers: corsHeaders }
+        { status: activeRes.status, headers: corsHeaders }
       );
     }
 
-    const geminiData: any = await geminiRes.json();
+    const geminiData: any = await activeRes.json();
     const candidateText =
       geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
 
@@ -235,7 +250,7 @@ Return ONLY valid JSON matching this schema:
       JSON.stringify({
         success: true,
         avatar: parsedAvatar,
-        source: 'gemini-2.5-flash-edge',
+        source: 'gemini-3.5-flash-edge',
       }),
       { status: 200, headers: corsHeaders }
     );

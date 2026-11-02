@@ -43,12 +43,21 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
   }, []);
 
   const handleStart = () => {
-    if (!connectedAccount.isLoggedIn) {
-      sound.playClick();
-      setAuthOpen(true);
-      return;
-    }
+    try {
+      localStorage.setItem('petslam_has_entered_game', 'true');
+    } catch {}
     sound.playVictory();
+    onEnterGame();
+  };
+
+  const handleGuestPlayDirect = () => {
+    sound.playVictory();
+    if (!connectedAccount.isLoggedIn) {
+      loginAccount('Guest', 'trainer.guest@petslam.app', trainerName || 'Trainer');
+    }
+    try {
+      localStorage.setItem('petslam_has_entered_game', 'true');
+    } catch {}
     onEnterGame();
   };
 
@@ -253,10 +262,10 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
               {/* Instant Guest / Preview */}
               <button
                 type="button"
-                onClick={handleStart}
-                className="text-[11px] font-mono text-neutral-400 hover:text-white transition cursor-pointer underline text-center pt-0.5"
+                onClick={handleGuestPlayDirect}
+                className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white font-mono text-xs transition border border-white/10 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
               >
-                Continue as Guest / Enter Directly →
+                <span>⚡ Quick Play / Continue as Guest →</span>
               </button>
             </>
           )}

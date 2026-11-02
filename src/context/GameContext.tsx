@@ -234,7 +234,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (supabase && sub) {
       supabase
         .from('profiles')
-        .select('credits, trophies, player_level, display_name')
+        .select('credits, trophies, player_level, trainer_name')
         .eq('id', sub)
         .single()
         .then(
@@ -249,8 +249,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (data.player_level !== undefined && data.player_level !== null) {
                 setPlayerLevel((prev) => Math.max(prev, Number(data.player_level)));
               }
-              if (data.display_name) {
-                setTrainerName(data.display_name);
+              if ((data as any).trainer_name) {
+                setTrainerName((data as any).trainer_name);
               }
             }
           },
@@ -264,6 +264,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setConnectedAccount(acc);
     try {
       localStorage.removeItem('petslam_auth_account');
+      localStorage.removeItem('petslam_has_entered_game');
     } catch {}
     if (supabase) {
       supabase.auth.signOut().catch(() => {});

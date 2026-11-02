@@ -843,7 +843,7 @@ Return ONLY valid JSON matching this schema:
 }`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: 'gemini-3.5-flash',
       contents: [
         {
           inlineData: {
@@ -864,7 +864,7 @@ Return ONLY valid JSON matching this schema:
     res.json({
       success: true,
       avatar: parsed,
-      source: 'gemini-3.8-flash',
+      source: 'gemini-3.5-flash',
     });
   } catch (error: any) {
     console.error('Error analyzing pet photo with Gemini:', error);

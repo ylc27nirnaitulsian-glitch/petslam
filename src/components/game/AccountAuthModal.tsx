@@ -44,6 +44,13 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
   const [username, setUsername] = useState<string>(currentTrainerName !== 'Trainer' ? currentTrainerName : '');
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [rememberMe, setRememberMe] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('petslam_remember_me') !== 'false';
+    } catch {
+      return true;
+    }
+  });
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -99,6 +106,10 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
       }
 
       const verifiedName = res.profile?.trainer_name || res.user?.user_metadata?.username || email.split('@')[0];
+      try {
+        localStorage.setItem('petslam_remember_me', rememberMe ? 'true' : 'false');
+        if (rememberMe) localStorage.setItem('petslam_has_entered_game', 'true');
+      } catch {}
       loginAccount('Supabase', res.user?.email || email, verifiedName, res.profile?.avatar_url, res.user?.id);
       onUpdateTrainerName(verifiedName);
       sound.playLevelUp();
@@ -166,6 +177,10 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
 
       // Auto login if session exists (if email confirmation is turned off or immediate)
       if (res.session) {
+        try {
+          localStorage.setItem('petslam_remember_me', rememberMe ? 'true' : 'false');
+          if (rememberMe) localStorage.setItem('petslam_has_entered_game', 'true');
+        } catch {}
         loginAccount('Supabase', res.user?.email || email, username, undefined, res.user?.id);
         onUpdateTrainerName(username);
         setTimeout(() => {
@@ -224,6 +239,12 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
   // Quick Guest Mode Bypass
   const handleGuestPlay = () => {
     sound.playClick();
+    if (!connectedAccount.isLoggedIn) {
+      loginAccount('Guest', 'trainer.guest@petslam.app', trainerName || 'Trainer');
+    }
+    try {
+      localStorage.setItem('petslam_has_entered_game', 'true');
+    } catch {}
     onClose();
     onAuthSuccess?.();
   };
@@ -452,6 +473,23 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                     </div>
                   </div>
 
+                  <div className="flex items-center justify-between py-0.5">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => {
+                          setRememberMe(e.target.checked);
+                          try {
+                            localStorage.setItem('petslam_remember_me', e.target.checked ? 'true' : 'false');
+                          } catch {}
+                        }}
+                        className="w-3.5 h-3.5 accent-[#CCFF00] rounded cursor-pointer"
+                      />
+                      <span className="text-[11px] text-neutral-300 font-medium">Keep me signed in on this device</span>
+                    </label>
+                  </div>
+
                   <button
                     type="submit"
                     disabled={isSubmitting}
@@ -465,6 +503,14 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleGuestPlay}
+                    className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white font-mono text-xs transition border border-white/10 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>⚡ Quick Play as Guest (Instant Access)</span>
                   </button>
                 </form>
               )}
@@ -535,6 +581,23 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                     </div>
                   </div>
 
+                  <div className="flex items-center justify-between py-0.5">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => {
+                          setRememberMe(e.target.checked);
+                          try {
+                            localStorage.setItem('petslam_remember_me', e.target.checked ? 'true' : 'false');
+                          } catch {}
+                        }}
+                        className="w-3.5 h-3.5 accent-[#CCFF00] rounded cursor-pointer"
+                      />
+                      <span className="text-[11px] text-neutral-300 font-medium">Keep me signed in on this device</span>
+                    </label>
+                  </div>
+
                   <button
                     type="submit"
                     disabled={isSubmitting}
@@ -548,6 +611,14 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                         <Sparkles className="w-4 h-4" />
                       </>
                     )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleGuestPlay}
+                    className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white font-mono text-xs transition border border-white/10 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>⚡ Quick Play as Guest (Instant Access)</span>
                   </button>
                 </form>
               )}
