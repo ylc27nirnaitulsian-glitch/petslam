@@ -117,22 +117,36 @@ export async function signInPlayerWithSupabase(
 
   let finalEmail = emailOrUsername.trim();
 
-  // If user entered a username instead of email, resolve it from public.profiles
+  // If user entered a username instead of email, resolve it securely
   if (!finalEmail.includes('@')) {
-    const { data: profileData, error: profileErr } = await supabase
-      .from('profiles')
-      .select('email')
-      .ilike('username', finalEmail)
-      .maybeSingle();
+    let resolvedEmail: string | null = null;
+    try {
+      const { data: rpcEmail, error: rpcErr } = await supabase
+        .rpc('get_auth_email_by_username', { p_username: finalEmail });
+      if (!rpcErr && rpcEmail) {
+        resolvedEmail = rpcEmail;
+      }
+    } catch {}
 
-    if (profileErr || !profileData?.email) {
+    if (!resolvedEmail) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('email')
+        .ilike('username', finalEmail)
+        .maybeSingle();
+      if (profileData?.email) {
+        resolvedEmail = profileData.email;
+      }
+    }
+
+    if (!resolvedEmail) {
       return {
         user: null,
         session: null,
         error: `Could not find an account with username "${finalEmail}". Please use your email.`,
       };
     }
-    finalEmail = profileData.email;
+    finalEmail = resolvedEmail;
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({

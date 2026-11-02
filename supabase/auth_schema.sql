@@ -29,11 +29,13 @@ CREATE INDEX IF NOT EXISTS idx_profiles_trophies ON public.profiles (trophies DE
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- 4. RLS Policies
--- Allow anyone authenticated or public to read profiles (needed for leaderboards and duel match-ups)
+-- DATA-2 FIX: Public profiles only viewable by authenticated user themselves for sensitive data.
+-- Non-sensitive public data is exposed via the public.public_profiles view.
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
-CREATE POLICY "Public profiles are viewable by everyone"
+DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
+CREATE POLICY "Users can read own profile"
 ON public.profiles FOR SELECT
-USING (true);
+USING (auth.uid() = id);
 
 -- Allow users to insert their own profile
 DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
@@ -41,12 +43,71 @@ CREATE POLICY "Users can insert their own profile"
 ON public.profiles FOR INSERT
 WITH CHECK (auth.uid() = id);
 
--- Allow users to update only their own profile
+-- DATA-3 FIX: Allow users to update only safe profile fields (e.g. trainer_name, avatar_url, active_beast_id).
+-- In-game currency (credits), ranking (trophies), and progression (player_level) are locked against client tampering.
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile"
 ON public.profiles FOR UPDATE
 USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
+
+-- DATA-3 Trigger: Enforce that client cannot update credits, trophies, or level directly
+CREATE OR REPLACE FUNCTION public.protect_profile_progression()
+RETURNS trigger AS $$
+BEGIN
+    IF (auth.role() = 'authenticated' OR auth.role() = 'anon') THEN
+        IF NEW.credits <> OLD.credits THEN
+            RAISE EXCEPTION 'Cannot modify credits directly from client.';
+        END IF;
+        IF NEW.trophies <> OLD.trophies THEN
+            RAISE EXCEPTION 'Cannot modify trophies directly from client.';
+        END IF;
+        IF NEW.player_level <> OLD.player_level THEN
+            RAISE EXCEPTION 'Cannot modify player_level directly from client.';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_protect_profile_progression ON public.profiles;
+CREATE TRIGGER trg_protect_profile_progression
+BEFORE UPDATE ON public.profiles
+FOR EACH ROW
+EXECUTE FUNCTION public.protect_profile_progression();
+
+-- DATA-2 Public Safe View: Exposes only non-sensitive leaderboard & matchmaking data
+CREATE OR REPLACE VIEW public.public_profiles AS
+SELECT
+    id,
+    username,
+    trainer_name,
+    player_tag,
+    trophies,
+    player_level,
+    active_beast_id,
+    avatar_url,
+    created_at
+FROM public.profiles;
+
+GRANT SELECT ON public.public_profiles TO anon, authenticated;
+
+-- Helper RPC to securely resolve username to email for sign-in without exposing entire table
+CREATE OR REPLACE FUNCTION public.get_auth_email_by_username(p_username TEXT)
+RETURNS TEXT AS $$
+DECLARE
+    found_email TEXT;
+BEGIN
+    SELECT email INTO found_email
+    FROM public.profiles
+    WHERE LOWER(username) = LOWER(p_username)
+    LIMIT 1;
+    RETURN found_email;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+REVOKE EXECUTE ON FUNCTION public.get_auth_email_by_username(TEXT) FROM public;
+GRANT EXECUTE ON FUNCTION public.get_auth_email_by_username(TEXT) TO anon, authenticated;
 
 -- 5. Trigger to Automatically Create Profile on Signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
