@@ -106,10 +106,10 @@ export const Footer: React.FC<FooterProps> = ({ onJoinWaitlist, onNavigate }) =>
               </li>
               <li>
                 <button
-                  onClick={() => handleLinkClick('landing', '#auctions')}
+                  onClick={() => handleLinkClick('landing', '#sanctuary')}
                   className="hover:text-white transition-colors cursor-pointer"
                 >
-                  Weekly Auctions
+                  Sanctuary Shelter
                 </button>
               </li>
               <li>
@@ -221,7 +221,7 @@ export const Footer: React.FC<FooterProps> = ({ onJoinWaitlist, onNavigate }) =>
                 </h3>
                 <div className="space-y-3 text-xs text-neutral-300 leading-relaxed max-h-80 overflow-y-auto pr-2">
                   <p>
-                    <strong>1. Platform Nature:</strong> PET SLAM is currently in pre-release preview. Features showcased—including the Animal Marketplace, Arena Clashes, and Auctions—represent interactive design specifications.
+                    <strong>1. Platform Nature:</strong> PET SLAM is currently in pre-release preview. Features showcased—including the Animal Marketplace, Arena Clashes, and Sanctuary Adoptions—represent interactive design specifications.
                   </p>
                   <p>
                     <strong>2. Virtual In-Game Assets:</strong> Animal attributes, levels, and credit balances within sandbox simulations carry no real-money cash value.

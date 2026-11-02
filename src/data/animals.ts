@@ -54,7 +54,7 @@ export interface Animal {
 
   image: string;
   fallbackImage: string;
-  acquisitionStatus: 'Available' | 'In Auction' | 'Reserved';
+  acquisitionStatus: 'Available' | 'Adopted' | 'Reserved';
   currentPriceCredits: number;
   combatArchetype: 'Heavy Grappler' | 'Precision Striker' | 'Speed Skirmisher' | 'Crushing Enforcer';
   description: string;
@@ -115,7 +115,7 @@ export const ANIMALS_DATA: Animal[] = [
     biteForce: 328,
     image: animalImages.rottweiler,
     fallbackImage: 'https://images.unsplash.com/photo-1567752881298-894bb81f9379?auto=format&fit=crop&w=600&q=80',
-    acquisitionStatus: 'In Auction',
+    acquisitionStatus: 'Adopted',
     currentPriceCredits: 18200,
     combatArchetype: 'Crushing Enforcer',
     description: 'Heavyweight juggernaut with massive cranial muscle and devastating bone-shattering jaw crushing power.',
@@ -255,7 +255,7 @@ export const ANIMALS_DATA: Animal[] = [
     biteForce: 305,
     image: 'https://images.unsplash.com/photo-1534361960057-19889db9621e?auto=format&fit=crop&w=600&q=80',
     fallbackImage: 'https://images.unsplash.com/photo-1534361960057-19889db9621e?auto=format&fit=crop&w=600&q=80',
-    acquisitionStatus: 'In Auction',
+    acquisitionStatus: 'Adopted',
     currentPriceCredits: 22500,
     combatArchetype: 'Precision Striker',
     description: 'Chiseled noble guardian combining apex intimidation, blistering pursuit speed, and lethal intercept strikes.',
@@ -343,7 +343,7 @@ export const ANIMALS_DATA: Animal[] = [
     biteForce: 160,
     image: 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=600&q=80',
     fallbackImage: 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?auto=format&fit=crop&w=600&q=80',
-    acquisitionStatus: 'In Auction',
+    acquisitionStatus: 'Adopted',
     currentPriceCredits: 21000,
     combatArchetype: 'Crushing Enforcer',
     description: 'The heavyweight giant of cats: massive tufted paws, impenetrable thick winter coat, and intimidating brawler dominance.',
@@ -511,7 +511,7 @@ export const ANIMALS_DATA: Animal[] = [
     biteForce: 155,
     image: 'https://images.unsplash.com/photo-1503777119540-ce54b422baff?auto=format&fit=crop&w=600&q=80',
     fallbackImage: 'https://images.unsplash.com/photo-1503777119540-ce54b422baff?auto=format&fit=crop&w=600&q=80',
-    acquisitionStatus: 'In Auction',
+    acquisitionStatus: 'Adopted',
     currentPriceCredits: 28000,
     combatArchetype: 'Precision Striker',
     description: 'Sleek miniature panther with shining obsidian fur, glowing copper eyes, and unmatched silent assassination strikes.',

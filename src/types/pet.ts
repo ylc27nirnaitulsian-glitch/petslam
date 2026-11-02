@@ -234,7 +234,7 @@ export interface MarketActivityEvent {
   description: string;
 }
 
-// Pet Auction House definitions
+// Sanctuary Pet Adoption definitions (Fixed credits, non-wagering)
 export interface PetAuctionItem {
   id: string;
   pet: CompanionPet;
@@ -250,4 +250,5 @@ export interface PetAuctionItem {
   notes?: string;
   bidHistory?: BidHistoryEntry[];
 }
+export type PetAdoptionItem = PetAuctionItem;
 

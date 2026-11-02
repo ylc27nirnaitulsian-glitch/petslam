@@ -19,7 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { label: 'Marketplace', href: '#marketplace', targetPage: 'landing' as const },
     { label: 'Evolution', href: '#evolution', targetPage: 'landing' as const },
     { label: 'Battle Arena', href: '#arena', targetPage: 'landing' as const },
-    { label: 'Auctions', href: '#auctions', targetPage: 'landing' as const },
+    { label: 'Sanctuary', href: '#sanctuary', targetPage: 'landing' as const },
     { label: 'IRL Mode', href: '#irl-mode', targetPage: 'landing' as const },
     {
       label: 'System Required Details',

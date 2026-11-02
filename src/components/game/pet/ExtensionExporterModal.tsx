@@ -186,7 +186,7 @@ export const ExtensionExporterModal: React.FC<ExtensionExporterModalProps> = ({ 
           name: 'Pet Slam - Multi-Pet Sanctuary & Screen Companion',
           version: '3.1.0',
           description:
-            'Interactive multi-pet screen companion with all Dog, Cat, and Beast breeds, voice mimic repeater, Pokemon GO wild catch radar, auction market, and persistent on-screen roaming across all tabs!',
+            'Interactive multi-pet screen companion with all Dog, Cat, and Beast breeds, voice mimic repeater, Pokemon GO wild catch radar, sanctuary adoption market, and persistent on-screen roaming across all tabs!',
           icons: {
             '16': 'icons/icon16.png',
             '48': 'icons/icon48.png',
@@ -1023,7 +1023,7 @@ function createPetCanvas(species, stage, width, height) {
     <button class="tab-btn active" data-tab="buddy">🏠 Buddy</button>
     <button class="tab-btn" data-tab="kennel">🐾 Kennel (12)</button>
     <button class="tab-btn" data-tab="radar">🎯 Catch Radar</button>
-    <button class="tab-btn" data-tab="auctions">⚖️ Market</button>
+    <button class="tab-btn" data-tab="auctions">🏠 Shelter</button>
   </div>
 
   <!-- TAB 1: BUDDY (Interactive Sanctuary Stage) -->
@@ -1095,28 +1095,27 @@ function createPetCanvas(species, stage, width, height) {
     </div>
   </div>
 
-  <!-- TAB 4: PET AUCTION MARKET -->
+  <!-- TAB 4: PET SANCTUARY ADOPTION SHELTER -->
   <div class="tab-content" id="tab-auctions">
-    <div style="font-size:11px;font-weight:bold;color:#F59E0B;margin-bottom:6px;">
-      ⚖️ Live Pet Auctions & Marketplace
+    <div style="font-size:11px;font-weight:bold;color:#CCFF00;margin-bottom:6px;">
+      🏠 Sanctuary Pet Adoption Shelter
     </div>
 
     <!-- Quick List Form -->
-    <div style="background:#0F1422;border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:8px;margin-bottom:8px;">
-      <div style="font-size:10px;font-weight:bold;color:#F59E0B;margin-bottom:4px;display:flex;justify-content:space-between;">
-        <span>➕ List Companion on Market</span>
+    <div style="background:#0F1422;border:1px solid rgba(204,255,0,0.3);border-radius:10px;padding:8px;margin-bottom:8px;">
+      <div style="font-size:10px;font-weight:bold;color:#CCFF00;margin-bottom:4px;display:flex;justify-content:space-between;">
+        <span>➕ Offer Companion for Adoption</span>
         <span style="color:#94A3B8;" id="listingPetTag">Active: Hachi</span>
       </div>
-      <div style="display:flex;gap:4px;margin-bottom:4px;">
-        <input type="number" id="listStartBid" placeholder="Start Bid (🪙)" style="flex:1;background:#07090E;color:#FFF;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:3px 6px;font-size:10px;" value="1200" />
-        <input type="number" id="listBuyout" placeholder="Buyout (🪙)" style="flex:1;background:#07090E;color:#FFF;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:3px 6px;font-size:10px;" value="2500" />
+      <div style="margin-bottom:4px;">
+        <input type="number" id="listBuyout" placeholder="Adoption Fee (🪙)" style="width:100%;box-sizing:border-box;background:#07090E;color:#FFF;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:3px 6px;font-size:10px;" value="1500" />
       </div>
-      <button id="submitListingBtn" style="width:100%;background:#F59E0B;color:#000;border:none;border-radius:6px;padding:4px;font-size:10px;font-weight:bold;cursor:pointer;">List for Auction</button>
+      <button id="submitListingBtn" style="width:100%;background:#CCFF00;color:#000;border:none;border-radius:6px;padding:4px;font-size:10px;font-weight:bold;cursor:pointer;">List for Adoption</button>
     </div>
 
     <!-- Activity Ticker -->
     <div id="marketTicker" style="font-size:9px;color:#10B981;font-weight:bold;background:rgba(16,185,129,0.1);padding:3px 6px;border-radius:6px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-      ⚡ Live Market: 3 active auctions across community
+      ⚡ Live Shelter: 3 companions awaiting adoption
     </div>
 
     <div class="auction-list" id="auctionListContainer"></div>
@@ -2260,7 +2259,7 @@ Includes:
 - **Custom Photo Avatar Support**: Upload your own dog or cat photo to roam across all Google tabs!
 - **Voice Mimic Sanctuary Stage**: Microphone voice repeater (companion voice!), poke head, tickle belly, feed berries, bubble bath with soap physics, gym workouts, and day/night lights.
 - **Pokemon GO Catch Radar**: Scan for wild pets, throw Beast-Balls with contracting target rings, and catch pets into your permanent kennel!
-- **Pet Auction House**: Real-time bidding, buyouts, and trade market!
+- **Sanctuary Pet Adoption Shelter**: Fixed-credit companion adoption and kennel re-homing!
 - **On-Screen Webpage Roaming**: Floats and roams across any website with drag physics, battery charging aura, and posture reminders!
 
 ## Quick 30-Second Install:
@@ -2309,7 +2308,7 @@ Includes:
                 </span>
               </h2>
               <p className="text-[11px] text-neutral-400">
-                Voice Mimic Sanctuary, Multi-Breed Kennel, Pokemon GO Catch Radar & Auction Market in one extension
+                Voice Mimic Sanctuary, Multi-Breed Kennel, Pokemon GO Catch Radar & Adoption Shelter in one extension
               </p>
             </div>
           </div>
@@ -2783,23 +2782,9 @@ Includes:
                       alert(e?.message || 'Failed to connect to Dodo Payments');
                     }
                   }}
-                  className="py-2.5 px-3 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold text-xs uppercase cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold text-xs uppercase cursor-pointer shadow-md"
                 >
-                  Pay $1.99 (Dodo)
-                </button>
-                <button
-                  onClick={() => {
-                    const res = unlockPass('extension', true);
-                    if (res.success) {
-                      setShowPassModal(false);
-                      handleDownloadZip();
-                    } else {
-                      alert(res.message);
-                    }
-                  }}
-                  className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase cursor-pointer border border-white/15"
-                >
-                  1,500 Credits
+                  Unlock Companion License $2.99 (Dodo Payments)
                 </button>
               </div>
 

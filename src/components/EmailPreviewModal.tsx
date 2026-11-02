@@ -110,7 +110,7 @@ export const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
                   <span>10,000 Credits</span>
                 </div>
                 <p className="text-xs text-neutral-300 leading-relaxed mt-2">
-                  Automatically credited to your account for beast marketplace acquisition, auction bidding, and attribute training.
+                  Automatically credited to your account for beast marketplace acquisition, sanctuary pet adoption, and attribute training.
                 </p>
               </div>
               <div className="mt-4 pt-2 border-t border-white/5 font-mono text-[11px] text-[#CCFF00] font-bold">
@@ -142,7 +142,7 @@ export const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
                   <span>Alpha Testing</span>
                 </div>
                 <p className="text-xs text-neutral-300 leading-relaxed mt-2">
-                  Priority invitation wave to playtest the real-time PvP battle arena, weekly player auctions, and IRL proximity matchmaking.
+                  Priority invitation wave to playtest the real-time PvP battle arena, sanctuary pet adoptions, and IRL proximity matchmaking.
                 </p>
               </div>
               <div className="mt-4 pt-2 border-t border-white/5 font-mono text-[11px] text-cyan-400 font-bold">

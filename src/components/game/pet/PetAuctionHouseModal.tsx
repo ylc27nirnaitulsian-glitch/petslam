@@ -33,8 +33,6 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
   const { credits, addCredits } = useGame();
 
   const [activeTab, setActiveTab] = useState<'live' | 'create' | 'my_listings'>('live');
-  const [selectedAuction, setSelectedAuction] = useState<PetAuctionItem | null>(null);
-  const [bidAmountInput, setBidAmountInput] = useState<number>(0);
   const [toastMessage, setToastMessage] = useState<{ text: string; isError?: boolean } | null>(null);
 
   // Create listing form state
@@ -45,85 +43,15 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
   const [buyoutPrice, setBuyoutPrice] = useState<number>(2500);
   const [durationHours, setDurationHours] = useState<number>(6);
 
-  // Dynamic Simulated Rival AI Bidders State
-  const [rivalBiddersEnabled, setRivalBiddersEnabled] = useState<boolean>(true);
-  const [liveOutbidAlert, setLiveOutbidAlert] = useState<string | null>(null);
-
-  // Simulated Dynamic Rival AI Bidders Floor (3-8s interval)
-  useEffect(() => {
-    if (!rivalBiddersEnabled || activeTab !== 'live' || auctions.length === 0) return;
-
-    const RIVAL_NAMES = [
-      'ShadowFang',
-      'ApexPredator',
-      'NeonKitsune',
-      'VoltHound',
-      'CyberTrainer99',
-      'TitanShiba',
-      'ValkyrieCat',
-    ];
-
-    const timer = setInterval(() => {
-      const eligible = auctions.filter((a) => !a.isUserListing && a.currentBid < a.buyoutPrice);
-      if (eligible.length === 0) return;
-
-      const target = eligible[Math.floor(Math.random() * eligible.length)];
-      const rival = RIVAL_NAMES[Math.floor(Math.random() * RIVAL_NAMES.length)];
-      const increment = Math.floor(Math.random() * 3 + 1) * 50;
-      const newBid = Math.min(target.buyoutPrice - 50, target.currentBid + increment);
-
-      if (newBid > target.currentBid) {
-        placeAuctionBid(target.id, newBid);
-
-        const wasUserWinning = target.highestBidder === 'Trainer (You)';
-        if (wasUserWinning) {
-          sound.playLightHit();
-          setLiveOutbidAlert(
-            `⚠️ New Sponsor Alert! ${rival} just sponsored ${target.pet.name} with ${newBid.toLocaleString()} Credits!`
-          );
-          setTimeout(() => setLiveOutbidAlert(null), 4000);
-        }
-      }
-    }, Math.floor(Math.random() * 4000 + 4000));
-
-    return () => clearInterval(timer);
-  }, [rivalBiddersEnabled, activeTab, auctions, placeAuctionBid]);
-
   const showToast = (text: string, isError = false) => {
     setToastMessage({ text, isError });
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleOpenBidModal = (item: PetAuctionItem) => {
-    setSelectedAuction(item);
-    setBidAmountInput(item.minNextBid);
-  };
-
-  const handleConfirmBid = () => {
-    if (!selectedAuction) return;
-
-    if (credits < bidAmountInput) {
-      showToast('Insufficient Credits in your wallet to sponsor this pet!', true);
-      sound.playClick();
-      return;
-    }
-
-    const res = placeAuctionBid(selectedAuction.id, bidAmountInput);
-    if (res.success) {
-      // Deduct credits from user wallet
-      addCredits(-bidAmountInput);
-      triggerConfetti();
-      showToast(res.message);
-      setSelectedAuction(null);
-    } else {
-      showToast(res.message, true);
-    }
-  };
-
-  const handleBuyout = (item: PetAuctionItem) => {
+  const handleAdopt = (item: PetAuctionItem) => {
     if (credits < item.buyoutPrice) {
       showToast(
-        `Insufficient Credits! You need ${item.buyoutPrice.toLocaleString()} Credits for Instant Adoption.`,
+        `Insufficient Credits! You need ${item.buyoutPrice.toLocaleString()} Credits for Adoption.`,
         true
       );
       sound.playClick();
@@ -148,12 +76,12 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
       return;
     }
 
-    if (buyoutPrice <= startBid) {
-      showToast('Instant adoption price must be higher than starting sponsorship!', true);
+    if (buyoutPrice <= 0) {
+      showToast('Please set a valid adoption fee in credits!', true);
       return;
     }
 
-    const res = listPetForAuction(selectedKennelPetId, startBid, buyoutPrice, durationHours);
+    const res = listPetForAuction(selectedKennelPetId, buyoutPrice, buyoutPrice, 24);
     if (res.success) {
       showToast(res.message);
       setActiveTab('live');
@@ -245,31 +173,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
               My Re-Homed ({userListings.length})
             </button>
           </div>
-
-          {/* Rival AI Bidders Toggle */}
-          <button
-            onClick={() => setRivalBiddersEnabled(!rivalBiddersEnabled)}
-            className={`mb-1.5 px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer border shrink-0 ${
-              rivalBiddersEnabled
-                ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300'
-                : 'bg-white/5 border-white/10 text-neutral-400'
-            }`}
-            title="Toggle simulated community shelter activity"
-          >
-            <span>🤖 Shelter Bots:</span>
-            <span className={rivalBiddersEnabled ? 'text-[#CCFF00]' : 'text-neutral-500'}>
-              {rivalBiddersEnabled ? 'ON' : 'OFF'}
-            </span>
-          </button>
         </div>
-
-        {/* Live Outbid Alert Notification */}
-        {liveOutbidAlert && (
-          <div className="mx-4 mt-2.5 p-2 rounded-xl text-xs font-mono bg-amber-500/20 border border-amber-400/60 text-amber-200 flex items-center gap-2 animate-bounce">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-            <span className="font-bold">{liveOutbidAlert}</span>
-          </div>
-        )}
 
         {/* Toast Feedback */}
         {toastMessage && (
@@ -336,30 +240,22 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                     </div>
                   </div>
 
-                  {/* Right: Bidding Controls */}
+                  {/* Right: Adoption Controls */}
                   <div className="flex flex-col items-end gap-1.5">
                     <div className="text-right">
-                      <div className="text-[10px] text-neutral-400 uppercase">Current Bid</div>
+                      <div className="text-[10px] text-neutral-400 uppercase font-mono">Adoption Fee</div>
                       <div className="text-xs font-bold text-white font-mono flex items-center gap-1 justify-end">
                         <Coins className="w-3 h-3 text-amber-400" />
-                        <span>{item.currentBid.toLocaleString()}</span>
+                        <span>{item.buyoutPrice.toLocaleString()}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => handleOpenBidModal(item)}
-                        className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-mono font-bold cursor-pointer"
-                      >
-                        Bid
-                      </button>
-                      <button
-                        onClick={() => handleBuyout(item)}
-                        className="px-2.5 py-1 bg-[#CCFF00] hover:bg-[#b8e600] text-black rounded-lg text-[10px] font-mono font-bold cursor-pointer shadow"
-                      >
-                        Buyout ({item.buyoutPrice.toLocaleString()})
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleAdopt(item)}
+                      className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#b8e600] text-black rounded-lg text-[11px] font-mono font-black uppercase cursor-pointer shadow-md transition-all active:scale-95"
+                    >
+                      Adopt Companion
+                    </button>
                   </div>
                 </div>
               ))}
@@ -400,56 +296,23 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-neutral-300 font-bold mb-1">Starting Bid (Credits):</label>
-                  <input
-                    type="number"
-                    min="100"
-                    step="50"
-                    value={startBid}
-                    onChange={(e) => setStartBid(Number(e.target.value))}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-white font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-neutral-300 font-bold mb-1">Buyout Price (Credits):</label>
-                  <input
-                    type="number"
-                    min="200"
-                    step="100"
-                    value={buyoutPrice}
-                    onChange={(e) => setBuyoutPrice(Number(e.target.value))}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-white font-mono"
-                  />
-                </div>
-              </div>
-
               <div>
-                <label className="block text-neutral-300 font-bold mb-1">Auction Duration:</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[2, 6, 12, 24].map((hrs) => (
-                    <button
-                      type="button"
-                      key={hrs}
-                      onClick={() => setDurationHours(hrs)}
-                      className={`py-1.5 rounded-xl border text-center cursor-pointer transition-all ${
-                        durationHours === hrs
-                          ? 'bg-[#CCFF00] text-black font-bold border-[#CCFF00]'
-                          : 'bg-black/40 text-neutral-300 border-white/10 hover:bg-white/5'
-                      }`}
-                    >
-                      {hrs} Hours
-                    </button>
-                  ))}
-                </div>
+                <label className="block text-neutral-300 font-bold mb-1">Fixed Adoption Fee (Credits):</label>
+                <input
+                  type="number"
+                  min="500"
+                  step="100"
+                  value={buyoutPrice}
+                  onChange={(e) => setBuyoutPrice(Number(e.target.value))}
+                  className="w-full bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-white font-mono"
+                />
               </div>
 
               <button
                 type="submit"
                 className="w-full py-2.5 bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black uppercase tracking-wider rounded-xl cursor-pointer shadow-lg active:scale-95 transition-transform"
               >
-                Publish Pet to Auction House
+                Publish Companion to Adoption Shelter
               </button>
             </form>
           )}
@@ -459,7 +322,7 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
             <div className="space-y-3">
               {userListings.length === 0 ? (
                 <div className="p-8 text-center text-neutral-400 font-mono text-xs">
-                  You currently have no active pet listings. Select "List Pet for Auction" to sell a companion!
+                  You currently have no pets offered for adoption. Select "+ Offer Pet" to re-home a companion!
                 </div>
               ) : (
                 userListings.map((item) => (
@@ -504,65 +367,6 @@ export const PetAuctionHouseModal: React.FC<PetAuctionHouseModalProps> = ({ onCl
           )}
         </div>
 
-        {/* Place Bid Modal Popover */}
-        {selectedAuction && (
-          <div className="absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="w-full max-w-xs bg-[#151C2C] border border-[#CCFF00]/40 rounded-2xl p-4 shadow-2xl text-white font-mono space-y-3">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                <span className="font-bold text-xs uppercase">
-                  Place Bid on {selectedAuction.pet.name}
-                </span>
-                <button
-                  onClick={() => setSelectedAuction(null)}
-                  className="text-neutral-400 hover:text-white"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="text-xs text-neutral-300">
-                Minimum Next Bid:{' '}
-                <span className="text-[#CCFF00] font-bold">
-                  {selectedAuction.minNextBid.toLocaleString()} Credits
-                </span>
-              </div>
-
-              <div>
-                <label className="text-[11px] text-neutral-400 block mb-1">Your Bid Amount:</label>
-                <input
-                  type="number"
-                  min={selectedAuction.minNextBid}
-                  step="50"
-                  value={bidAmountInput}
-                  onChange={(e) => setBidAmountInput(Number(e.target.value))}
-                  className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-white font-mono text-sm"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setBidAmountInput((prev) => prev + 100)}
-                  className="flex-1 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] text-neutral-300"
-                >
-                  +100
-                </button>
-                <button
-                  onClick={() => setBidAmountInput((prev) => prev + 500)}
-                  className="flex-1 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] text-neutral-300"
-                >
-                  +500
-                </button>
-              </div>
-
-              <button
-                onClick={handleConfirmBid}
-                className="w-full py-2 bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black uppercase text-xs rounded-xl cursor-pointer"
-              >
-                Confirm Sponsorship ({bidAmountInput.toLocaleString()} Credits)
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

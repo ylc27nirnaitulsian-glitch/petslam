@@ -75,8 +75,8 @@ export const Hero: React.FC<HeroProps> = ({ onJoinWaitlist, onExploreGame }) => 
                 <span className="text-neutral-400">Global PvP Circuit</span>
               </div>
               <div>
-                <span className="block font-display text-2xl font-black text-white">AUCTIONS</span>
-                <span className="text-neutral-400">Player Economy</span>
+                <span className="block font-display text-2xl font-black text-white">SANCTUARY</span>
+                <span className="text-neutral-400">Adoption Shelter</span>
               </div>
             </div>
           </div>

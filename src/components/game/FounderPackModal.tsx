@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Sparkles, Shield, Check, Flame, Award, Coins, CreditCard } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { sound } from '../../utils/audio';
+import { createDodoCheckout } from '../../services/dodo';
 
 interface FounderPackModalProps {
   isOpen: boolean;
@@ -11,7 +12,8 @@ interface FounderPackModalProps {
 export const FounderPackModal: React.FC<FounderPackModalProps> = ({ isOpen, onClose }) => {
   const { credits } = useGame();
   const [purchased, setPurchased] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState<'stripe' | 'credits'>('stripe');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<'dodo' | 'credits'>('dodo');
 
   if (!isOpen) return null;
 
@@ -22,9 +24,22 @@ export const FounderPackModal: React.FC<FounderPackModalProps> = ({ isOpen, onCl
     { title: 'Apex Founder Call-Sign Badge', desc: 'Exclusive gold border and permanent Genesis verification symbol' },
   ];
 
-  const handlePurchase = () => {
-    sound.playVictory();
-    setPurchased(true);
+  const handlePurchase = async () => {
+    setIsProcessing(true);
+    sound.playClick();
+    try {
+      const checkout = await createDodoCheckout({ passType: 'bundle' });
+      if (checkout.checkoutUrl) {
+        window.location.href = checkout.checkoutUrl;
+      } else {
+        sound.playVictory();
+        setPurchased(true);
+      }
+    } catch (err: any) {
+      alert(err?.message || 'Failed to initialize Dodo Payments checkout.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -53,16 +68,16 @@ export const FounderPackModal: React.FC<FounderPackModalProps> = ({ isOpen, onCl
 
             <div className="mt-4 p-3 bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/30 rounded-2xl flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-mono text-neutral-400 uppercase">Fixed Tier Price</span>
+                <span className="text-[10px] font-mono text-neutral-400 uppercase">Fixed Supporter Price</span>
                 <div className="text-2xl font-display font-black text-amber-300">
-                  $19.99 USD
+                  $4.99 USD
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-mono text-neutral-400 uppercase">Or In-Game</span>
+                <span className="text-[10px] font-mono text-neutral-400 uppercase">One-Time License</span>
                 <div className="text-xs font-mono font-bold text-white flex items-center gap-1">
-                  <Coins className="w-3.5 h-3.5 text-amber-400" />
-                  <span>25,000 Credits</span>
+                  <Shield className="w-3.5 h-3.5 text-amber-400" />
+                  <span>100% Cosmetic</span>
                 </div>
               </div>
             </div>
@@ -88,41 +103,13 @@ export const FounderPackModal: React.FC<FounderPackModalProps> = ({ isOpen, onCl
               ))}
             </div>
 
-            {/* Payment Method Selector */}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedCurrency('stripe')}
-                className={`py-2 px-3 rounded-xl border text-center transition-all cursor-pointer ${
-                  selectedCurrency === 'stripe'
-                    ? 'border-[#CCFF00] bg-[#1A1E2A] text-white font-bold'
-                    : 'border-white/10 bg-[#141620] text-neutral-400 hover:text-white'
-                }`}
-              >
-                <CreditCard className="w-4 h-4 mx-auto mb-0.5 text-[#CCFF00]" />
-                <span className="text-[11px]">Card / Stripe ($19.99)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedCurrency('credits')}
-                className={`py-2 px-3 rounded-xl border text-center transition-all cursor-pointer ${
-                  selectedCurrency === 'credits'
-                    ? 'border-[#CCFF00] bg-[#1A1E2A] text-white font-bold'
-                    : 'border-white/10 bg-[#141620] text-neutral-400 hover:text-white'
-                }`}
-              >
-                <Coins className="w-4 h-4 mx-auto mb-0.5 text-amber-400" />
-                <span className="text-[11px]">Credits (25,000 Cr)</span>
-              </button>
-            </div>
-
             <button
               onClick={handlePurchase}
-              className="mt-4 w-full py-3 rounded-xl font-display font-black text-xs uppercase tracking-wider bg-gradient-to-r from-amber-400 to-[#CCFF00] hover:brightness-110 text-black shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
+              disabled={isProcessing}
+              className="mt-5 w-full py-3 rounded-xl font-display font-black text-xs uppercase tracking-wider bg-gradient-to-r from-amber-400 to-[#CCFF00] hover:brightness-110 text-black shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              <span>Unlock Genesis Founder Collection</span>
+              <span>{isProcessing ? 'Connecting to Checkout...' : 'Unlock Founder Pack ($4.99 via Dodo)'}</span>
             </button>
           </div>
         ) : (

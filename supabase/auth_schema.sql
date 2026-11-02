@@ -109,7 +109,27 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 REVOKE EXECUTE ON FUNCTION public.get_auth_email_by_username(TEXT) FROM public;
 GRANT EXECUTE ON FUNCTION public.get_auth_email_by_username(TEXT) TO anon, authenticated;
 
--- 5. Trigger to Automatically Create Profile on Signup
+-- 6. Purchases & Entitlements Table (PAY-3)
+CREATE TABLE IF NOT EXISTS public.purchases (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    payment_id TEXT UNIQUE NOT NULL,
+    pass_type TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL,
+    currency TEXT DEFAULT 'USD' NOT NULL,
+    status TEXT NOT NULL,
+    customer_email TEXT,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read own purchases" ON public.purchases;
+CREATE POLICY "Users can read own purchases"
+ON public.purchases FOR SELECT
+USING (auth.uid() = user_id);
+
+-- 7. Trigger to Automatically Create Profile on Signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 DECLARE

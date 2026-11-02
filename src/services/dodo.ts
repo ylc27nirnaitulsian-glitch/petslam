@@ -3,7 +3,7 @@
  * Connects frontend to backend checkout session creation and status verification.
  */
 
-export type DodoPassType = 'extension' | 'avatar' | 'supporter' | 'bundle' | 'auction' | 'credits_5000';
+export type DodoPassType = 'extension' | 'avatar' | 'supporter' | 'bundle';
 
 export interface DodoProductInfo {
   id: string;
@@ -26,6 +26,25 @@ export interface DodoConfigResponse {
   configured: boolean;
   environment: string;
   products: Record<DodoPassType, DodoProductInfo>;
+}
+
+/**
+ * Verify a payment checkout session with the server before unlocking entitlements (PAY-1, PAY-3)
+ */
+export async function verifyDodoPaymentSession(sessionId: string): Promise<{
+  verified: boolean;
+  passType?: DodoPassType;
+  error?: string;
+}> {
+  try {
+    const res = await fetch(`/api/dodo/verify-session?sessionId=${encodeURIComponent(sessionId)}`);
+    if (!res.ok) {
+      return { verified: false, error: 'Verification request failed' };
+    }
+    return await res.json();
+  } catch (err: any) {
+    return { verified: false, error: err?.message || 'Network error verifying payment' };
+  }
 }
 
 /**
@@ -54,7 +73,7 @@ export async function createDodoCheckout(params: {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const finalReturnUrl =
     params.returnUrl ||
-    `${origin}/?dodo_payment=success&pass=${params.passType}`;
+    `${origin}/?payment_verify=pending&pass=${params.passType}`;
 
   const res = await fetch('/api/dodo/create-checkout', {
     method: 'POST',

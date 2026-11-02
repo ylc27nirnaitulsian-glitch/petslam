@@ -16,7 +16,7 @@ export const HowItWorks: React.FC = () => {
       title: 'Build Your Collection',
       icon: Layers,
       description:
-        'Acquire high-potential animals through direct marketplace sales or bid in competitive weekly live player auctions. Expand your personal stable, cross-specialize across combat weight classes, and secure rare generational bloodlines.',
+        'Acquire high-potential animals through direct marketplace sales or adopt companions through the community sanctuary shelter. Expand your personal stable, cross-specialize across combat weight classes, and secure rare generational bloodlines.',
       highlight: 'Player-to-player verified ownership',
     },
     {

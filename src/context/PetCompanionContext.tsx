@@ -566,7 +566,7 @@ const INITIAL_MARKET_FEED: MarketActivityEvent[] = [
     actor: 'NordicKennel',
     amount: 1800,
     timestamp: Date.now() - 1000 * 60 * 18,
-    description: '@NordicKennel listed Blizzard Ghost for auction (Starting: 1,800 🪙)!',
+    description: '@NordicKennel offered Blizzard Ghost for adoption (Fee: 1,800 🪙)!',
   },
   {
     id: 'feed_5',
@@ -1304,14 +1304,14 @@ export const PetCompanionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         actor: 'You',
         amount: startingBid,
         timestamp: Date.now(),
-        description: `You listed ${targetPet.name} (${targetPet.title}) for auction!`,
+        description: `You offered ${targetPet.name} (${targetPet.title}) for adoption!`,
       };
       setMarketFeedEvents((f) => [listingEvt, ...f.slice(0, 29)]);
 
       sound.playCoin();
       setAuctions((prev) => [newListing, ...prev]);
 
-      // Remove from active kennel while on auction
+      // Remove from active kennel while listed for adoption
       setKennelPets((prev) => prev.filter((p) => p.id !== petId));
 
       // If active pet was listed, switch active pet to another
@@ -1324,7 +1324,7 @@ export const PetCompanionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       return {
         success: true,
-        message: `${targetPet.name} has been listed on the Pet Auction House!`,
+        message: `${targetPet.name} has been listed in the Sanctuary Adoption Shelter!`,
       };
     },
     [kennelPets, pet.id]

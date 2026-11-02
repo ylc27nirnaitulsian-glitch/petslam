@@ -6,11 +6,9 @@
 interface Env {
   DODO_PAYMENTS_API_KEY?: string;
   DODO_PAYMENTS_ENVIRONMENT?: string;
-  DODO_PRODUCT_AUCTION_PASS?: string;
   DODO_PRODUCT_AVATAR_PASS?: string;
   DODO_PRODUCT_EXTENSION_PASS?: string;
   DODO_PRODUCT_BUNDLE_PASS?: string;
-  DODO_PRODUCT_CREDITS_5K?: string;
 }
 
 interface EventContext {
@@ -65,20 +63,6 @@ export async function onRequestGet(context: EventContext): Promise<Response> {
       price: '$4.99',
       amountCents: 499,
       description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
-    },
-    auction: {
-      id: env.DODO_PRODUCT_AUCTION_PASS || 'pdt_0NqgJlisZzb8svxO90gL0',
-      title: 'Sanctuary Supporter License',
-      price: '$1.99',
-      amountCents: 199,
-      description: 'Supporter pass for sanctuary cosmetic customizations and adoption shelter flair.',
-    },
-    credits_5000: {
-      id: env.DODO_PRODUCT_CREDITS_5K || 'pdt_0NqgJznwnQjxDNNAydOuK',
-      title: '5,000 Slam Credits Pack',
-      price: '$4.99',
-      amountCents: 499,
-      description: 'In-game credits for animal training, dietary boosters, and market purchases.',
     },
   };
 

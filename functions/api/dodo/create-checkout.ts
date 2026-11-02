@@ -19,7 +19,7 @@ interface EventContext {
 }
 
 interface CreateCheckoutBody {
-  passType: 'auction' | 'avatar' | 'extension' | 'bundle' | 'credits_5000';
+  passType: 'avatar' | 'extension' | 'bundle' | 'supporter';
   customerEmail?: string;
   customerName?: string;
   returnUrl?: string;
@@ -51,11 +51,10 @@ export async function onRequestPost(context: EventContext): Promise<Response> {
     : 'https://test.dodopayments.com/checkouts';
 
   const productCatalog: Record<string, string> = {
-    auction: env.DODO_PRODUCT_AUCTION_PASS || 'pdt_0NqgJlisZzb8svxO90gL0',
     avatar: env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0NqgJPS04QMUNn6vlOUrI',
     extension: env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0NqgJtNVeIeTlUsEMZ3C1',
+    supporter: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
     bundle: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
-    credits_5000: env.DODO_PRODUCT_CREDITS_5K || 'pdt_0NqgJznwnQjxDNNAydOuK',
   };
 
   try {
@@ -70,7 +69,7 @@ export async function onRequestPost(context: EventContext): Promise<Response> {
       );
     }
 
-    const defaultReturnUrl = `https://www.petslam.app/?dodo_payment=success&pass=${passType}`;
+    const defaultReturnUrl = `https://www.petslam.app/?payment_verify=pending&pass=${passType}`;
     const finalReturnUrl = returnUrl || defaultReturnUrl;
 
     const payload: Record<string, any> = {

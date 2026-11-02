@@ -13,6 +13,7 @@ import {
   Sparkles,
   HeartPulse,
   Gavel,
+  Home,
 } from 'lucide-react';
 import { useGame } from '../../../context/GameContext';
 import { Animal, ANIMALS_DATA } from '../../../data/animals';
@@ -139,10 +140,10 @@ export const MarketScreen: React.FC = () => {
               sound.playClick();
               setShowPetAuctions(true);
             }}
-            className="py-2 text-[11px] font-display font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 flex items-center justify-center gap-1 shadow-sm"
+            className="py-2 text-[11px] font-display font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 flex items-center justify-center gap-1 shadow-sm"
           >
-            <Gavel className="w-3 h-3" />
-            <span>Auctions</span>
+            <Home className="w-3 h-3" />
+            <span>Adoptions</span>
           </button>
         </div>
       </div>

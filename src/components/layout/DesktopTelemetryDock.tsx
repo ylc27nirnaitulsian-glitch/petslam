@@ -44,7 +44,6 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
     battleDeckIds,
     activeBeast,
     selectActiveBeast,
-    hasAuctionPass,
     hasAvatarStudioPass,
     hasExtensionPass,
   } = useGame();

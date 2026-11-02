@@ -1327,23 +1327,9 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       alert(e?.message || 'Failed to connect to Dodo Payments');
                     }
                   }}
-                  className="py-2.5 px-3 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold text-xs uppercase cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold text-xs uppercase cursor-pointer shadow-md"
                 >
-                  Pay $0.99 (Dodo)
-                </button>
-                <button
-                  onClick={() => {
-                    const res = unlockPass('avatar', true);
-                    if (res.success) {
-                      setShowPassModal(false);
-                      finalizeSave();
-                    } else {
-                      alert(res.message);
-                    }
-                  }}
-                  className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase cursor-pointer border border-white/15"
-                >
-                  1,000 Credits
+                  Unlock AI Photo Pass $0.99 (Dodo Payments)
                 </button>
               </div>
 

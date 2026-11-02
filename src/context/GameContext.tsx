@@ -4,6 +4,7 @@ import { GearItem, GEAR_ITEMS } from '../data/armory';
 import { sound } from '../utils/audio';
 import { trackClarityEvent, setClarityTag } from '../utils/clarity';
 import { supabase } from '../services/supabaseClient';
+import { verifyDodoPaymentSession } from '../services/dodo';
 
 export interface MatchHistoryEntry {
   id: string;
@@ -80,10 +81,9 @@ interface GameContextType {
   registerCustomFighter: (fighter: Animal) => void;
 
   // VIP Monetization Passes
-  hasAuctionPass: boolean;
   hasAvatarStudioPass: boolean;
   hasExtensionPass: boolean;
-  unlockPass: (passType: 'auction' | 'avatar' | 'extension' | 'bundle', useCredits?: boolean) => { success: boolean; message: string };
+  unlockPass: (passType: 'avatar' | 'extension' | 'bundle' | 'supporter', useCredits?: boolean) => { success: boolean; message: string };
 
   // Armory
   equippedGear: EquippedGear;
@@ -282,7 +282,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const [credits, setCredits] = useState<number>(24500);
+  const [credits, setCredits] = useState<number>(1000);
   const addCredits = (amount: number) => {
     setCredits((prev) => Math.max(0, prev + amount));
   };
@@ -314,14 +314,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const [hasAuctionPass, setHasAuctionPass] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('petslam_pass_auction') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
   const [hasAvatarStudioPass, setHasAvatarStudioPass] = useState<boolean>(() => {
     try {
       return localStorage.getItem('petslam_pass_avatar') === 'true';
@@ -338,63 +330,54 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  const unlockPass = (passType: 'auction' | 'avatar' | 'extension' | 'bundle', useCredits = false) => {
-    const creditPrices: Record<string, number> = {
-      auction: 1500, // Reduced to $1.99 / 1,500 credits
-      avatar: 1000,
-      extension: 1500,
-      bundle: 3500,
-    };
-
-    if (useCredits) {
-      const price = creditPrices[passType] || 2500;
-      if (credits < price) {
-        sound.playClick();
-        return { success: false, message: `Need ${price.toLocaleString()} Credits to unlock this pass!` };
-      }
-      setCredits((prev) => prev - price);
-    }
-
+  const unlockPass = (passType: 'avatar' | 'extension' | 'bundle' | 'supporter', _useCredits = false) => {
     sound.playLevelUp();
 
-    if (passType === 'auction' || passType === 'bundle') {
-      setHasAuctionPass(true);
-      try { localStorage.setItem('petslam_pass_auction', 'true'); } catch {}
-    }
-    if (passType === 'avatar' || passType === 'bundle') {
+    if (passType === 'avatar' || passType === 'bundle' || passType === 'supporter') {
       setHasAvatarStudioPass(true);
       try { localStorage.setItem('petslam_pass_avatar', 'true'); } catch {}
     }
-    if (passType === 'extension' || passType === 'bundle') {
+    if (passType === 'extension' || passType === 'bundle' || passType === 'supporter') {
       setHasExtensionPass(true);
       try { localStorage.setItem('petslam_pass_extension', 'true'); } catch {}
     }
 
     return {
       success: true,
-      message: passType === 'bundle' ? 'All-Access Genesis VIP Bundle Activated!' : `${passType.toUpperCase()} VIP Pass Activated!`,
+      message: passType === 'bundle' || passType === 'supporter' ? 'All-Access Genesis Supporter Pack Activated!' : `${passType.toUpperCase()} VIP Pass Activated!`,
     };
   };
 
-  // Listen for Dodo Payments success redirects: /?dodo_payment=success&pass=[type]
+  // PAY-1 & PAY-3: Secure Payment Verification Listener
+  // Never unlock passes based on URL params alone. Only grant upon verified server confirmation.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const paymentStatus = urlParams.get('dodo_payment');
+      const sessionId = urlParams.get('session_id') || urlParams.get('sessionId');
       const pass = urlParams.get('pass');
 
-      if (paymentStatus === 'success' && pass) {
-        unlockPass(pass as any, false);
-        trackClarityEvent(`dodo_payment_success_${pass}`);
-        setClarityTag('vip_pass_' + pass, 'active');
+      // Clean query params from address bar immediately to prevent tampering
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
 
-        // Clean query params from address bar without reloading
-        const cleanUrl = window.location.pathname + window.location.hash;
-        window.history.replaceState({}, document.title, cleanUrl);
+      if (sessionId && pass) {
+        verifyDodoPaymentSession(sessionId).then((result) => {
+          if (result.verified) {
+            const confirmedPass = (result.passType || pass) as any;
+            unlockPass(confirmedPass, false);
+            trackClarityEvent(`dodo_payment_verified_${confirmedPass}`);
+            setClarityTag('vip_pass_' + confirmedPass, 'active');
+            sound.playVictory();
+          } else {
+            console.warn('[GameContext] Payment verification failed or pending:', result.error);
+          }
+        }).catch((e) => {
+          console.warn('[GameContext] Failed to contact payment verification endpoint:', e);
+        });
       }
     } catch (e) {
-      console.warn('[GameContext] Error parsing payment redirect params:', e);
+      console.warn('[GameContext] Error handling payment return:', e);
     }
   }, []);
 
@@ -823,7 +806,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refillEnergy,
         resetProgress,
         getEffectiveStats,
-        hasAuctionPass,
         hasAvatarStudioPass,
         hasExtensionPass,
         unlockPass,

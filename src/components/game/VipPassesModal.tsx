@@ -7,9 +7,6 @@ import {
   Flame,
   Award,
   Crown,
-  Coins,
-  CreditCard,
-  Gavel,
   Camera,
   Tv,
   Zap,
@@ -35,14 +32,11 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
   defaultPass = 'extension',
 }) => {
   const {
-    credits,
-    hasAuctionPass,
     hasAvatarStudioPass,
     hasExtensionPass,
     unlockPass,
   } = useGame();
 
-  const [paymentMethod, setPaymentMethod] = useState<'usd' | 'credits'>('usd');
   const [selectedPass, setSelectedPass] = useState<'extension' | 'avatar' | 'bundle'>(defaultPass);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -108,50 +102,29 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
   const handlePurchase = async (passId: 'extension' | 'avatar' | 'bundle') => {
     setIsProcessing(true);
     sound.playClick();
-    trackClarityEvent(`pass_unlock_attempt_${passId}_${paymentMethod}`);
+    trackClarityEvent(`pass_unlock_attempt_${passId}_dodo`);
 
-    if (paymentMethod === 'usd') {
-      try {
-        const checkout = await createDodoCheckout({ passType: passId });
-        setIsProcessing(false);
-
-        if (checkout.simulated) {
-          // In test/sandbox simulation mode, immediately fulfill pass
-          const res = unlockPass(passId, false);
-          sound.playVictory();
-          setSuccessToast(`[Dodo Sandbox] ${res.message}`);
-          trackClarityEvent(`dodo_checkout_simulated_success_${passId}`);
-          setTimeout(() => setSuccessToast(null), 3500);
-        } else if (checkout.checkoutUrl) {
-          // In official live/test mode, redirect to Dodo Payments hosted checkout
-          trackClarityEvent(`dodo_redirect_hosted_${passId}`);
-          window.location.href = checkout.checkoutUrl;
-        }
-      } catch (err: any) {
-        setIsProcessing(false);
-        sound.playClick();
-        alert(err?.message || 'Failed to connect to Dodo Payments checkout.');
-      }
-      return;
-    }
-
-    // Credits Flow
-    setTimeout(() => {
-      const res = unlockPass(passId, true);
+    try {
+      const checkout = await createDodoCheckout({ passType: passId });
       setIsProcessing(false);
 
-      if (res.success) {
+      if (checkout.simulated) {
+        // In test/sandbox simulation mode, fulfill pass
+        const res = unlockPass(passId, false);
         sound.playVictory();
-        setSuccessToast(res.message);
-        trackClarityEvent(`credits_pass_unlocked_${passId}`);
-        setTimeout(() => {
-          setSuccessToast(null);
-        }, 3000);
-      } else {
-        sound.playClick();
-        alert(res.message);
+        setSuccessToast(`[Dodo Sandbox] ${res.message}`);
+        trackClarityEvent(`dodo_checkout_simulated_success_${passId}`);
+        setTimeout(() => setSuccessToast(null), 3500);
+      } else if (checkout.checkoutUrl) {
+        // In official live/test mode, redirect to Dodo Payments hosted checkout
+        trackClarityEvent(`dodo_redirect_hosted_${passId}`);
+        window.location.href = checkout.checkoutUrl;
       }
-    }, 500);
+    } catch (err: any) {
+      setIsProcessing(false);
+      sound.playClick();
+      alert(err?.message || 'Failed to connect to Dodo Payments checkout.');
+    }
   };
 
   return (
@@ -182,33 +155,6 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
         <div className="mt-3 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2 text-[11px] text-emerald-300">
           <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
           <span><strong>Fair-Play Pledge:</strong> 100% non-wagering. No real-money auctions. Zero pay-to-win stat advantages.</span>
-        </div>
-
-        {/* Currency Switcher: USD or Credits */}
-        <div className="mt-4 p-1 rounded-2xl bg-[#141A28] border border-white/10 grid grid-cols-2 gap-1">
-          <button
-            onClick={() => setPaymentMethod('usd')}
-            className={`py-2 px-3 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              paymentMethod === 'usd'
-                ? 'bg-gradient-to-r from-[#CCFF00] to-emerald-400 text-black shadow-md'
-                : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>Direct Payment (USD)</span>
-          </button>
-
-          <button
-            onClick={() => setPaymentMethod('credits')}
-            className={`py-2 px-3 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              paymentMethod === 'credits'
-                ? 'bg-gradient-to-r from-amber-400 to-amber-600 text-black shadow-md'
-                : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            <Coins className="w-3.5 h-3.5" />
-            <span>Pay with Credits ({credits.toLocaleString()})</span>
-          </button>
         </div>
 
         {/* Pass Cards */}
@@ -263,10 +209,10 @@ export const VipPassesModal: React.FC<VipPassesModalProps> = ({
 
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-base font-display font-black text-white">
-                          {paymentMethod === 'usd' ? pass.priceUsd : `${pass.creditsCost.toLocaleString()} Credits`}
+                          {pass.priceUsd}
                         </span>
                         <span className="text-[10px] text-neutral-400 font-mono">
-                          {paymentMethod === 'usd' ? `or ${pass.creditsCost.toLocaleString()} Credits` : `(${pass.priceUsd})`}
+                          One-time license
                         </span>
                       </div>
                     </div>

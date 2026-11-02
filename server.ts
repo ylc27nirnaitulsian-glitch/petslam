@@ -123,20 +123,6 @@ const DODO_PRODUCTS = {
     amountCents: 499,
     description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
   },
-  auction: {
-    id: process.env.DODO_PRODUCT_AUCTION_PASS || 'pdt_0NqgJlisZzb8svxO90gL0',
-    title: 'Sanctuary Supporter License',
-    price: '$1.99',
-    amountCents: 199,
-    description: 'Supporter pass for sanctuary cosmetic customizations and adoption shelter flair.',
-  },
-  credits_5000: {
-    id: process.env.DODO_PRODUCT_CREDITS_5K || 'pdt_0NqgJznwnQjxDNNAydOuK',
-    title: '5,000 Slam Credits Pack',
-    price: '$4.99',
-    amountCents: 499,
-    description: 'In-game credits for animal training, dietary boosters, and market purchases.',
-  },
 };
 
 export interface PaymentRecord {
@@ -485,7 +471,52 @@ app.post('/api/dodo/webhook', async (req: any, res) => {
   }
 });
 
-// 4. Payment History (Audit Log) - Protected: Requires server-configured ADMIN_SECRET_KEY
+// 4. Verify Payment Session (PAY-1 & PAY-3)
+app.get('/api/dodo/verify-session', async (req, res) => {
+  try {
+    const sessionId = (req.query.sessionId as string) || (req.query.session_id as string);
+    if (!sessionId) {
+      res.status(400).json({ verified: false, error: 'Session ID is required.' });
+      return;
+    }
+
+    // Check existing recorded payments
+    const existing = getPayments().find((p) => p.sessionId === sessionId && p.status === 'succeeded');
+    if (existing) {
+      res.json({ verified: true, passType: existing.passType, status: 'succeeded' });
+      return;
+    }
+
+    const apiKey = process.env.DODO_PAYMENTS_API_KEY;
+    if (!apiKey) {
+      res.json({ verified: false, error: 'Dodo Payments not configured on server.' });
+      return;
+    }
+
+    const isLive = apiKey.startsWith('dodo_live_') || process.env.DODO_PAYMENTS_ENVIRONMENT === 'live_mode';
+    const baseUrl = isLive ? 'https://live.dodopayments.com' : 'https://test.dodopayments.com';
+
+    const dodoRes = await fetch(`${baseUrl}/payments/${sessionId}`, {
+      headers: {
+        Authorization: `Bearer ${apiKey.trim()}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (dodoRes.ok) {
+      const data: any = await dodoRes.json();
+      const isPaid = data.status === 'succeeded' || data.status === 'paid';
+      res.json({ verified: isPaid, status: data.status, passType: data.metadata?.passType });
+      return;
+    }
+
+    res.json({ verified: false, error: 'Payment not verified.' });
+  } catch (err: any) {
+    res.status(500).json({ verified: false, error: err.message });
+  }
+});
+
+// 5. Payment History (Audit Log) - Protected: Requires server-configured ADMIN_SECRET_KEY
 app.get('/api/dodo/payments', (req, res) => {
   const adminSecret = process.env.ADMIN_SECRET_KEY;
   const authHeader = req.headers['x-admin-key'] || req.headers['authorization'];

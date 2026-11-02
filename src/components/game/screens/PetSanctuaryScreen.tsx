@@ -26,6 +26,7 @@ import {
   Smile,
   Droplets,
   Flame,
+  Home,
 } from 'lucide-react';
 import { sound } from '../../../utils/audio';
 import { voiceMimic } from '../../../utils/voiceMimic';
@@ -504,10 +505,10 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
           </button>
           <button
             onClick={() => setShowAuctionModal(true)}
-            className="p-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 transition-colors cursor-pointer"
-            title="Live Auction House Floor"
+            className="p-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 transition-colors cursor-pointer"
+            title="Sanctuary Pet Adoption Shelter"
           >
-            <Gavel className="w-3.5 h-3.5" />
+            <Home className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setShowWorldMap(true)}

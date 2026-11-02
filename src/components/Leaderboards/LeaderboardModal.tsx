@@ -39,60 +39,60 @@ interface ArenaKingPlayer {
   avatarUrl: string;
 }
 
-interface OutbidPetEntry {
+interface ChampionPetEntry {
   rank: number;
   petName: string;
   trainerName: string;
-  currentBidUsd: number;
+  cheers: number;
   photoUrl: string;
-  heldSince: string;
+  featuredSince: string;
   isAiVerified: boolean;
 }
 
-const INITIAL_OUTBID_HOLDERS: OutbidPetEntry[] = [
+const INITIAL_CHAMPION_HOLDERS: ChampionPetEntry[] = [
   {
     rank: 1,
     petName: 'Barnaby the Sovereign',
     trainerName: 'LordSterling',
-    currentBidUsd: 42.0,
+    cheers: 420,
     photoUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&auto=format&fit=crop&q=80',
-    heldSince: '4h ago',
+    featuredSince: '4h ago',
     isAiVerified: true,
   },
   {
     rank: 2,
     petName: 'Cleo Golden Empress',
     trainerName: 'CairoKing',
-    currentBidUsd: 28.0,
+    cheers: 280,
     photoUrl: 'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=400&auto=format&fit=crop&q=80',
-    heldSince: '7h ago',
+    featuredSince: '7h ago',
     isAiVerified: true,
   },
   {
     rank: 3,
     petName: 'Diesel Mountain Dog',
     trainerName: 'ApexRuler',
-    currentBidUsd: 19.0,
+    cheers: 195,
     photoUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&auto=format&fit=crop&q=80',
-    heldSince: '1d ago',
+    featuredSince: '1d ago',
     isAiVerified: true,
   },
   {
     rank: 4,
     petName: 'Mochi Marshmallow',
     trainerName: 'SugarBytes',
-    currentBidUsd: 12.0,
+    cheers: 120,
     photoUrl: 'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&auto=format&fit=crop&q=80',
-    heldSince: '2d ago',
+    featuredSince: '2d ago',
     isAiVerified: true,
   },
   {
     rank: 5,
     petName: 'Ghost Samurai Cat',
     trainerName: 'TokyoRonin',
-    currentBidUsd: 8.0,
+    cheers: 85,
     photoUrl: 'https://images.unsplash.com/photo-1513360309081-36f20ca48f22?w=400&auto=format&fit=crop&q=80',
-    heldSince: '3d ago',
+    featuredSince: '3d ago',
     isAiVerified: true,
   },
 ];
@@ -103,16 +103,15 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   onOpenUpload,
 }) => {
   const { trainerName } = useGame();
-  const [activeTab, setActiveTab] = useState<'arena' | 'outbid'>('outbid');
-  const [outbidToast, setOutbidToast] = useState<string | null>(null);
-  const [holders, setHolders] = useState<OutbidPetEntry[]>(INITIAL_OUTBID_HOLDERS);
+  const [activeTab, setActiveTab] = useState<'arena' | 'champions'>('champions');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [holders, setHolders] = useState<ChampionPetEntry[]>(INITIAL_CHAMPION_HOLDERS);
 
   // Photo Upload & Direct Camera Snap State
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [inputPetName, setInputPetName] = useState<string>('');
   const [inputTrainerName, setInputTrainerName] = useState<string>(trainerName || 'Champion Trainer');
-  const [inputBidUsd, setInputBidUsd] = useState<number>(43.0);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -193,40 +192,34 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
     }
   };
 
-  const handleOpenPhotoForm = (suggestedBid?: number) => {
+  const handleOpenPhotoForm = () => {
     sound.playClick();
     setShowUploadForm(true);
-    if (suggestedBid) {
-      setInputBidUsd(suggestedBid);
-    } else {
-      const topBid = holders[0]?.currentBidUsd || 42.0;
-      setInputBidUsd(topBid + 1.0);
-    }
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
-  const handleSubmitNewOutbid = () => {
+  const handleSubmitNewChampion = () => {
     if (!previewPhoto) {
-      setOutbidToast('⚠️ Please snap or select a photo of your pet first!');
+      setToastMessage('⚠️ Please snap or select a photo of your pet first!');
       sound.playClick();
       return;
     }
 
-    const petName = inputPetName.trim() || 'My Crown Pet';
+    const petName = inputPetName.trim() || 'My Champion Pet';
     sound.playVictory();
     triggerVictoryExplosion();
-    trackClarityEvent('outbid_photo_submitted');
+    trackClarityEvent('champion_photo_submitted');
 
-    const newBidAmount = Math.max(1, Number(inputBidUsd) || 43.0);
-    const newEntry: OutbidPetEntry = {
+    const topCheers = holders[0]?.cheers || 420;
+    const newEntry: ChampionPetEntry = {
       rank: 1,
       petName,
       trainerName: inputTrainerName.trim() || 'Trainer',
-      currentBidUsd: newBidAmount,
+      cheers: topCheers + 1,
       photoUrl: previewPhoto,
-      heldSince: 'Just now',
+      featuredSince: 'Just now',
       isAiVerified: true,
     };
 
@@ -239,20 +232,29 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
       return updated.slice(0, 10);
     });
 
-    setOutbidToast(`👑 ${petName} is now Sovereign #1 on the Outbid Hall of Fame!`);
+    setToastMessage(`👑 ${petName} is now featured #1 in the Hall of Champions!`);
     setShowUploadForm(false);
     setPreviewPhoto(null);
     setInputPetName('');
 
     setTimeout(() => {
-      setOutbidToast(null);
+      setToastMessage(null);
     }, 4500);
   };
 
-  const handleOutbidClick = (entry: OutbidPetEntry) => {
-    sound.playClick();
-    const nextBid = entry.currentBidUsd + 1.0;
-    handleOpenPhotoForm(nextBid);
+  const handleCheerPet = (entry: ChampionPetEntry) => {
+    sound.playVictory();
+    triggerVictoryExplosion();
+    setHolders((prev) => {
+      const updated = prev.map((p) =>
+        p.petName === entry.petName ? { ...p, cheers: p.cheers + 1 } : p
+      );
+      return updated.sort((a, b) => b.cheers - a.cheers).map((p, idx) => ({ ...p, rank: idx + 1 }));
+    });
+    setToastMessage(`✨ Cheered for ${entry.petName}! (+1 Fan Cheer)`);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
   };
 
   return (
@@ -260,10 +262,10 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
       <div className="relative w-full max-w-2xl max-h-[92vh] flex flex-col bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/20 rounded-3xl shadow-2xl overflow-hidden transition-colors duration-300">
         
         {/* Toast Alert */}
-        {outbidToast && (
+        {toastMessage && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 bg-[#CCFF00] text-black font-mono font-black text-xs sm:text-sm rounded-xl shadow-2xl border-2 border-black animate-in slide-in-from-top-4 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-black" />
-            <span>{outbidToast}</span>
+            <span>{toastMessage}</span>
           </div>
         )}
 
@@ -278,7 +280,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                 Pet Slam Hall of Fame
               </h2>
               <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                PvP Elo Kings & Real-Money Clout Leaderboards
+                PvP Elo Kings & Community Champion Pets
               </p>
             </div>
           </div>
@@ -300,16 +302,16 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           <button
             onClick={() => {
               sound.playClick();
-              setActiveTab('outbid');
+              setActiveTab('champions');
             }}
             className={`flex-1 py-2.5 px-4 rounded-2xl font-display font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'outbid'
+              activeTab === 'champions'
                 ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black shadow-md'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            <DollarSign className="w-4 h-4" />
-            <span>OutbidPet (Wealth Clout)</span>
+            <Crown className="w-4 h-4" />
+            <span>Hall of Champions (Top Pets)</span>
           </button>
 
           <button
@@ -399,7 +401,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               ))}
             </div>
           ) : (
-            /* TAB 2: OUTBIDPET (REAL-MONEY CLOUT) */
+            /* TAB 2: HALL OF CHAMPIONS (FAIR PLAY COMMUNITY PETS) */
             <div className="space-y-4">
               {/* Header Action Banner with Instant Camera Trigger */}
               <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 border-2 border-amber-400/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
@@ -409,10 +411,10 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   </div>
                   <div>
                     <h3 className="font-display font-black text-base sm:text-lg uppercase text-slate-900 dark:text-white tracking-wide">
-                      Hold The Clout Crown With Your Pet
+                      Showcase Your Pet In The Hall of Fame
                     </h3>
                     <p className="text-xs font-mono text-slate-600 dark:text-neutral-300 mt-0.5">
-                      Upload or snap a photo of your pet to outbid the top spot!
+                      Upload or snap your real pet to earn community fan cheers!
                     </p>
                   </div>
                 </div>
@@ -422,7 +424,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-black hover:bg-slate-900 text-[#CCFF00] dark:bg-[#CCFF00] dark:text-black dark:hover:bg-[#b8e600] font-display font-black uppercase text-xs tracking-wider transition-all cursor-pointer shadow-lg active:scale-95 flex items-center justify-center gap-2 shrink-0"
                 >
                   <Camera className="w-4 h-4" />
-                  <span>Add / Snap Pet Photo 📸</span>
+                  <span>Showcase Pet Photo 📸</span>
                 </button>
               </div>
 
@@ -436,7 +438,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-amber-500" />
                       <h4 className="font-display font-black text-base uppercase text-slate-900 dark:text-white tracking-wide">
-                        Claim Your Outbid Hall of Fame Rank
+                        Feature Your Companion
                       </h4>
                     </div>
                     <button
@@ -516,12 +518,12 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                       </div>
 
                       <p className="text-[11px] font-mono text-slate-500 dark:text-neutral-400">
-                        Upload an unedited photo of your dog or cat. Gemini AI verifies real pets automatically!
+                        Upload a photo of your pet companion. Verified pets earn exclusive cosmetic badges!
                       </p>
                     </div>
                   </div>
 
-                  {/* Pet Name & Bid Inputs */}
+                  {/* Pet Name Input */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                     <div>
                       <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -538,21 +540,15 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 
                     <div>
                       <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1">
-                        Outbid Amount ($ USD):
+                        Trainer Name:
                       </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-mono font-bold">
-                          $
-                        </span>
-                        <input
-                          type="number"
-                          step="1.00"
-                          min="1"
-                          value={inputBidUsd}
-                          onChange={(e) => setInputBidUsd(parseFloat(e.target.value) || 0)}
-                          className="w-full pl-7 pr-3 py-2 rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-black/50 text-slate-900 dark:text-white font-mono text-sm font-bold focus:outline-hidden focus:border-amber-400"
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={inputTrainerName}
+                        onChange={(e) => setInputTrainerName(e.target.value)}
+                        placeholder="Your Trainer Name"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-black/50 text-slate-900 dark:text-white font-mono text-sm focus:outline-hidden focus:border-amber-400"
+                      />
                     </div>
                   </div>
 
@@ -566,17 +562,17 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     </button>
                     <button
                       type="button"
-                      onClick={handleSubmitNewOutbid}
+                      onClick={handleSubmitNewChampion}
                       className="px-6 py-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
                     >
                       <Crown className="w-4 h-4 text-black" />
-                      <span>Submit Outbid & Claim #1 ($ {inputBidUsd.toFixed(2)})</span>
+                      <span>Feature Pet in Hall of Fame</span>
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Spacious, Highly Legible Outbid Pet Cards */}
+              {/* Spacious, Highly Legible Champion Pet Cards */}
               <div className="space-y-3.5">
                 {holders.map((entry) => (
                   <div
@@ -600,7 +596,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                       </div>
 
                       {/* Raw Pet Photo */}
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-amber-400/80 shrink-0 bg-black shadow-md">
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 border-amber-400/80 shrink-0 bg-black shadow-md overflow-hidden">
                         <img
                           src={entry.photoUrl}
                           alt={entry.petName}
@@ -616,28 +612,28 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         )}
                       </div>
 
-                      {/* Pet Information with Generous Spacing & High-Contrast Typography */}
+                      {/* Pet Information */}
                       <div className="min-w-0 flex-1">
                         <div className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white tracking-wide truncate">
                           {entry.petName}
                         </div>
                         <div className="text-xs sm:text-sm font-mono text-slate-600 dark:text-slate-300 mt-1 leading-normal">
-                          Held by <span className="font-black text-slate-900 dark:text-white">{entry.trainerName}</span> · {entry.heldSince}
+                          Trained by <span className="font-black text-slate-900 dark:text-white">{entry.trainerName}</span> · Featured {entry.featuredSince}
                         </div>
                         <div className="text-base sm:text-lg font-mono font-black text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1.5">
-                          <DollarSign className="w-4 h-4 text-amber-500" />
-                          <span>${entry.currentBidUsd.toFixed(2)} USD</span>
+                          <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
+                          <span>{entry.cheers} Fan Cheers</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Outbid Action Button */}
+                    {/* Cheer Action Button */}
                     <button
-                      onClick={() => handleOutbidClick(entry)}
+                      onClick={() => handleCheerPet(entry)}
                       className="w-full sm:w-auto py-3 px-5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs sm:text-sm uppercase tracking-wider shadow-md hover:shadow-[0_0_15px_rgba(204,255,0,0.5)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 shrink-0"
                     >
-                      <span>Outbid (+${(1.0).toFixed(2)})</span>
-                      <ArrowUpRight className="w-4 h-4 text-black" />
+                      <Flame className="w-4 h-4 text-black fill-black" />
+                      <span>Cheer Pet (+1)</span>
                     </button>
                   </div>
                 ))}

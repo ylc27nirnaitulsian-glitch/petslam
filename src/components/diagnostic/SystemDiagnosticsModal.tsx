@@ -89,7 +89,7 @@ export const SystemDiagnosticsModal: React.FC<SystemDiagnosticsModalProps> = ({
       category: 'payments',
       status: 'sandbox',
       badgeText: 'Sandbox Ready (0-Friction)',
-      details: 'Instant passes ($0.99 Studio, $1.99 Auction, $4.99 VIP). Webhooks at /api/dodo/webhook.',
+      details: 'Instant passes ($0.99 Studio, $2.99 Companion, $4.99 Founder Supporter). Webhooks at /api/dodo/webhook.',
       metric: 'Mode: Sandbox Testnet',
     },
     {

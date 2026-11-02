@@ -6,7 +6,6 @@ import {
   Zap,
   CheckCircle,
   ShieldCheck,
-  TrendingUp,
   Award,
   Swords,
   Target,
@@ -17,7 +16,6 @@ import {
 import { useGame } from '../../context/GameContext';
 import { sound } from '../../utils/audio';
 import { triggerVictoryExplosion } from '../../utils/confetti';
-import { createDodoCheckout } from '../../services/dodo';
 import { trackClarityEvent } from '../../utils/clarity';
 
 interface TokenRefillModalProps {
@@ -28,51 +26,6 @@ interface TokenRefillModalProps {
   onOpenRadar?: () => void;
 }
 
-interface TokenPack {
-  id: string;
-  name: string;
-  coins: number;
-  bonus: string;
-  priceUsd: string;
-  priceCents: number;
-  badge?: string;
-  popular?: boolean;
-  iconBg: string;
-}
-
-const TOKEN_PACKS: TokenPack[] = [
-  {
-    id: 'pack_starter',
-    name: 'Pouch of Coins',
-    coins: 5000,
-    bonus: '+500 Bonus',
-    priceUsd: '$0.99',
-    priceCents: 99,
-    iconBg: 'from-amber-500/20 to-yellow-500/10',
-  },
-  {
-    id: 'pack_champion',
-    name: 'Chest of Coins',
-    coins: 25000,
-    bonus: '+5,000 Bonus (5x Value)',
-    priceUsd: '$2.99',
-    priceCents: 299,
-    badge: 'MOST POPULAR',
-    popular: true,
-    iconBg: 'from-cyan-500/20 to-blue-500/10',
-  },
-  {
-    id: 'pack_legend',
-    name: 'Vault of Champions',
-    coins: 100000,
-    bonus: '+30,000 Bonus (20x Value)',
-    priceUsd: '$7.99',
-    priceCents: 799,
-    badge: 'BEST VALUE',
-    iconBg: 'from-emerald-500/20 to-[#CCFF00]/15',
-  },
-];
-
 export const TokenRefillModal: React.FC<TokenRefillModalProps> = ({
   isOpen,
   onClose,
@@ -81,7 +34,6 @@ export const TokenRefillModal: React.FC<TokenRefillModalProps> = ({
   onOpenRadar,
 }) => {
   const { credits, addCredits } = useGame();
-  const [processingPackId, setProcessingPackId] = useState<string | null>(null);
   const [faucetClaimed, setFaucetClaimed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     const lastClaim = localStorage.getItem('petslam_faucet_last_claim');
@@ -102,42 +54,6 @@ export const TokenRefillModal: React.FC<TokenRefillModalProps> = ({
     setPurchaseToast('🎉 +500 Free Daily Tokens Claimed!');
     trackClarityEvent('claim_daily_faucet');
     setTimeout(() => setPurchaseToast(null), 4000);
-  };
-
-  const handlePurchasePack = async (pack: TokenPack) => {
-    setProcessingPackId(pack.id);
-    sound.playClick();
-    trackClarityEvent('initiate_token_checkout');
-
-    try {
-      const checkoutResult = await createDodoCheckout({
-        passType: 'credits_5000',
-        returnUrl: `${window.location.origin}/?payment_success=true&pack=${pack.id}`,
-      });
-
-      if (checkoutResult && checkoutResult.checkoutUrl && !checkoutResult.simulated) {
-        // Redirect to live Dodo Checkout page
-        window.location.href = checkoutResult.checkoutUrl;
-      } else {
-        // Instant Sandbox / Local verification grant
-        addCredits(pack.coins);
-        sound.playVictory();
-        triggerVictoryExplosion();
-        setPurchaseToast(`🎉 +${pack.coins.toLocaleString()} Coins Added to your Balance!`);
-        trackClarityEvent('token_pack_granted_sandbox');
-        setTimeout(() => setPurchaseToast(null), 4500);
-      }
-    } catch (err) {
-      console.warn('Checkout fallback triggered:', err);
-      // Fallback sandbox fulfillment
-      addCredits(pack.coins);
-      sound.playVictory();
-      triggerVictoryExplosion();
-      setPurchaseToast(`🎉 Sandbox Grant: +${pack.coins.toLocaleString()} Coins added!`);
-      setTimeout(() => setPurchaseToast(null), 4500);
-    } finally {
-      setProcessingPackId(null);
-    }
   };
 
   return (
@@ -221,73 +137,20 @@ export const TokenRefillModal: React.FC<TokenRefillModalProps> = ({
             </button>
           </div>
 
-          {/* Dodo Payments Instant Token Bundles */}
-          <div className="space-y-2.5">
+          {/* Fair-Play Zero Pay-to-Win Notice */}
+          <div className="p-4 rounded-2xl border border-cyan-400/30 bg-cyan-950/20 space-y-2">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Instant Token Packs (Dodo Payments)</span>
-              </h4>
-              <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>256-Bit SSL Encrypted</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#CCFF00]" />
+                <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+                  Zero Pay-to-Win Fair Play Economy
+                </h4>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400">100% Earnable</span>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {TOKEN_PACKS.map((pack) => {
-                const isProcessing = processingPackId === pack.id;
-                return (
-                  <div
-                    key={pack.id}
-                    className={`relative rounded-2xl border p-3.5 flex flex-col justify-between transition-all bg-slate-950/60 ${
-                      pack.popular
-                        ? 'border-cyan-400/60 shadow-[0_0_15px_rgba(0,240,255,0.2)]'
-                        : 'border-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    {pack.badge && (
-                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-cyan-500 to-blue-500 text-black font-mono font-black text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider shadow">
-                        {pack.badge}
-                      </span>
-                    )}
-
-                    <div className="space-y-1 mb-3">
-                      <div className="flex items-center gap-1.5">
-                        <Coins className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span className="font-display font-black text-sm text-white truncate">
-                          {pack.coins.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="text-[11px] font-mono font-bold text-slate-300">
-                        {pack.name}
-                      </div>
-                      <div className="text-[10px] font-mono text-emerald-400">
-                        {pack.bonus}
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handlePurchasePack(pack)}
-                      disabled={isProcessing}
-                      className={`w-full py-2 px-3 rounded-xl text-xs font-mono font-black uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md ${
-                        pack.popular
-                          ? 'bg-[#CCFF00] hover:bg-[#b8e600] text-black active:scale-95'
-                          : 'bg-white/10 hover:bg-white/20 text-white active:scale-95'
-                      }`}
-                    >
-                      {isProcessing ? (
-                        <span className="animate-pulse">Processing...</span>
-                      ) : (
-                        <>
-                          <span>Buy {pack.priceUsd}</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              In strict compliance with competitive fair-play and Dodo Payments non-wagering guidelines, combat tokens cannot be purchased with real money. Win arena bouts, complete daily quests, or claim the free 24h faucet to grow your token balance!
+            </p>
           </div>
 
           {/* In-Game Free Ways to Earn Tokens */}
