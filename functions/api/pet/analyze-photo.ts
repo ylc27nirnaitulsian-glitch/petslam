@@ -173,7 +173,7 @@ Return ONLY valid JSON matching this schema:
   }
 }`;
 
-    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
     const geminiRes = await fetch(geminiEndpoint, {
       method: 'POST',
@@ -208,7 +208,7 @@ Return ONLY valid JSON matching this schema:
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Gemini AI analysis error (${geminiRes.status}): ${geminiRes.statusText}`,
+          error: `Gemini AI analysis error (${geminiRes.status}): ${errText || geminiRes.statusText}`,
         }),
         { status: geminiRes.status, headers: corsHeaders }
       );
