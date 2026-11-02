@@ -8,60 +8,60 @@ export const TeamSection: React.FC = () => {
       role: 'Founder & Head of Product',
       focus: 'Product Strategy · Ecosystem Mechanics · Esports Architecture',
       experience:
-        '8+ years building high-throughput consumer web platforms, competitive gaming tournaments, and digital asset economies. Leading the vision of converging biological animal ownership with competitive esports.',
-      priorCredits: 'Shipped 4 production platforms · Regional Esports Tournament Director',
-      badge: 'Product Lead',
+        'Building high-throughput consumer web platforms, competitive gaming tournaments, and digital asset systems. Leading the product vision of converging biological animal ownership with competitive browser esports.',
+      priorCredits: 'Regional Esports Organizer & Full-Stack Product Architect',
+      badge: 'Founder',
       initials: 'NT',
     },
     {
-      name: 'Marcus Vance',
-      role: 'Lead Combat Systems & Netcode',
-      focus: 'Synchronous Multiplayer · Physics Simulation · Anti-Cheat',
+      name: 'Deterministic Netcode & Combat',
+      role: 'Engineering Discipline',
+      focus: 'Synchronous 20-Tick Netcode · Physics Simulation · Client Prediction',
       experience:
-        '11+ years engineering deterministic combat netcode and authoritative server simulations. Specializes in low-latency client reconciliation for tactical and competitive esports titles.',
-      priorCredits: 'Ex-Riot Games Engine Contributor · Shipped 2 Competitive PC Titles',
+        'Architected around client input prediction and server reconciliation to deliver responsive 60 FPS arena clashes with sub-50ms latency across global edge points.',
+      priorCredits: 'WebSocket Netcode Framework · 20-Tick Authoritative Net Loop',
       badge: 'Combat Engine',
-      initials: 'MV',
+      initials: 'CE',
     },
     {
-      name: 'Tariq Chen',
-      role: 'Lead Backend & DevOps Infrastructure',
-      focus: 'Cloud Architecture · AWS ECS · PostgreSQL Clustering · Redis',
+      name: 'Edge Cloud & Data Infrastructure',
+      role: 'Architecture Discipline',
+      focus: 'Cloudflare Pages Functions · Supabase PostgreSQL · Resend Transactional Mail',
       experience:
-        '9+ years architecting high-concurrency cloud backends, container orchestration, and real-time database sharding for live-service multiplayer games. Owns all serverless and persistent infrastructure.',
-      priorCredits: 'Ex-AWS GameTech Specialist · Shipped Epic Games Cloud Services',
-      badge: 'Backend & DevOps',
-      initials: 'TC',
+        'Serverless edge worker functions running close to players worldwide, backed by row-level-secured PostgreSQL schemas and automated transactional notification pipelines.',
+      priorCredits: 'Cloudflare Pages Edge · Supabase RLS · Dodo MoR Verification',
+      badge: 'Infrastructure',
+      initials: 'IF',
     },
     {
-      name: 'Sophia Lin',
-      role: 'Lead QA & Competitive Balance Engineer',
-      focus: 'Automated Matchmaking Fuzzing · Balance Simulation · Physics Tests',
+      name: 'QA & Competitive Balance',
+      role: 'Quality Discipline',
+      focus: 'End-to-End Test Automation · Stat Regression Suites · Combat Balance',
       experience:
-        '7+ years directing competitive title QA, automated stat regression test suites, and combat balance simulations to eliminate broken meta exploits prior to release.',
-      priorCredits: 'Ex-Electronic Arts Competitive QA Lead · Shipped 3 AAA Sports Titles',
+        'Rigorous automated test suites validating combat power equations, speed-tier thresholds, and energy budgets to guarantee fair-play competitive integrity.',
+      priorCredits: 'Playwright E2E Suites · Combat Balancing Test Harness',
       badge: 'QA & Balance',
-      initials: 'SL',
+      initials: 'QA',
     },
     {
-      name: 'Dr. Elena Rostova',
-      role: 'Head of Biological Mechanics',
-      focus: 'Vertebrate Anatomy · Bite Pressure Modeling · Kinetic Physics',
+      name: 'Biological Anatomy & Wildlife Lore',
+      role: 'Design Discipline',
+      focus: 'Vertebrate Anatomy · Bite Pressure Modeling · Kinetic Strike Physics',
       experience:
-        'PhD in Comparative Vertebrate Biomechanics. Directs biological accuracy, ensuring every beast’s strength, sprint acceleration, and endurance ratios mirror genuine wildlife and canine physiology.',
-      priorCredits: 'Published Wildlife Biomechanist · Consultant for Documentary Studios',
-      badge: 'Biology & Lore',
-      initials: 'ER',
+        'Grounding every beast in real-world zoological data—including bite force in PSI, top sprint velocity in km/h, and kinetic strike output in Joules—reflecting authentic physiology.',
+      priorCredits: 'Vertebrate Physiology Database · Zoological Data Modeling',
+      badge: 'Zoology & Lore',
+      initials: 'ZL',
     },
     {
-      name: 'Kaelen Scott',
-      role: 'Principal Economy Designer',
-      focus: 'Player Auctions · Non-Pay-to-Win Balancing · Liquidity Sinks',
+      name: 'Fair-Play Game Economy',
+      role: 'Systems Discipline',
+      focus: 'Fixed Digital Licensing · Zero Pay-to-Win · Faucet & Quest Sinks',
       experience:
-        'Over 9 years designing transparent virtual economies, currency sink loops, and secondary auction mechanics without predatory pay-to-win mechanics or inflation collapse.',
-      priorCredits: 'Ex-Blizzard Systems Designer · Built Economies for 2M+ DAU Live Titles',
-      badge: 'Game Economy',
-      initials: 'KS',
+        'Engineered on transparent fixed digital licensing ($0.99 Studio Pass, $2.99 Companion License, $4.99 Supporter Pack) with zero gambling, zero betting, and zero pay-to-win advantages.',
+      priorCredits: 'Dodo MoR Compliance · Skill-Only Leaderboard Design',
+      badge: 'Fair Economy',
+      initials: 'EC',
     },
   ];
 
@@ -203,27 +203,27 @@ export const TeamSection: React.FC = () => {
               </ul>
             </div>
 
-            {/* Payment Provider Choice: Stripe & RevenueCat */}
+            {/* Payment Provider Choice: Dodo Payments (Merchant of Record) */}
             <div className="border-t lg:border-t-0 lg:border-l border-white/10 pt-4 lg:pt-0 lg:pl-6">
               <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-amber-400 mb-2">
                 <Database className="h-4 w-4" />
-                <span>Confirmed Payment Providers & Integration Health</span>
+                <span>Confirmed Payment Provider & Compliance</span>
               </div>
               <h4 className="font-display text-lg font-bold uppercase text-white">
-                Stripe (Web) & RevenueCat (Mobile In-App Purchases)
+                Dodo Payments (Merchant of Record)
               </h4>
               <ul className="mt-3 space-y-2 text-xs text-neutral-300 leading-relaxed">
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">›</span>
-                  <span><strong>Web Browser Client:</strong> <strong>Stripe</strong> (Stripe Checkout & Billing API) for direct credit purchases, cosmetic pack checkouts, and signed webhook delivery.</span>
+                  <span><strong>Merchant of Record:</strong> <strong>Dodo Payments</strong> manages global checkout, sales tax compliance, multi-currency conversion, and fraud prevention across 150+ countries.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">›</span>
-                  <span><strong>Mobile Client (iOS & Android):</strong> <strong>RevenueCat</strong> integrating Apple StoreKit 2 and Google Play Billing with unified server receipt validation.</span>
+                  <span><strong>Compliant Digital Products:</strong> Fixed-price licenses ($0.99 Studio AI Pass, $2.99 Companion License, $4.99 Supporter Pack) with zero gambling, zero betting, and zero pay-to-win advantages.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">›</span>
-                  <span><strong>Zero Integration Blockers:</strong> Standardized REST + WebSocket APIs, pre-tested sandbox keys, and automated GitHub Actions CI/CD to eliminate launch friction.</span>
+                  <span><strong>Cryptographic Verification:</strong> WebCrypto HMAC signature validation on webhook callbacks and server-side payment verification endpoints.</span>
                 </li>
               </ul>
             </div>

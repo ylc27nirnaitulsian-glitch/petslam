@@ -200,15 +200,27 @@ export const Footer: React.FC<FooterProps> = ({ onJoinWaitlist, onNavigate }) =>
                 <h3 className="font-display text-2xl font-black uppercase text-white mb-3">
                   Privacy Policy
                 </h3>
-                <div className="space-y-3 text-xs text-neutral-300 leading-relaxed max-h-80 overflow-y-auto pr-2">
+                <div className="space-y-3 text-xs text-neutral-300 leading-relaxed max-h-96 overflow-y-auto pr-2">
                   <p>
-                    <strong>1. Information Collection:</strong> PET SLAM collects subscriber email addresses exclusively for waitlist verification, alpha dispatch credentials, and platform rollout updates.
+                    <strong>1. Information Collection & Waitlist:</strong> PET SLAM collects subscriber email addresses exclusively for waitlist verification, alpha dispatch credentials, and platform rollout updates. Emails are processed securely via Resend and encrypted databases.
                   </p>
                   <p>
-                    <strong>2. IRL Mode Proximity:</strong> Future location-based mechanics are strictly opt-in and utilize fuzzy geographic sectors. Exact real-time user GPS coordinates are never broadcast or sold to third parties.
+                    <strong>2. Pet Photo Studio & AI Vision:</strong> Pet photos uploaded or snapped in the Pet Studio are transmitted over HTTPS to Google Gemini AI API solely for real-time coat color, breed, and cosmetic avatar feature extraction. Photos are not used to train public models or sold to third parties.
                   </p>
                   <p>
-                    <strong>3. Data Security:</strong> Information is stored in encrypted, isolated environments. You may unsubscribe or request data deletion at any time by contacting our privacy compliance desk.
+                    <strong>3. Geolocation & Pet Radar:</strong> Geolocation coordinates are accessed only with your explicit browser permission and processed ephemerally on your client device to spawn wild animals on the local radar map. Exact coordinates are never shared with or exposed to other trainers.
+                  </p>
+                  <p>
+                    <strong>4. Voice Audio & Speech Synthesis:</strong> Voice interaction and text-to-speech are processed client-side in your browser using the local ONNX Web Audio engine (Kokoro-82M). No voice recordings are transmitted to external servers.
+                  </p>
+                  <p>
+                    <strong>5. Behavioral Telemetry & Analytics:</strong> We use Microsoft Clarity (Project ID: z4be9kfna6) to analyze user interaction, performance bottlenecks, and navigation patterns via anonymized heatmaps and session metrics to optimize application responsiveness.
+                  </p>
+                  <p>
+                    <strong>6. Payment Processing:</strong> Payments for digital cosmetic passes and companion licenses are processed securely by Dodo Payments acting as Merchant of Record. PET SLAM does not store credit card numbers or payment credentials on its servers.
+                  </p>
+                  <p>
+                    <strong>7. Data Rights & Deletion:</strong> You may request full deletion of your profile data or waitlist registration at any time by contacting support@petslam.gg.
                   </p>
                 </div>
               </div>

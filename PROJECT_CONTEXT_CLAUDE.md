@@ -153,7 +153,7 @@ export interface PetCustomFeatures {
   - Dominant vs recessive traits for ear types, markings (rosettes, stripes, eye patch).
   - Hex color blending via RGB vector interpolation with a ±10% mutation factor.
   - Chimera Fusion mode: Can hybridize Cat + Dog into a mythical "Chimeric Beast" with dual ear shapes and dual buffs.
-  - Tier ascension probability: Common (60%), Rare (25%), Epic (10%), Legendary (4%), Mythic (1%).
+  - Tier ascension probability: 30% baseline chance to ascend +1 tier from the higher parent's tier (scaled up to 50% based on parent levels and affection hearts). 5% chance for rare radioactive/cyber-gold Chimera mutation. Common → Rare → Epic → Legendary → Mythic.
 
 ### 5. Chrome Extension Companion Exporter (`ExtensionExporterModal.tsx`)
 - Builds an unpackable Chrome Web Extension (Manifest V3) on the fly in the browser.
