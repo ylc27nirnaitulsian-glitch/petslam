@@ -20,6 +20,7 @@ import {
   Smile,
   Sliders,
   Check,
+  AlertCircle,
 } from 'lucide-react';
 import { ProceduralPetCanvas } from './ProceduralPetCanvas';
 import { usePetCompanion } from '../../../context/PetCompanionContext';
@@ -125,6 +126,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
   const [petNameInput, setPetNameInput] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisStep, setAnalysisStep] = useState<string>('');
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analyzedAvatar, setAnalyzedAvatar] = useState<{
     name: string;
     title: string;
@@ -203,6 +205,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
     if (!file) return;
 
     sound.playClick();
+    setAnalysisError(null);
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
@@ -215,6 +218,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
   const handleSelectSample = async (sample: (typeof SAMPLE_PET_PHOTOS)[0]) => {
     sound.playClick();
+    setAnalysisError(null);
     setPetNameInput(sample.name);
     setAnalyzedAvatar(null);
     setIsSaved(false);
@@ -237,6 +241,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
     if (!imagePreview) return;
 
     setIsAnalyzing(true);
+    setAnalysisError(null);
     sound.playClick();
     setAnalysisStep('Scanning pet contours & coat colors...');
 
@@ -261,56 +266,26 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
       clearTimeout(timer1);
       clearTimeout(timer2);
 
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error('Received an invalid response from the photo analysis service.');
+      }
 
-      if (data.success && data.avatar) {
+      if (response.ok && data.success && data.avatar) {
         setAnalyzedAvatar(data.avatar);
         setActivePalette(data.avatar.palette);
         sound.playVictory();
       } else {
-        throw new Error(data.error || 'Failed to analyze pet');
+        throw new Error(data.error || 'Failed to analyze pet photo. Please check your image or try another.');
       }
-    } catch {
-      // High-quality deterministic fallback
-      const detectedName = petNameInput.trim() || 'Champion';
-      const fallback = {
-        name: detectedName,
-        title: 'The Couch Champion',
-        category: 'dog' as PetCategory,
-        species: 'retriever' as PetSpecies,
-        breedName: 'Golden Pedigree',
-        palette: {
-          primary: '#F59E0B',
-          secondary: '#D97706',
-          belly: '#FEF3C7',
-          ear: '#D97706',
-          eye: '#451A03',
-          nose: '#1C1917',
-        },
-        features: {
-          earType: 'floppy' as const,
-          hasWhiskers: false,
-          eyePatch: true,
-          collarColor: '#CCFF00',
-          fluffyTail: true,
-        },
-        personalityTraits: ['Loyal Vanguard', 'Zoomies Sprinter', 'Heart Thief'],
-        quirk: 'Chases laser pointers and protects the sofa with fierce dedication.',
-        signatureMove: {
-          name: `${detectedName}'s Hyper Pounce`,
-          description: 'A dazzling burst dash that deals 220 kinetic damage and stuns targets.',
-        },
-        stats: { attack: 72, defense: 68, agility: 75, stamina: 70, cp: 520 },
-        battleBuff: {
-          name: 'Guardian Aura',
-          description: '+20% Critical Strike Multiplier from pure companion love.',
-          effectType: 'crit_chance' as const,
-          potency: 20,
-        },
-      };
-      setAnalyzedAvatar(fallback);
-      setActivePalette(fallback.palette);
-      sound.playLevelUp();
+    } catch (err: any) {
+      console.error('Pet avatar scan error:', err);
+      sound.playDefeat();
+      setAnalysisError(
+        err?.message || 'Unable to analyze photo. Please check your network connection or try another clear photo.'
+      );
     } finally {
       setIsAnalyzing(false);
       setAnalysisStep('');
@@ -663,6 +638,26 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                     ))}
                   </div>
                 </div>
+
+                {/* Error Notice */}
+                {analysisError && (
+                  <div className="bg-red-950/70 border border-red-500/50 p-3.5 rounded-2xl flex items-start gap-3 text-red-200 text-xs animate-in fade-in">
+                    <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-bold text-red-300">{analysisError}</p>
+                      <p className="text-[11px] text-red-200/80 mt-1">
+                        Your photo is preserved. Click the button below to retry, or upload another image.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisError(null)}
+                      className="text-red-400 hover:text-white text-xs font-mono px-1 py-0.5"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
 
                 {/* Action Button */}
                 <button

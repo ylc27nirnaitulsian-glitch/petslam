@@ -729,8 +729,15 @@ function generateProceduralFallback(userGivenName?: string) {
 app.post('/api/pet/analyze-photo', async (req, res) => {
   try {
     const { imageBase64, mimeType = 'image/jpeg', userGivenName } = req.body;
-    if (!imageBase64) {
+    if (!imageBase64 || typeof imageBase64 !== 'string') {
       res.status(400).json({ success: false, error: 'Image base64 data is required.' });
+      return;
+    }
+
+    // CORE-5: Size check (max 10MB)
+    const MAX_BASE64_LENGTH = 10 * 1024 * 1024;
+    if (imageBase64.length > MAX_BASE64_LENGTH) {
+      res.status(413).json({ success: false, error: 'Image file exceeds maximum allowable size (10MB limit).' });
       return;
     }
 
@@ -741,6 +748,16 @@ app.post('/api/pet/analyze-photo', async (req, res) => {
     if (match) {
       detectedMime = match[1];
       cleanBase64 = match[2];
+    }
+
+    // CORE-5: MIME type validation
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/jpg'];
+    if (!allowedMimeTypes.includes(detectedMime.toLowerCase())) {
+      res.status(415).json({
+        success: false,
+        error: `Unsupported image MIME type: ${detectedMime}. Only JPEG, PNG, WEBP, and GIF are permitted.`,
+      });
+      return;
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
