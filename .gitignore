@@ -8,5 +8,9 @@ coverage/
 !.env.example
 data/
 data/*.json
+.antigravity/
+.aistudio/
+CLAUDE_CODEBASE_BUNDLE.md
+*.pbtxt
 *.zip
 *.bundle
