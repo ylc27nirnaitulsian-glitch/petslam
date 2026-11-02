@@ -485,8 +485,14 @@ app.post('/api/dodo/webhook', async (req: any, res) => {
   }
 });
 
-// 4. Payment History (Audit Log)
-app.get('/api/dodo/payments', (_req, res) => {
+// 4. Payment History (Audit Log) - Protected: Requires server-configured ADMIN_SECRET_KEY
+app.get('/api/dodo/payments', (req, res) => {
+  const adminSecret = process.env.ADMIN_SECRET_KEY;
+  const authHeader = req.headers['x-admin-key'] || req.headers['authorization'];
+  if (!adminSecret || authHeader !== adminSecret && authHeader !== `Bearer ${adminSecret}`) {
+    res.status(401).json({ error: 'Unauthorized: Admin authentication required to access payment records.' });
+    return;
+  }
   res.json(getPayments());
 });
 

@@ -63,14 +63,10 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
 
-  // Admin query param and Global Hotkey Listener (Ctrl + Shift + D / Cmd + Shift + D)
+  // Development-only Hotkey Listener (Ctrl + Shift + D / Cmd + Shift + D)
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes('admin=true')) {
-      setIsDiagnosticsOpen(true);
-    }
-  }, []);
+    if (!import.meta.env.DEV) return;
 
-  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
         e.preventDefault();
