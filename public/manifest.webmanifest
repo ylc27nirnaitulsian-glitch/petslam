@@ -9,7 +9,7 @@
   "theme_color": "#0B0E14",
   "icons": [
     {
-      "src": "/assets/hero_beast_arena_1791711055803-Ddwlz3hy.jpg",
+      "src": "/og-image.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"
@@ -30,10 +30,10 @@
       "url": "/#sanctuary"
     },
     {
-      "name": "Auction House",
-      "short_name": "Auctions",
-      "description": "Trade rare pedigree beasts",
-      "url": "/#auctions"
+      "name": "Adoption Shelter",
+      "short_name": "Shelter",
+      "description": "Adopt rescued shelter beasts",
+      "url": "/#shelter"
     }
   ]
 }

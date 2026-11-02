@@ -229,6 +229,34 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       localStorage.setItem('petslam_auth_account', JSON.stringify(acc));
     } catch {}
+
+    // CORE-6: Sync profile progression from Supabase if authenticated
+    if (supabase && sub) {
+      supabase
+        .from('profiles')
+        .select('credits, trophies, player_level, display_name')
+        .eq('id', sub)
+        .single()
+        .then(
+          ({ data, error }) => {
+            if (data && !error) {
+              if (data.credits !== undefined && data.credits !== null) {
+                setCredits((prev) => Math.max(prev, Number(data.credits)));
+              }
+              if (data.trophies !== undefined && data.trophies !== null) {
+                setTrophies((prev) => Math.max(prev, Number(data.trophies)));
+              }
+              if (data.player_level !== undefined && data.player_level !== null) {
+                setPlayerLevel((prev) => Math.max(prev, Number(data.player_level)));
+              }
+              if (data.display_name) {
+                setTrainerName(data.display_name);
+              }
+            }
+          },
+          () => {}
+        );
+    }
   };
 
   const logoutAccount = () => {

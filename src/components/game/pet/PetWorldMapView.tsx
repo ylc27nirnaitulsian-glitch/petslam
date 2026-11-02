@@ -76,81 +76,65 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
   const [gpsStatus, setGpsStatus] = useState<'locating' | 'live_gps' | 'simulated'>('locating');
   const [accuracyMeters, setAccuracyMeters] = useState<number>(30);
   const [mapTheme, setMapTheme] = useState<
-    'dark' | 'geoapify_dark' | 'geoapify_bright' | 'google_roadmap' | 'google_hybrid' | 'voyager' | 'osm'
+    'dark' | 'openfreemap_bright' | 'openfreemap_liberty' | 'osm' | 'geoapify_dark'
   >('dark');
   const [isScanning, setIsScanning] = useState<boolean>(false);
 
-  // Maps API Key (Geoapify, Google Maps Platform, or Mapbox)
-  const [mapsApiKey, setMapsApiKey] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return (
-        (import.meta.env.VITE_GEOAPIFY_API_KEY as string) ||
-        (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string) ||
-        localStorage.getItem('petslam_geoapify_key') ||
-        localStorage.getItem('petslam_maps_api_key') ||
-        ''
-      );
-    }
-    return '';
-  });
-  const [showKeyModal, setShowKeyModal] = useState<boolean>(false);
-  const [tempApiKey, setTempApiKey] = useState<string>('');
+  // Geoapify API Key from environment (optional developer enhancement; zero-key OpenFreeMap/Carto works by default)
+  const mapsApiKey = (import.meta.env.VITE_GEOAPIFY_API_KEY as string) || '';
 
   const getTileConfig = (theme: typeof mapTheme, apiKey: string) => {
-    // 1. Geoapify Cyber Dark (Purple Roads & Dark Matter)
-    if (theme === 'geoapify_dark' || (apiKey && !apiKey.startsWith('AIza') && !apiKey.startsWith('pk.') && theme === 'dark')) {
-      if (apiKey) {
-        return {
-          url: `https://maps.geoapify.com/v1/tile/dark-matter-purple-roads/{z}/{x}/{y}.png?apiKey=${apiKey}`,
-          subdomains: '',
-          maxZoom: 20,
-        };
-      }
-    }
-    // 2. Geoapify Streets Bright
-    if (theme === 'geoapify_bright') {
-      if (apiKey) {
-        return {
-          url: `https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${apiKey}`,
-          subdomains: '',
-          maxZoom: 20,
-        };
-      }
-    }
-    // 3. Google Maps Roadmap
-    if (theme === 'google_roadmap') {
-      const url = apiKey
-        ? `https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=${apiKey}`
-        : 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
-      return { url, subdomains: '0123', maxZoom: 20 };
-    }
-    // 4. Google Maps Satellite / Hybrid
-    if (theme === 'google_hybrid') {
-      const url = apiKey
-        ? `https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&key=${apiKey}`
-        : 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
-      return { url, subdomains: '0123', maxZoom: 20 };
-    }
-    // 5. Carto Voyager
-    if (theme === 'voyager') {
+    // 1. Geoapify Cyber Dark (if API key is present)
+    if (theme === 'geoapify_dark' && apiKey) {
       return {
-        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        subdomains: 'abcd',
-        maxZoom: 19,
+        url: `https://maps.geoapify.com/v1/tile/dark-matter-purple-roads/{z}/{x}/{y}.png?apiKey=${apiKey}`,
+        subdomains: '',
+        maxZoom: 20,
+        attribution:
+          'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
       };
     }
-    // 6. OpenStreetMap Default
+
+    // 2. OpenFreeMap Bright (100% Free, Zero Key, No Limits)
+    if (theme === 'openfreemap_bright') {
+      return {
+        url: 'https://tiles.openfreemap.org/styles/bright/{z}/{x}/{y}.png',
+        subdomains: '',
+        maxZoom: 19,
+        attribution:
+          '&copy; <a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+      };
+    }
+
+    // 3. OpenFreeMap Liberty (100% Free, Zero Key, No Limits)
+    if (theme === 'openfreemap_liberty') {
+      return {
+        url: 'https://tiles.openfreemap.org/styles/liberty/{z}/{x}/{y}.png',
+        subdomains: '',
+        maxZoom: 19,
+        attribution:
+          '&copy; <a href="https://openfreemap.org" target="_blank">OpenFreeMap</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+      };
+    }
+
+    // 4. OpenStreetMap Standard
     if (theme === 'osm') {
       return {
         url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         subdomains: 'abc',
         maxZoom: 19,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
       };
     }
+
+    // 5. Carto Dark Matter (Default Cyber Dark Theme)
     return {
       url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
       subdomains: 'abcd',
       maxZoom: 19,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
     };
   };
 
@@ -297,7 +281,7 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
       center: [initialLat, initialLng],
       zoom: 16,
       zoomControl: false,
-      attributionControl: false,
+      attributionControl: true,
     });
 
     // Add zoom controls at top-right
@@ -308,6 +292,7 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
     const tileLayer = L.tileLayer(tileConfig.url, {
       maxZoom: tileConfig.maxZoom,
       subdomains: tileConfig.subdomains,
+      attribution: tileConfig.attribution,
     }).addTo(map);
     tileLayerRef.current = tileLayer;
 
@@ -364,6 +349,7 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
     const newLayer = L.tileLayer(tileConfig.url, {
       maxZoom: tileConfig.maxZoom,
       subdomains: tileConfig.subdomains,
+      attribution: tileConfig.attribution,
     }).addTo(mapInstanceRef.current);
     tileLayerRef.current = newLayer;
   }, [mapTheme, mapsApiKey]);
@@ -490,6 +476,35 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
     }
   };
 
+  // Explicit user-triggered GPS request (MAP-1 & MAP-6)
+  const handleRequestGps = () => {
+    sound.playClick();
+    if ('geolocation' in navigator) {
+      setGpsStatus('locating');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const acc = Math.round(pos.coords.accuracy || 25);
+          setUserLocation({ lat, lng });
+          setAccuracyMeters(acc);
+          setGpsStatus('live_gps');
+          const spawns = generateSpawnsAround(lat, lng);
+          setGeoPetSpawns(spawns);
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.flyTo([lat, lng], 16, { duration: 0.8 });
+          }
+          sound.playVictory();
+        },
+        (err) => {
+          console.warn('Geolocation denied or unavailable:', err.message);
+          setGpsStatus('simulated');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md select-none">
       <div className="relative w-full h-full sm:h-[700px] max-w-lg bg-[#090D16] border-0 sm:border border-white/20 rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col text-white">
@@ -511,7 +526,7 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
                       : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                   }`}
                 >
-                  {gpsStatus === 'live_gps' ? '🛰️ Live GPS' : '🏙️ Tap-To-Walk'}
+                  {gpsStatus === 'live_gps' ? '🛰️ Live GPS' : '🏙️ Demo Park'}
                 </span>
               </div>
               <p className="text-[10px] text-neutral-400 font-mono truncate">
@@ -521,44 +536,20 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            {/* Configure Maps API Key (Google Maps / Mapbox) */}
+            {/* Tile Layer Selector (OpenFreeMap / Carto / OSM / Geoapify) */}
             <button
               onClick={() => {
                 sound.playClick();
-                setTempApiKey(mapsApiKey);
-                setShowKeyModal(true);
-              }}
-              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white cursor-pointer transition-colors relative"
-              title="Configure Maps API Key (Google Maps)"
-            >
-              <Key className="w-3.5 h-3.5 text-[#CCFF00]" />
-              {mapsApiKey && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#CCFF00] shadow-[0_0_6px_#CCFF00]" />
-              )}
-            </button>
-
-            {/* Tile Layer Selector */}
-            <button
-              onClick={() => {
-                sound.playClick();
-                setMapTheme((prev) =>
-                  prev === 'dark'
-                    ? 'geoapify_dark'
-                    : prev === 'geoapify_dark'
-                    ? 'geoapify_bright'
-                    : prev === 'geoapify_bright'
-                    ? 'google_roadmap'
-                    : prev === 'google_roadmap'
-                    ? 'google_hybrid'
-                    : prev === 'google_hybrid'
-                    ? 'voyager'
-                    : prev === 'voyager'
-                    ? 'osm'
-                    : 'dark'
-                );
+                setMapTheme((prev) => {
+                  if (prev === 'dark') return 'openfreemap_bright';
+                  if (prev === 'openfreemap_bright') return 'openfreemap_liberty';
+                  if (prev === 'openfreemap_liberty') return 'osm';
+                  if (prev === 'osm') return mapsApiKey ? 'geoapify_dark' : 'dark';
+                  return 'dark';
+                });
               }}
               className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white cursor-pointer transition-colors"
-              title="Toggle Map Style (Geoapify Cyber / Streets / Google Maps / Satellite / Dark / Voyager / OSM)"
+              title="Toggle Map Provider (OpenFreeMap / Carto / OSM / Geoapify)"
             >
               <Layers className="w-3.5 h-3.5" />
             </button>
@@ -593,6 +584,22 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
           </div>
         </div>
 
+        {/* MAP-6: Demo Area Banner When GPS is Inactive */}
+        {gpsStatus === 'simulated' && (
+          <div className="bg-amber-950/80 border-b border-amber-500/40 px-3 py-1.5 flex items-center justify-between text-[11px] font-mono text-amber-200 shrink-0">
+            <div className="flex items-center gap-1.5 truncate">
+              <span>📍</span>
+              <span className="truncate">Demo Area: Location off. Viewing San Francisco demo park.</span>
+            </div>
+            <button
+              onClick={handleRequestGps}
+              className="ml-2 px-2 py-0.5 rounded-md bg-amber-400 hover:bg-amber-300 text-black font-bold text-[10px] shrink-0 cursor-pointer active:scale-95 transition-all"
+            >
+              Enable GPS
+            </button>
+          </div>
+        )}
+
         {/* REAL-TIME LEAFLET MAP CONTAINER */}
         <div className="flex-1 relative overflow-hidden bg-black min-h-0">
           <div ref={mapContainerRef} className="w-full h-full absolute inset-0 z-10" />
@@ -608,27 +615,25 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
           <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/15 text-[9px] font-mono text-neutral-300 flex items-center gap-1.5 shadow-lg">
             <span className="w-2 h-2 rounded-full bg-[#CCFF00] animate-ping" />
             <span>
-              {mapTheme === 'geoapify_dark' || mapTheme === 'geoapify_bright' || (mapsApiKey && !mapsApiKey.startsWith('AIza') && mapTheme === 'dark')
+              {mapTheme === 'geoapify_dark'
                 ? 'GEOAPIFY'
-                : mapTheme.startsWith('google')
-                ? 'GOOGLE MAPS'
+                : mapTheme === 'openfreemap_bright' || mapTheme === 'openfreemap_liberty'
+                ? 'OPENFREEMAP'
                 : mapTheme === 'osm'
                 ? 'OPENSTREETMAP'
-                : mapTheme === 'voyager'
-                ? 'CARTO VOYAGER'
-                : 'CARTO DARK'}
+                : 'CARTO'}
             </span>
             <span className="text-neutral-500">|</span>
             <span className="text-[#CCFF00] font-bold uppercase">
               {mapTheme === 'geoapify_dark'
                 ? 'Cyber Dark'
-                : mapTheme === 'geoapify_bright'
-                ? 'Streets Bright'
-                : mapTheme === 'google_roadmap'
-                ? 'Roadmap'
-                : mapTheme === 'google_hybrid'
-                ? 'Satellite'
-                : mapTheme}
+                : mapTheme === 'openfreemap_bright'
+                ? 'Bright'
+                : mapTheme === 'openfreemap_liberty'
+                ? 'Liberty'
+                : mapTheme === 'osm'
+                ? 'Standard'
+                : 'Dark Matter'}
             </span>
           </div>
         </div>
@@ -707,81 +712,6 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
             setGeoPetSpawns((prev) => prev.filter((p) => p.id !== activeCatchEncounter.id));
           }}
         />
-      )}
-
-      {/* Geoapify / Google Maps Key Configuration Modal */}
-      {showKeyModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
-          <div className="w-full max-w-sm bg-[#0E1320] border-2 border-[#CCFF00]/40 rounded-3xl p-5 shadow-2xl text-white space-y-3.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Key className="w-4 h-4 text-[#CCFF00]" />
-                <h4 className="font-display font-black text-base uppercase tracking-wider text-white">Maps API Key</h4>
-              </div>
-              <button
-                onClick={() => setShowKeyModal(false)}
-                className="text-neutral-400 hover:text-white p-1 rounded-xl hover:bg-white/10 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="text-xs text-neutral-300 font-mono leading-relaxed">
-              Connect your <span className="text-[#CCFF00] font-bold">Geoapify</span>, <span className="text-cyan-400 font-bold">Google Maps</span>, or <span className="text-fuchsia-400 font-bold">Mapbox</span> API key to unlock high-definition live real-time world map tiles in Pet Radar.
-            </p>
-            <div className="space-y-1">
-              <label className="text-[10px] font-mono uppercase text-[#CCFF00] font-bold">API Key or Token</label>
-              <input
-                type="text"
-                placeholder="Geoapify API key (e.g. 7f8a...) or AIzaSy..."
-                value={tempApiKey}
-                onChange={(e) => setTempApiKey(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-black/70 border border-white/20 font-mono text-xs text-white placeholder:text-neutral-600 focus:outline-none focus:border-[#CCFF00]"
-              />
-            </div>
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={() => {
-                  sound.playVictory();
-                  const trimmed = tempApiKey.trim();
-                  setMapsApiKey(trimmed);
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('petslam_geoapify_key', trimmed);
-                    localStorage.setItem('petslam_maps_api_key', trimmed);
-                  }
-                  if (trimmed) {
-                    if (trimmed.startsWith('AIza')) {
-                      setMapTheme('google_roadmap');
-                    } else {
-                      setMapTheme('geoapify_dark');
-                    }
-                  }
-                  setShowKeyModal(false);
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-[#CCFF00] text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer hover:bg-[#b8e600] active:scale-95 transition-all shadow-md"
-              >
-                Save & Apply Map
-              </button>
-              {mapsApiKey && (
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    setMapsApiKey('');
-                    setTempApiKey('');
-                    if (typeof window !== 'undefined') {
-                      localStorage.removeItem('petslam_geoapify_key');
-                      localStorage.removeItem('petslam_maps_api_key');
-                    }
-                    setMapTheme('dark');
-                    setShowKeyModal(false);
-                  }}
-                  className="px-3 py-2.5 rounded-xl bg-red-500/20 text-red-300 hover:bg-red-500/30 text-xs font-mono cursor-pointer"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
