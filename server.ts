@@ -96,28 +96,28 @@ if (exaApiKey && exaApiKey !== 'your_exa_api_key_here' && exaApiKey.trim().lengt
 // Product Catalog definition for PET SLAM Monetization (Software & AI Utilities)
 const DODO_PRODUCTS = {
   extension: {
-    id: process.env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0NqgJtNVeIeTlUsEMZ3C1',
+    id: process.env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0Nr3ogcp25O1QY64y7E4w',
     title: 'PET SLAM Desktop & Browser Companion (Lifetime License)',
     price: '$2.99',
     amountCents: 299,
     description: 'Standalone Chrome extension & desktop productivity companion with posture/hydration alerts and voice mimicry.',
   },
   avatar: {
-    id: process.env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0NqgJPS04QMUNn6vlOUrI',
+    id: process.env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0Nr3oUSO21xdKMqzxV2Bq',
     title: 'AI Pet Photo Studio Scanner Pass',
     price: '$0.99',
     amountCents: 99,
     description: 'Generative AI photo utility converting real dog & cat photos into stylized 2D digital trading cards.',
   },
   supporter: {
-    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
+    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
     title: 'Genesis Founder Supporter Pack',
     price: '$4.99',
     amountCents: 499,
     description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
   },
   bundle: {
-    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
+    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
     title: 'Genesis Founder Supporter Pack',
     price: '$4.99',
     amountCents: 499,

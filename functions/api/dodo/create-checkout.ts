@@ -51,10 +51,10 @@ export async function onRequestPost(context: EventContext): Promise<Response> {
     : 'https://test.dodopayments.com/checkouts';
 
   const productCatalog: Record<string, string> = {
-    avatar: env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0NqgJPS04QMUNn6vlOUrI',
-    extension: env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0NqgJtNVeIeTlUsEMZ3C1',
-    supporter: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
-    bundle: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0NqgJznwnQjxDNNAydOuK',
+    avatar: env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0Nr3oUSO21xdKMqzxV2Bq',
+    extension: env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0Nr3ogcp25O1QY64y7E4w',
+    supporter: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
+    bundle: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
   };
 
   try {
