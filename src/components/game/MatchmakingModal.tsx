@@ -231,7 +231,12 @@ export const MatchmakingModal: React.FC<MatchmakingModalProps> = ({
                   />
                 </div>
                 <div>
-                  <p className="font-display font-black text-sm text-white uppercase">{displayTrainer}</p>
+                  <div className="flex items-center justify-center gap-1.5">
+                    <p className="font-display font-black text-sm text-white uppercase">{displayTrainer}</p>
+                    <span className="text-[9px] font-mono bg-purple-500/20 text-purple-300 border border-purple-500/40 px-1.5 py-0.5 rounded font-bold">
+                      AI TRAINER
+                    </span>
+                  </div>
                   <p className="text-xs text-red-400 font-bold">{displayOpponent.name}</p>
                   <p className="text-[10px] text-neutral-400 font-mono">{displayOpponent.species} · {displayOpponent.weightKg}kg</p>
                 </div>

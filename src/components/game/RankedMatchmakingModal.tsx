@@ -44,6 +44,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
   const [tickData, setTickData] = useState<TickUpdateData | null>(null);
   const [resultData, setResultData] = useState<MatchFinishedData | null>(null);
   const [combatLogs, setCombatLogs] = useState<Array<{ text: string; type: string }>>([]);
+  const [isBotMatch, setIsBotMatch] = useState<boolean>(false);
 
   const fallbackTimerRef = useRef<NodeJS.Timeout | null>(null);
   const botCombatIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -96,6 +97,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
           fallbackTimerRef.current = null;
         }
         isBotMatchRef.current = false;
+        setIsBotMatch(false);
         setMatchData(data);
         setPhase('matched');
         sound.playVictory();
@@ -141,6 +143,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
 
   const startBotMatch = (effectivePet: any) => {
     isBotMatchRef.current = true;
+    setIsBotMatch(true);
     const botOpponents = [
       { name: 'Apex Buster', trainer: 'Rival Kira', breed: 'Husky Storm', cp: 1180, hp: 1050, image: 'https://images.unsplash.com/photo-1537151625747-768eb6cf92b2?w=400&auto=format&fit=crop&q=80' },
       { name: 'Shadow Saber', trainer: 'Grandmaster Kaito', breed: 'Bengal Stealth', cp: 1240, hp: 980, image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&auto=format&fit=crop&q=80' },
@@ -167,7 +170,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
 
     const oppFighterSnap: NetFighterSnapshot = {
       id: 'bot_rival',
-      name: bot.name,
+      name: `${bot.name} [Bot]`,
       species: bot.breed,
       level: effectivePet.level,
       hp: bot.hp,
@@ -184,7 +187,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
     const simulatedMatch: MatchFoundData = {
       roomId: `sim_${Date.now()}`,
       p1: { id: playerTag || 'player_1', name: trainerName || 'Trainer', cp: myFighterSnap.cp, rating: 1200, fighter: myFighterSnap },
-      p2: { id: 'bot_rival', name: bot.trainer, cp: bot.cp, rating: 1210, fighter: oppFighterSnap },
+      p2: { id: 'bot_rival', name: `[AI Bot] ${bot.trainer}`, cp: bot.cp, rating: 1210, fighter: oppFighterSnap },
       countdown: 3,
     };
 
@@ -320,6 +323,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
       botCombatIntervalRef.current = null;
     }
     isBotMatchRef.current = false;
+    setIsBotMatch(false);
     multiplayerNetcode.cancelQueue();
     setPhase('idle');
   };
@@ -535,6 +539,12 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
                 {countdown > 0 ? `STARTING IN ${countdown}...` : 'BATTLE ENGAGED!'}
               </div>
 
+              {isBotMatch && (
+                <div className="text-xs font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-400/40 px-3.5 py-1.5 rounded-xl max-w-sm mx-auto shadow-md">
+                  🤖 Live queue empty: Matched with AI Bot Trainer for training!
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
                 {/* Player 1 */}
                 <div className="bg-[#0C1222] border-2 border-cyan-400/60 rounded-2xl p-3 text-center">
@@ -547,7 +557,14 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
 
                 {/* Player 2 */}
                 <div className="bg-[#0C1222] border-2 border-rose-500/60 rounded-2xl p-3 text-center">
-                  <div className="text-[10px] font-mono font-bold text-rose-400 uppercase">Rival</div>
+                  <div className="text-[10px] font-mono font-bold text-rose-400 uppercase flex items-center justify-center gap-1">
+                    <span>{isBotMatch ? 'AI Bot Rival' : 'Rival'}</span>
+                    {isBotMatch && (
+                      <span className="text-[8px] bg-purple-500/30 text-purple-200 border border-purple-400/50 px-1 rounded">
+                        BOT
+                      </span>
+                    )}
+                  </div>
                   <div className="text-sm font-bold text-white truncate">{opponentFighter?.name}</div>
                   <div className="text-xs font-mono font-black text-rose-400 mt-0.5">
                     CP {opponentFighter?.cp}
@@ -590,8 +607,15 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
                 {/* Right: Rival */}
                 <div className={`p-3 rounded-2xl border transition-all ${oppOverdrive ? 'border-amber-400 bg-amber-950/20 shadow-[0_0_20px_rgba(251,191,36,0.3)]' : 'border-rose-500/40 bg-[#160D1A]'}`}>
                   <div className="flex items-center justify-between text-xs font-bold mb-1">
-                    <span className="text-white truncate">{opponentFighter?.name}</span>
-                    <span className="font-mono text-rose-300">{Math.round(oppHp)} HP</span>
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="text-white truncate">{opponentFighter?.name}</span>
+                      {isBotMatch && (
+                        <span className="text-[8px] bg-purple-500/30 text-purple-200 border border-purple-400/50 px-1 rounded shrink-0">
+                          AI BOT
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-mono text-rose-300 shrink-0">{Math.round(oppHp)} HP</span>
                   </div>
                   {/* HP Bar */}
                   <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden border border-white/20 p-0.5 mb-2">
@@ -715,19 +739,26 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
               )}
 
               {/* Rewards Summary */}
-              <div className="bg-[#0D1424] border border-white/10 rounded-2xl p-4 max-w-sm mx-auto grid grid-cols-2 gap-2 font-mono text-center">
-                <div className="p-2 bg-black/40 rounded-xl">
-                  <div className="text-[10px] text-neutral-400">RATING</div>
-                  <div className={`text-sm font-black ${(isPlayer1 ? resultData.winnerId === resultData.p1Result.id : resultData.winnerId === resultData.p2Result.id) ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {(isPlayer1 ? resultData.winnerId === resultData.p1Result.id : resultData.winnerId === resultData.p2Result.id) ? '+25 ELO' : '-18 ELO'}
+              <div className="bg-[#0D1424] border border-white/10 rounded-2xl p-4 max-w-sm mx-auto space-y-2 font-mono text-center">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2 bg-black/40 rounded-xl">
+                    <div className="text-[10px] text-neutral-400">RATING</div>
+                    <div className={`text-sm font-black ${(isPlayer1 ? resultData.winnerId === resultData.p1Result.id : resultData.winnerId === resultData.p2Result.id) ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {(isPlayer1 ? resultData.winnerId === resultData.p1Result.id : resultData.winnerId === resultData.p2Result.id) ? '+25 ELO' : '-18 ELO'}
+                    </div>
+                  </div>
+                  <div className="p-2 bg-black/40 rounded-xl">
+                    <div className="text-[10px] text-neutral-400">CREDITS</div>
+                    <div className="text-sm font-black text-[#CCFF00]">
+                      +{(isPlayer1 ? resultData.winnerId === resultData.p1Result.id : resultData.winnerId === resultData.p2Result.id) ? 350 : 100}
+                    </div>
                   </div>
                 </div>
-                <div className="p-2 bg-black/40 rounded-xl">
-                  <div className="text-[10px] text-neutral-400">CREDITS</div>
-                  <div className="text-sm font-black text-[#CCFF00]">
-                    +{(isPlayer1 ? resultData.winnerId === resultData.p1Result.id : resultData.winnerId === resultData.p2Result.id) ? 350 : 100}
+                {isBotMatch && (
+                  <div className="text-[10px] text-purple-300 bg-purple-950/40 border border-purple-500/30 rounded-lg py-1 px-2">
+                    🤖 Opponent: AI Bot Trainer Practice Session
                   </div>
-                </div>
+                )}
               </div>
 
               <button
