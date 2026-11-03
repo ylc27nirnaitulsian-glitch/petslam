@@ -49,6 +49,7 @@ interface GameContextType {
   trainerName: string;
   setTrainerName: (name: string) => void;
   playerTag: string;
+  setPlayerTag: (tag: string) => void;
   connectedAccount: ConnectedAccountData;
   loginAccount: (provider: string, email?: string, name?: string, avatarUrl?: string, sub?: string) => void;
   logoutAccount: () => void;
@@ -177,7 +178,31 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ];
 
   const [trainerName, setTrainerName] = useState<string>('Nirn');
-  const [playerTag] = useState<string>('#SLAM-7749');
+  const [playerTag, setPlayerTagState] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('petslam_player_tag');
+      if (saved && saved.startsWith('#SLAM-') && saved !== '#SLAM-7749') {
+        return saved;
+      }
+      // Generate a unique persistent player ID (e.g. #SLAM-4821)
+      const uniqueCode = `#SLAM-${Math.floor(1000 + Math.random() * 9000)}`;
+      try {
+        localStorage.setItem('petslam_player_tag', uniqueCode);
+      } catch {}
+      return uniqueCode;
+    } catch {
+      return `#SLAM-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+  });
+
+  const setPlayerTag = (newTag: string) => {
+    const clean = newTag.trim().toUpperCase();
+    const formatted = clean.startsWith('#') ? clean : `#${clean}`;
+    setPlayerTagState(formatted);
+    try {
+      localStorage.setItem('petslam_player_tag', formatted);
+    } catch {}
+  };
   const [connectedAccount, setConnectedAccount] = useState<ConnectedAccountData>(() => {
     try {
       const savedAuth = localStorage.getItem('petslam_auth_account');
@@ -230,6 +255,19 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('petslam_auth_account', JSON.stringify(acc));
     } catch {}
 
+    // Derive deterministic unique player tag for registered user
+    if (sub || email) {
+      const seed = `${sub || ''}_${email || ''}`;
+      let hash = 0;
+      for (let i = 0; i < seed.length; i++) {
+        hash = (hash << 5) - hash + seed.charCodeAt(i);
+        hash |= 0;
+      }
+      const uniqueNum = Math.abs(hash % 9000) + 1000;
+      const userTag = `#SLAM-${uniqueNum}`;
+      setPlayerTag(userTag);
+    }
+
     // CORE-6: Sync profile progression from Supabase if authenticated
     if (supabase && sub) {
       supabase
@@ -262,6 +300,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logoutAccount = () => {
     const acc: ConnectedAccountData = { isLoggedIn: false, provider: 'Guest', email: '' };
     setConnectedAccount(acc);
+    const guestTag = `#SLAM-${Math.floor(1000 + Math.random() * 9000)}`;
+    setPlayerTag(guestTag);
     try {
       localStorage.removeItem('petslam_auth_account');
       localStorage.removeItem('petslam_has_entered_game');
@@ -798,6 +838,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         trainerName,
         setTrainerName,
         playerTag,
+        setPlayerTag,
         connectedAccount,
         loginAccount,
         logoutAccount,

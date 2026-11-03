@@ -52,8 +52,22 @@ export class VoiceMimicEngine {
         },
       });
 
+      // Detect supported container
+      let mimeType = '';
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        }
+      }
+
       this.recordedChunks = [];
-      this.mediaRecorder = new MediaRecorder(this.mediaStream);
+      this.mediaRecorder = mimeType
+        ? new MediaRecorder(this.mediaStream, { mimeType })
+        : new MediaRecorder(this.mediaStream);
 
       this.mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -118,18 +132,82 @@ export class VoiceMimicEngine {
           return;
         }
 
-        const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
-        const arrayBuffer = await blob.arrayBuffer();
+        const blob = new Blob(this.recordedChunks, {
+          type: this.recordedChunks[0]?.type || 'audio/webm',
+        });
+
+        // Helper to play via HTMLAudioElement (works seamlessly across all browsers)
+        const playViaAudioElement = () => {
+          try {
+            const audioUrl = URL.createObjectURL(blob);
+            const audio = new Audio(audioUrl);
+            audio.playbackRate = 1.48; // Cartoon pitch multiplier!
+            try {
+              (audio as any).preservesPitch = false;
+              (audio as any).webkitPreservesPitch = false;
+              (audio as any).mozPreservesPitch = false;
+            } catch {}
+
+            this.isPlaying = true;
+
+            const startTime = performance.now();
+            const lipInterval = setInterval(() => {
+              if (!this.isPlaying) {
+                clearInterval(lipInterval);
+                return;
+              }
+              const amp = 0.35 + Math.abs(Math.sin((performance.now() - startTime) * 0.022)) * 0.65;
+              onMouthSync(amp);
+            }, 60);
+
+            audio.onended = () => {
+              this.isPlaying = false;
+              clearInterval(lipInterval);
+              onMouthSync(0);
+              URL.revokeObjectURL(audioUrl);
+              onFinish();
+              resolve();
+            };
+
+            audio.onerror = () => {
+              this.isPlaying = false;
+              clearInterval(lipInterval);
+              onMouthSync(0);
+              URL.revokeObjectURL(audioUrl);
+              this.speakPresetPhrase('Hahaha! I heard you loud and clear!', onMouthSync, onFinish);
+              resolve();
+            };
+
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(() => {
+                this.isPlaying = false;
+                clearInterval(lipInterval);
+                onMouthSync(0);
+                this.speakPresetPhrase('Hahaha! I heard you loud and clear!', onMouthSync, onFinish);
+                resolve();
+              });
+            }
+          } catch {
+            this.speakPresetPhrase('Hahaha! I heard you loud and clear!', onMouthSync, onFinish);
+            resolve();
+          }
+        };
 
         try {
           this.initCtx();
           if (!this.audioCtx) {
-            onFinish();
-            resolve();
+            playViaAudioElement();
             return;
           }
 
-          const audioBuffer = await this.audioCtx.decodeAudioData(arrayBuffer);
+          const arrayBuffer = await blob.arrayBuffer();
+          const audioBuffer = await this.audioCtx.decodeAudioData(arrayBuffer).catch(() => null);
+
+          if (!audioBuffer) {
+            playViaAudioElement();
+            return;
+          }
 
           // Play pitch shifted: 1.48x playback speed creates the iconic high-pitched cartoon voice!
           const source = this.audioCtx.createBufferSource();
@@ -167,13 +245,8 @@ export class VoiceMimicEngine {
             resolve();
           };
         } catch (e) {
-          console.warn('Audio decoding failed, using fallback speech synthesis:', e);
-          this.speakPresetPhrase(
-            'Hahaha! I heard you loud and clear!',
-            onMouthSync,
-            onFinish
-          );
-          resolve();
+          console.warn('Audio decoding fallback:', e);
+          playViaAudioElement();
         }
       };
 

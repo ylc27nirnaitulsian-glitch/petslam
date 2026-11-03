@@ -52,6 +52,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [animState, setAnimState] = useState<PetAnimationState>('idle');
   const [talkingVolume, setTalkingVolume] = useState<number>(0);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [showRadialMenu, setShowRadialMenu] = useState(false);
   const [speechBubble, setSpeechBubble] = useState<string | null>(null);
   const [isMinimized, setIsMinimized] = useState<boolean>(() => {
@@ -263,6 +264,96 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     setTimeout(() => setAnimState('idle'), 800);
   };
 
+  // Handle Minimized Pill Dragging & Repositioning
+  const pillDragRef = useRef({
+    isDown: false,
+    hasMoved: false,
+    startX: 0,
+    startY: 0,
+    originX: 0,
+    originY: 0,
+  });
+  const justDraggedPillRef = useRef(false);
+
+  const handleExpandPet = useCallback(() => {
+    sound.playClick();
+    setIsMinimized(false);
+    if (typeof window !== 'undefined') {
+      const mobile = window.innerWidth < 768;
+      const petW = mobile ? 130 : petScaleMode === 'large' ? 200 : 160;
+      const petH = mobile ? 130 : petScaleMode === 'large' ? 200 : 160;
+      setPosition((prev) => ({
+        x: Math.max(10, Math.min(window.innerWidth - petW - 10, prev.x)),
+        y: Math.max(10, Math.min(window.innerHeight - petH - (mobile ? 75 : 15), prev.y)),
+      }));
+    }
+  }, [petScaleMode]);
+
+  const handleTriggerSanctuary = useCallback(
+    (e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      sound.playClick();
+      setShowRadialMenu(false);
+      if (onOpenSanctuary) {
+        onOpenSanctuary();
+      } else {
+        window.dispatchEvent(new CustomEvent('petslam:navigate', { detail: { tab: 'sanctuary' } }));
+      }
+    },
+    [onOpenSanctuary]
+  );
+
+  const handlePillPointerDown = (e: React.PointerEvent) => {
+    // Only primary mouse button or touch/pen
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const originX = position.x;
+    const originY = position.y;
+    let hasMoved = false;
+
+    const onPointerMove = (ev: PointerEvent) => {
+      const deltaX = ev.clientX - startX;
+      const deltaY = ev.clientY - startY;
+
+      if (!hasMoved && Math.hypot(deltaX, deltaY) > 3) {
+        hasMoved = true;
+        setIsDragging(true);
+      }
+
+      if (hasMoved) {
+        const pillW = 180;
+        const pillH = 40;
+        const nextX = Math.max(10, Math.min(window.innerWidth - pillW, originX + deltaX));
+        const nextY = Math.max(10, Math.min(window.innerHeight - pillH - 10, originY + deltaY));
+        setPosition({ x: nextX, y: nextY });
+      }
+    };
+
+    const onPointerUp = () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+
+      if (hasMoved) {
+        setIsDragging(false);
+        justDraggedPillRef.current = true;
+        setTimeout(() => {
+          justDraggedPillRef.current = false;
+        }, 200);
+      } else {
+        handleExpandPet();
+      }
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  };
+
   // Playful Animated Tricks
   const handlePerformTrick = (trick: PetAnimationState) => {
     setAnimState(trick);
@@ -314,11 +405,17 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   };
 
   const handleVoiceMimic = async () => {
-    showSpeech(`Listening... Say something! 🎙️`);
+    if (isRecordingVoice) return;
+    sound.playClick();
+    setIsRecordingVoice(true);
+    showSpeech(`Listening... Say something! 🎙️`, 4000);
+    setAnimState('idle');
+
     const res = await voiceMimic.startListening();
     if (res.success) {
       setTimeout(async () => {
-        showSpeech(`Repeating back! 📢`);
+        setIsRecordingVoice(false);
+        showSpeech(`Repeating back! 📢`, 3000);
         setAnimState('talk');
         await voiceMimic.stopAndRepeat(
           (amp) => setTalkingVolume(amp),
@@ -327,10 +424,13 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
             setAnimState('idle');
           }
         );
-      }, 3000);
+      }, 3500);
     } else {
+      setIsRecordingVoice(false);
+      showSpeech(`Hello Trainer! I am ${activeBeast.name}! Ready to clash! 🐾`, 3000);
+      setAnimState('talk');
       voiceMimic.speakPresetPhrase(
-        `I am ${pet.name}! Your on-screen browser buddy!`,
+        `I am ${activeBeast.name}! Your on-screen companion!`,
         (amp) => setTalkingVolume(amp),
         () => {
           setTalkingVolume(0);
@@ -381,6 +481,18 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
               title="Feed Treat"
             >
               <Utensils className="w-4 h-4" />
+            </button>
+
+            {/* Top-Right Upper: Voice Mimic 🎙️ */}
+            <button
+              onClick={() => {
+                setShowRadialMenu(false);
+                handleVoiceMimic();
+              }}
+              className="absolute -top-3 right-8 bg-red-500 hover:bg-red-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
+              title="Voice Mimic (Repeats Your Voice!) 🎙️"
+            >
+              🎙️
             </button>
 
             {/* Top-Left: Backflip Trick */}
@@ -469,11 +581,8 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
 
             {/* Center: Open Sanctuary */}
             <button
-              onClick={() => {
-                setShowRadialMenu(false);
-                onOpenSanctuary?.();
-              }}
-              className="bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold p-3 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
+              onClick={handleTriggerSanctuary}
+              className="bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold p-3 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
               title="Open Sanctuary"
             >
               <Home className="w-4 h-4" />
@@ -484,19 +593,28 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
 
       {/* Pet Canvas Container */}
       {isMinimized ? (
-        <button
-          onClick={() => {
-            sound.playClick();
-            setIsMinimized(false);
-          }}
-          className="bg-black/95 hover:bg-[#1E293B] border-2 border-[#CCFF00] text-white px-3.5 py-1.5 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.35)] flex items-center gap-2 cursor-pointer text-xs font-mono font-bold active:scale-95 transition-all"
-          title="Click to Expand Screen Buddy"
-        >
-          <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] animate-pulse" />
-          <span className="text-[#CCFF00] font-black">{activeBeast.name}</span>
-          <span className="text-neutral-300 font-normal">(Expand)</span>
-          <ChevronUp className="w-3.5 h-3.5 text-[#CCFF00]" />
-        </button>
+        <div className={!isDragging ? 'animate-hover-float' : ''}>
+          <div
+            role="button"
+            tabIndex={0}
+            onPointerDown={handlePillPointerDown}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleExpandPet();
+              }
+            }}
+            className={`bg-black/95 hover:bg-[#1E293B] border-2 border-[#CCFF00] hover:border-white text-white px-3.5 py-1.5 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.4)] hover:shadow-[0_0_30px_rgba(204,255,0,0.75)] flex items-center gap-2 text-xs font-mono font-bold select-none touch-none group ${
+              isDragging ? 'cursor-grabbing ring-2 ring-[#CCFF00] scale-105' : 'cursor-grab hover:scale-105 active:scale-95'
+            }`}
+            title="Drag anywhere to move · Click to expand buddy"
+          >
+            <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] animate-pulse pointer-events-none group-hover:scale-125 transition-transform" />
+            <span className="text-[#CCFF00] font-black pointer-events-none group-hover:text-white transition-colors">{activeBeast.name}</span>
+            <span className="text-neutral-300 font-normal pointer-events-none">(Expand)</span>
+            <ChevronUp className="w-3.5 h-3.5 text-[#CCFF00] pointer-events-none transition-transform group-hover:-translate-y-0.5" />
+          </div>
+        </div>
       ) : (
         <div
           onPointerDown={handlePointerDown}
@@ -625,6 +743,22 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
               </button>
             )}
 
+            {/* Voice Mimic Repeater Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleVoiceMimic();
+              }}
+              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                isRecordingVoice
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : 'bg-red-500/20 hover:bg-red-500 hover:text-white text-red-300 border border-red-500/30'
+              }`}
+              title="Voice Mimic: Say something and your pet repeats it back in a pitched buddy voice! 🎙️"
+            >
+              <span>{isRecordingVoice ? '🎙️ Rec...' : '🎙️ Mimic'}</span>
+            </button>
+
             {/* Kokoro Local TTS Voice Toggle */}
             <button
               onClick={(e) => {
@@ -676,13 +810,11 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
             </button>
 
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenSanctuary?.();
-              }}
-              className="text-[#CCFF00] hover:underline px-2 py-0.5 font-bold text-xs cursor-pointer"
+              onClick={handleTriggerSanctuary}
+              className="text-[#CCFF00] hover:text-[#b8e600] hover:underline px-2 py-0.5 font-bold text-xs cursor-pointer flex items-center gap-1 active:scale-95 transition-all"
+              title="Open Pet Sanctuary"
             >
-              Sanctuary
+              <span>Sanctuary 🏡</span>
             </button>
           </div>
         </div>

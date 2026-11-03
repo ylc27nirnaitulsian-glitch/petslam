@@ -190,6 +190,35 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
     setCurrentTab(tab);
   };
 
+  const handleOpenSanctuary = () => {
+    sound.playClick();
+    setCurrentTab('sanctuary');
+    setRadarModalOpen(false);
+    setStudioModalOpen(false);
+    setAuctionsModalOpen(false);
+    setBuddyModalOpen(false);
+    setFriendsModalOpen(false);
+    setRankedModalOpen(false);
+    setBreedingModalOpen(false);
+    setPassModalOpen(false);
+    setQuestsDrawerOpen(false);
+    setLeaderboardModalOpen(false);
+    setShowInfoDrawer(false);
+  };
+
+  useEffect(() => {
+    const handleCustomNavigate = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail?.tab === 'sanctuary') {
+        handleOpenSanctuary();
+      } else if (detail?.tab) {
+        handleNavSelect(detail.tab);
+      }
+    };
+    window.addEventListener('petslam:navigate', handleCustomNavigate);
+    return () => window.removeEventListener('petslam:navigate', handleCustomNavigate);
+  }, []);
+
   return (
     <div className="relative w-full h-[100dvh] bg-slate-100 dark:bg-[#07090E] text-slate-900 dark:text-white flex overflow-hidden select-none transition-colors duration-300">
       {/* Floating Extension Companion Linked Toast */}
@@ -281,7 +310,10 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       {friendsModalOpen && (
         <FriendsHubModal
           onClose={() => setFriendsModalOpen(false)}
-          onChallengeFriend={() => setFriendsModalOpen(false)}
+          onChallengeFriend={(_friend) => {
+            setFriendsModalOpen(false);
+            setRankedModalOpen(true);
+          }}
         />
       )}
       {showVipStore && (
@@ -340,7 +372,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       />
 
       {/* 7. Screen Companion Pet Overlay */}
-      <FloatingPetOverlay />
+      <FloatingPetOverlay onOpenSanctuary={handleOpenSanctuary} />
     </div>
   );
 };

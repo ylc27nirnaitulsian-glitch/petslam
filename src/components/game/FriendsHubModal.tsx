@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Users,
@@ -12,8 +12,10 @@ import {
   Shield,
   Sparkles,
   Check,
+  Copy,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
+import { useGame } from '../../context/GameContext';
 import { FriendsVoiceRoomModal } from './FriendsVoiceRoomModal';
 
 interface Friend {
@@ -82,11 +84,41 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
   onChallengeFriend,
   onClose,
 }) => {
+  const { playerTag, trainerName } = useGame();
   const [activeTab, setActiveTab] = useState<'friends' | 'chat' | 'add'>('friends');
   const [showVoiceRoom, setShowVoiceRoom] = useState(false);
-  const [friendsList, setFriendsList] = useState<Friend[]>(INITIAL_FRIENDS);
+  const [copiedTag, setCopiedTag] = useState(false);
+
+  // Load friends from localStorage or use defaults
+  const [friendsList, setFriendsList] = useState<Friend[]>(() => {
+    try {
+      const saved = localStorage.getItem('petslam_friends_roster');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return INITIAL_FRIENDS;
+  });
+
   const [newFriendTag, setNewFriendTag] = useState('');
-  const [addSuccessToast, setAddSuccessToast] = useState<string | null>(null);
+  const [addSuccessToast, setAddSuccessToast] = useState<{ msg: string; error?: boolean } | null>(null);
+
+  const saveFriends = (newList: Friend[]) => {
+    setFriendsList(newList);
+    try {
+      localStorage.setItem('petslam_friends_roster', JSON.stringify(newList));
+    } catch {}
+  };
+
+  const handleCopyMyTag = () => {
+    sound.playCoin();
+    try {
+      navigator.clipboard?.writeText?.(playerTag);
+    } catch {}
+    setCopiedTag(true);
+    setTimeout(() => setCopiedTag(false), 2000);
+  };
 
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -149,23 +181,53 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
 
   const handleAddFriend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFriendTag.trim()) return;
+    const cleanTag = newFriendTag.trim();
+    if (!cleanTag) return;
+
+    const formattedTag = cleanTag.startsWith('#') ? cleanTag.toUpperCase() : `#${cleanTag.toUpperCase()}`;
+
+    // Cannot add yourself
+    if (formattedTag === playerTag.toUpperCase()) {
+      sound.playDefeat();
+      setAddSuccessToast({ msg: 'Cannot add yourself! Enter another trainer’s tag.', error: true });
+      setTimeout(() => setAddSuccessToast(null), 3000);
+      return;
+    }
+
+    // Check if already in friends list
+    if (friendsList.some((f) => f.tag.toUpperCase() === formattedTag)) {
+      sound.playClick();
+      setAddSuccessToast({ msg: `${formattedTag} is already on your Friends Roster!`, error: true });
+      setTimeout(() => setAddSuccessToast(null), 3000);
+      return;
+    }
+
     sound.playLevelUp();
+
+    const sampleFighters = ['Kaiser (Shepherd)', 'Leonidas (Bengal Cat)', 'Ghost (Husky)', 'Mochi (Siamese)', 'Vulkan (Rottweiler)'];
+    const sampleColors = [
+      'from-amber-400 to-red-500',
+      'from-[#CCFF00] to-emerald-500',
+      'from-cyan-400 to-blue-600',
+      'from-purple-500 to-pink-500',
+      'from-emerald-400 to-teal-600',
+    ];
 
     const newFriend: Friend = {
       id: `f_${Date.now()}`,
-      name: newFriendTag.replace('#', 'Trainer_'),
-      tag: newFriendTag.startsWith('#') ? newFriendTag : `#${newFriendTag}`,
-      beastName: 'Kaiser (Shepherd)',
-      trophies: 1250,
+      name: cleanTag.replace(/^#/, 'Trainer_'),
+      tag: formattedTag,
+      beastName: sampleFighters[Math.floor(Math.random() * sampleFighters.length)],
+      trophies: 1200 + Math.floor(Math.random() * 400),
       status: 'Online in Arena',
-      avatarColor: 'from-amber-400 to-emerald-400',
+      avatarColor: sampleColors[Math.floor(Math.random() * sampleColors.length)],
     };
 
-    setFriendsList((prev) => [newFriend, ...prev]);
-    setAddSuccessToast(`Added ${newFriend.name} to your Friends Roster!`);
+    const updated = [newFriend, ...friendsList];
+    saveFriends(updated);
+    setAddSuccessToast({ msg: `Added ${newFriend.name} (${formattedTag}) to your Friends Roster!` });
     setNewFriendTag('');
-    setTimeout(() => setAddSuccessToast(null), 3000);
+    setTimeout(() => setAddSuccessToast(null), 3500);
   };
 
   return (
@@ -259,8 +321,14 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
 
         {/* Dynamic Toast Feedback */}
         {addSuccessToast && (
-          <div className="mx-4 mt-2.5 p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400/60 text-center animate-in fade-in">
-            <p className="text-xs font-mono font-bold text-emerald-300">{addSuccessToast}</p>
+          <div
+            className={`mx-4 mt-2.5 p-2.5 rounded-xl border text-center animate-in fade-in ${
+              addSuccessToast.error
+                ? 'bg-rose-500/20 border-rose-500/50 text-rose-300'
+                : 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300'
+            }`}
+          >
+            <p className="text-xs font-mono font-bold">{addSuccessToast.msg}</p>
           </div>
         )}
 
@@ -392,12 +460,26 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
         {/* TAB 3: ADD FRIEND BY PLAYER TAG */}
         {activeTab === 'add' && (
           <div className="p-6 space-y-4 flex-1">
-            <div className="space-y-1 text-center">
+            <div className="space-y-2 text-center bg-[#141926] p-3 rounded-2xl border border-white/10">
               <h4 className="font-display font-black text-sm uppercase text-white">
-                Connect With Other Trainers
+                Share Your Tag With Friends
               </h4>
-              <p className="text-xs font-mono text-neutral-400">
-                Your Player Tag: <span className="text-[#CCFF00] font-bold">#SLAM-7749</span>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-xs font-mono text-neutral-400">Your Unique Tag:</span>
+                <span className="text-sm font-mono font-black text-[#CCFF00] tracking-wider px-2 py-0.5 rounded bg-black/60 border border-[#CCFF00]/40">
+                  {playerTag}
+                </span>
+                <button
+                  onClick={handleCopyMyTag}
+                  className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-neutral-200 hover:text-white text-[10px] font-mono flex items-center gap-1 cursor-pointer transition-colors active:scale-95"
+                  title="Copy Your Player Tag"
+                >
+                  {copiedTag ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-[#CCFF00]" />}
+                  <span>{copiedTag ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+              <p className="text-[10px] font-mono text-neutral-400">
+                Send this tag to friends so they can add and challenge you!
               </p>
             </div>
 
@@ -410,7 +492,7 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
                   type="text"
                   value={newFriendTag}
                   onChange={(e) => setNewFriendTag(e.target.value)}
-                  placeholder="e.g. #VIPER-99"
+                  placeholder="e.g. #SLAM-4891 or #VIPER-99"
                   required
                   className="w-full bg-[#121622] border border-white/10 rounded-xl px-3 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
                 />
@@ -418,10 +500,10 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow flex items-center justify-center gap-2 active:scale-95"
               >
                 <UserPlus className="w-4 h-4 text-black fill-black" />
-                <span>Send Friend Request</span>
+                <span>Add To Friends Roster</span>
               </button>
             </form>
           </div>

@@ -79,6 +79,11 @@ export const FriendsVoiceRoomModal: React.FC<FriendsVoiceRoomModalProps> = ({
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
+  const isMicMutedRef = useRef<boolean>(isMicMuted);
+
+  useEffect(() => {
+    isMicMutedRef.current = isMicMuted;
+  }, [isMicMuted]);
 
   // Initialize real microphone audio stream and live volume metering
   useEffect(() => {
@@ -87,7 +92,13 @@ export const FriendsVoiceRoomModal: React.FC<FriendsVoiceRoomModalProps> = ({
     async function initMic() {
       try {
         if (!navigator.mediaDevices?.getUserMedia) return;
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
         if (!active) {
           stream.getTracks().forEach((t) => t.stop());
           return;
@@ -96,6 +107,9 @@ export const FriendsVoiceRoomModal: React.FC<FriendsVoiceRoomModalProps> = ({
         micStreamRef.current = stream;
         const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') {
+          await ctx.resume().catch(() => {});
+        }
         audioContextRef.current = ctx;
 
         const source = ctx.createMediaStreamSource(stream);
@@ -108,6 +122,15 @@ export const FriendsVoiceRoomModal: React.FC<FriendsVoiceRoomModalProps> = ({
 
         const checkAudio = () => {
           if (!active) return;
+          if (isMicMutedRef.current) {
+            setAudioLevel(0);
+            setPartyMembers((prev) =>
+              prev.map((m) => (m.isHost ? { ...m, isTalking: false } : m))
+            );
+            animFrameRef.current = requestAnimationFrame(checkAudio);
+            return;
+          }
+
           analyser.getByteFrequencyData(dataArray);
           let sum = 0;
           for (let i = 0; i < dataArray.length; i++) {
@@ -119,7 +142,7 @@ export const FriendsVoiceRoomModal: React.FC<FriendsVoiceRoomModalProps> = ({
 
           // Update talking ring for host
           setPartyMembers((prev) =>
-            prev.map((m) => (m.isHost ? { ...m, isTalking: normalized > 15 && !isMicMuted } : m))
+            prev.map((m) => (m.isHost ? { ...m, isTalking: normalized > 12 } : m))
           );
 
           animFrameRef.current = requestAnimationFrame(checkAudio);
@@ -130,6 +153,10 @@ export const FriendsVoiceRoomModal: React.FC<FriendsVoiceRoomModalProps> = ({
         // Microphone permission denied or unavailable; use simulated voice fluctuation
         const interval = setInterval(() => {
           if (!active) return;
+          if (isMicMutedRef.current) {
+            setAudioLevel(0);
+            return;
+          }
           const sim = Math.floor(Math.random() * 45);
           setAudioLevel(sim);
         }, 300);
@@ -149,7 +176,7 @@ export const FriendsVoiceRoomModal: React.FC<FriendsVoiceRoomModalProps> = ({
         audioContextRef.current.close().catch(() => {});
       }
     };
-  }, [isMicMuted]);
+  }, []);
 
   // Periodic member speech simulation
   useEffect(() => {
@@ -167,6 +194,9 @@ export const FriendsVoiceRoomModal: React.FC<FriendsVoiceRoomModalProps> = ({
 
   const handleToggleMic = () => {
     sound.playClick();
+    if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume().catch(() => {});
+    }
     setIsMicMuted((prev) => {
       const next = !prev;
       if (micStreamRef.current) {

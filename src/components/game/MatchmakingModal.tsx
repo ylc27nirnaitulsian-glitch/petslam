@@ -98,7 +98,7 @@ export const MatchmakingModal: React.FC<MatchmakingModalProps> = ({
             <Swords className="w-5 h-5 text-[#CCFF00] animate-pulse" />
             <span className="font-display font-black text-sm uppercase tracking-wider text-white">
               {phase === 'searching'
-                ? 'Apex Global Live Matchmaking'
+                ? 'Finding a match'
                 : phase === 'found'
                 ? 'Challenger Located!'
                 : 'Colosseum Arena Clash'}

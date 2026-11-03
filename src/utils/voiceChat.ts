@@ -93,6 +93,9 @@ class VoiceChatEngine {
         this.micStream = stream;
         const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         this.audioCtx = new AudioCtx();
+        if (this.audioCtx.state === 'suspended') {
+          await this.audioCtx.resume().catch(() => {});
+        }
         const source = this.audioCtx.createMediaStreamSource(stream);
 
         const analyser = this.audioCtx.createAnalyser();

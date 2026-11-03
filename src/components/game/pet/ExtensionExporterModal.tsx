@@ -1982,6 +1982,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
     minPill.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (minPillMoved) return;
       minPill.style.display = 'none';
       wrapper.style.display = 'flex';
       if (petInstance) {
@@ -2128,8 +2129,16 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       try { wrapper.setPointerCapture(e.pointerId); } catch (err) {}
     });
 
+    let isPillDragging = false;
+    let minPillStartX = 0, minPillStartY = 0;
+    let minPillMoved = false;
+
     minPill.addEventListener('pointerdown', (e) => {
       isDragging = true;
+      isPillDragging = true;
+      minPillMoved = false;
+      minPillStartX = e.clientX;
+      minPillStartY = e.clientY;
       dragOffsetX = e.clientX - posX;
       dragOffsetY = e.clientY - posY;
       try { minPill.setPointerCapture(e.pointerId); } catch (err) {}
@@ -2137,8 +2146,16 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
     window.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
-      posX = Math.max(10, Math.min(window.innerWidth - 180, e.clientX - dragOffsetX));
-      posY = Math.max(10, Math.min(window.innerHeight - 200, e.clientY - dragOffsetY));
+      if (isPillDragging) {
+        if (!minPillMoved && Math.hypot(e.clientX - minPillStartX, e.clientY - minPillStartY) > 5) {
+          minPillMoved = true;
+        }
+        posX = Math.max(10, Math.min(window.innerWidth - 180, e.clientX - dragOffsetX));
+        posY = Math.max(10, Math.min(window.innerHeight - 50, e.clientY - dragOffsetY));
+      } else {
+        posX = Math.max(10, Math.min(window.innerWidth - 180, e.clientX - dragOffsetX));
+        posY = Math.max(10, Math.min(window.innerHeight - 200, e.clientY - dragOffsetY));
+      }
       host.style.left = posX + 'px';
       host.style.top = posY + 'px';
     });
@@ -2146,6 +2163,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     window.addEventListener('pointerup', (e) => {
       if (!isDragging) return;
       isDragging = false;
+      isPillDragging = false;
       petInstance.setAnimation('idle');
       try { wrapper.releasePointerCapture(e.pointerId); } catch (err) {}
       try { minPill.releasePointerCapture(e.pointerId); } catch (err) {}

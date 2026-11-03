@@ -14,7 +14,6 @@ import {
   Shield,
   Heart,
   LocateFixed,
-  Layers,
   Info,
   Key,
   Check,
@@ -137,78 +136,15 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
   });
   const [gpsStatus, setGpsStatus] = useState<'locating' | 'live_gps' | 'simulated'>('locating');
   const [accuracyMeters, setAccuracyMeters] = useState<number>(30);
-  const [mapTheme, setMapTheme] = useState<
-    'dark' | 'voyager' | 'positron' | 'satellite' | 'osm' | 'geoapify_dark'
-  >('dark');
   const [isScanning, setIsScanning] = useState<boolean>(false);
 
-  // Geoapify API Key from environment (optional developer enhancement; zero-key OpenFreeMap/Carto works by default)
-  const mapsApiKey = (import.meta.env.VITE_GEOAPIFY_API_KEY as string) || '';
-
-  const getTileConfig = (theme: typeof mapTheme, apiKey: string) => {
-    // 1. Geoapify Cyber Dark (if API key is present)
-    if (theme === 'geoapify_dark' && apiKey) {
-      return {
-        url: `https://maps.geoapify.com/v1/tile/dark-matter-purple-roads/{z}/{x}/{y}.png?apiKey=${apiKey}`,
-        subdomains: 'abcd',
-        maxZoom: 20,
-        attribution:
-          'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
-      };
-    }
-
-    // 2. OpenFreeMap Bright (100% Free, Zero Key, No Limits)
-    if (theme === 'voyager') {
-      return {
-        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        subdomains: 'abcd',
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.esri.com/" target="_blank">Esri</a>, Earthstar Geographics',
-      };
-    }
-
-    // 3. OpenFreeMap Liberty (100% Free, Zero Key, No Limits)
-    if (theme === 'satellite') {
-      return {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        subdomains: 'abcd',
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.esri.com/" target="_blank">Esri</a>, Earthstar Geographics',
-      };
-    }
-
-    // 3. Carto Positron (Clean Light Theme, 100% Free, Zero Key)
-    if (theme === 'positron') {
-      return {
-        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-        subdomains: 'abcd',
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
-      };
-    }
-
-    // 4. OpenStreetMap Standard
-    if (theme === 'osm') {
-      return {
-        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-        subdomains: 'abc',
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
-      };
-    }
-
-    // 5. Carto Dark Matter (Default Cyber Dark Theme)
-    return {
-      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      subdomains: 'abcd',
-      maxZoom: 19,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
-    };
+  // OpenStreetMap Standard (Sole Map Provider API)
+  const OSM_TILE_CONFIG = {
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: 'abc',
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
   };
 
   // Active pet spawns around user
@@ -299,12 +235,11 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
     // Add zoom controls at top-right
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Initial Tile Layer
-    const tileConfig = getTileConfig(mapTheme, mapsApiKey);
-    const tileLayer = L.tileLayer(tileConfig.url, {
-      maxZoom: tileConfig.maxZoom,
-      subdomains: tileConfig.subdomains,
-      attribution: tileConfig.attribution,
+    // OpenStreetMap Standard Tile Layer
+    const tileLayer = L.tileLayer(OSM_TILE_CONFIG.url, {
+      maxZoom: OSM_TILE_CONFIG.maxZoom,
+      subdomains: OSM_TILE_CONFIG.subdomains,
+      attribution: OSM_TILE_CONFIG.attribution,
     }).addTo(map);
     tileLayerRef.current = tileLayer;
 
@@ -337,11 +272,8 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
       setTimeout(() => map.invalidateSize(), 600),
     ];
 
-
-
-
     const resizeObserver = new ResizeObserver(() => {
-
+      map.invalidateSize();
     });
     if (mapContainerRef.current) {
       resizeObserver.observe(mapContainerRef.current);
@@ -354,22 +286,6 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
       mapInstanceRef.current = null;
     };
   }, []);
-
-  // 3. Switch Tile Layer when theme or API key changes
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    if (tileLayerRef.current) {
-      mapInstanceRef.current.removeLayer(tileLayerRef.current);
-    }
-
-    const tileConfig = getTileConfig(mapTheme, mapsApiKey);
-    const newLayer = L.tileLayer(tileConfig.url, {
-      maxZoom: tileConfig.maxZoom,
-      subdomains: tileConfig.subdomains,
-      attribution: tileConfig.attribution,
-    }).addTo(mapInstanceRef.current);
-    tileLayerRef.current = newLayer;
-  }, [mapTheme, mapsApiKey]);
 
   // 4. Render & Update Player & Pet Markers on Leaflet Layer
   useEffect(() => {
@@ -553,25 +469,6 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            {/* Tile Layer Selector (OpenFreeMap / Carto / OSM / Geoapify) */}
-            <button
-              onClick={() => {
-                sound.playClick();
-                setMapTheme((prev) => {
-                  if (prev === 'dark') return 'voyager';
-                  if (prev === 'voyager') return 'satellite';
-                  if (prev === 'satellite') return 'positron';
-                  if (prev === 'positron') return 'osm';
-                  if (prev === 'osm') return mapsApiKey ? 'geoapify_dark' : 'dark';
-                  return 'dark';
-                });
-              }}
-              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white cursor-pointer transition-colors"
-              title="Toggle Map Provider (OpenFreeMap / Carto / OSM / Geoapify)"
-            >
-              <Layers className="w-3.5 h-3.5" />
-            </button>
-
             {/* Recenter to User */}
             <button
               onClick={handleRecenter}
@@ -632,29 +529,9 @@ export const PetWorldMapView: React.FC<PetWorldMapViewProps> = ({ onClose }) => 
           {/* Map Controls Floating Badge */}
           <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/15 text-[9px] font-mono text-neutral-300 flex items-center gap-1.5 shadow-lg">
             <span className="w-2 h-2 rounded-full bg-[#CCFF00] animate-ping" />
-            <span>
-              {mapTheme === 'geoapify_dark'
-                ? 'GEOAPIFY'
-                : mapTheme === 'satellite'
-                ? 'SATELLITE (ESRI)'
-                : mapTheme === 'osm'
-                ? 'OPENSTREETMAP'
-                : 'CARTO'}
-            </span>
+            <span>OPENSTREETMAP</span>
             <span className="text-neutral-500">|</span>
-            <span className="text-[#CCFF00] font-bold uppercase">
-              {mapTheme === 'geoapify_dark'
-                ? 'Cyber Dark'
-                : mapTheme === 'voyager'
-                ? 'Voyager Streets'
-                : mapTheme === 'satellite'
-                ? 'Satellite 🛰️'
-                : mapTheme === 'positron'
-                ? 'Clean Light'
-                : mapTheme === 'osm'
-                ? 'Standard'
-                : 'Dark Matter'}
-            </span>
+            <span className="text-[#CCFF00] font-bold uppercase">STANDARD</span>
           </div>
         </div>
 
