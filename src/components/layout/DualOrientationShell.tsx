@@ -19,7 +19,9 @@ import { ProfileScreen } from '../game/screens/ProfileScreen';
 import { PetAvatarPhotoStudioModal } from '../game/pet/PetAvatarPhotoStudioModal';
 import { PetAuctionHouseModal } from '../game/pet/PetAuctionHouseModal';
 import { ExtensionExporterModal } from '../game/pet/ExtensionExporterModal';
-import { FriendsHubModal } from '../game/FriendsHubModal';
+import { FriendsHubModal, Friend } from '../game/FriendsHubModal';
+import { FriendPartyLobbyModal } from '../game/FriendPartyLobbyModal';
+import { friendNetwork, FriendLobbyItem } from '../../services/friendNetworkService';
 import { VipPassesModal } from '../game/VipPassesModal';
 import { SystemDiagnosticsModal } from '../diagnostic/SystemDiagnosticsModal';
 import { RankedMatchmakingModal } from '../game/RankedMatchmakingModal';
@@ -39,7 +41,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   onReturnToTitle,
   onOpenSystemDetails,
 }) => {
-  const { soundEnabled, toggleSound, addCredits } = useGame();
+  const { soundEnabled, toggleSound, addCredits, playerTag } = useGame();
   const { pet } = usePetCompanion();
 
   const [currentTab, setCurrentTab] = useState<MainNavId>('arena');
@@ -52,12 +54,37 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   const [auctionsModalOpen, setAuctionsModalOpen] = useState<boolean>(false);
   const [buddyModalOpen, setBuddyModalOpen] = useState<boolean>(false);
   const [friendsModalOpen, setFriendsModalOpen] = useState<boolean>(false);
+  const [activePartyLobby, setActivePartyLobby] = useState<{
+    roomCode?: string;
+    friend?: Friend | { name: string; tag: string; beastName?: string };
+    isHost?: boolean;
+  } | null>(null);
+  const [incomingInvite, setIncomingInvite] = useState<FriendLobbyItem | null>(null);
   const [rankedModalOpen, setRankedModalOpen] = useState<boolean>(false);
   const [breedingModalOpen, setBreedingModalOpen] = useState<boolean>(false);
   const [passModalOpen, setPassModalOpen] = useState<boolean>(false);
   const [questsDrawerOpen, setQuestsDrawerOpen] = useState<boolean>(false);
   const [leaderboardModalOpen, setLeaderboardModalOpen] = useState<boolean>(false);
   const [radarModalOpen, setRadarModalOpen] = useState<boolean>(false);
+
+  // Real-time Social Party Invite Listener & Global Friends Trigger
+  useEffect(() => {
+    if (!playerTag) return;
+    const unsub = friendNetwork.init(playerTag, {
+      onLobbyInvite: (lobby) => {
+        sound.playMatchFound();
+        setIncomingInvite(lobby);
+      },
+    });
+
+    const handleOpenFriends = () => setFriendsModalOpen(true);
+    window.addEventListener('petslam:open-friends', handleOpenFriends);
+
+    return () => {
+      unsub();
+      window.removeEventListener('petslam:open-friends', handleOpenFriends);
+    };
+  }, [playerTag]);
 
   // Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -298,6 +325,54 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       <MobileBottomDock currentTab={currentTab} onTabChange={handleNavSelect} />
 
       {/* 5. Modals & Hubs */}
+      {/* Real-time Incoming Battle / Party Invite Notification Banner */}
+      {incomingInvite && (
+        <div className="fixed top-4 inset-x-4 z-50 flex items-center justify-center animate-in slide-in-from-top duration-300">
+          <div className="bg-[#121824] border-2 border-[#CCFF00] rounded-2xl p-4 shadow-[0_0_40px_rgba(204,255,0,0.4)] flex items-center justify-between gap-4 max-w-lg w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#CCFF00]/20 border border-[#CCFF00]/50 flex items-center justify-center text-[#CCFF00] font-black animate-pulse">
+                ⚔️
+              </div>
+              <div>
+                <div className="font-display font-black text-sm text-white uppercase">
+                  Battle Invite from {incomingInvite.host_name}
+                </div>
+                <div className="text-xs font-mono text-neutral-300">
+                  Tag: <span className="text-[#CCFF00] font-bold">{incomingInvite.host_tag}</span> · Mode: {incomingInvite.mode.toUpperCase()}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  sound.playBattleStart();
+                  setActivePartyLobby({
+                    roomCode: incomingInvite.room_code,
+                    isHost: false,
+                    friend: {
+                      name: incomingInvite.host_name,
+                      tag: incomingInvite.host_tag,
+                      beastName: incomingInvite.host_beast?.name,
+                    },
+                  });
+                  setIncomingInvite(null);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-[#CCFF00] hover:bg-[#d8ff33] text-black font-display font-black text-xs uppercase cursor-pointer shadow active:scale-95 transition-all"
+              >
+                Join Party
+              </button>
+              <button
+                onClick={() => setIncomingInvite(null)}
+                className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-neutral-400 hover:text-white font-mono text-xs cursor-pointer"
+              >
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {studioModalOpen && (
         <PetAvatarPhotoStudioModal onClose={() => setStudioModalOpen(false)} />
       )}
@@ -310,8 +385,20 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       {friendsModalOpen && (
         <FriendsHubModal
           onClose={() => setFriendsModalOpen(false)}
-          onChallengeFriend={(_friend) => {
+          onChallengeFriend={(friend) => {
             setFriendsModalOpen(false);
+            setActivePartyLobby({ isHost: true, friend });
+          }}
+        />
+      )}
+      {activePartyLobby && (
+        <FriendPartyLobbyModal
+          initialRoomCode={activePartyLobby.roomCode}
+          initialFriend={activePartyLobby.friend}
+          isHost={activePartyLobby.isHost}
+          onClose={() => setActivePartyLobby(null)}
+          onLaunchBattle={(_mode) => {
+            setActivePartyLobby(null);
             setRankedModalOpen(true);
           }}
         />

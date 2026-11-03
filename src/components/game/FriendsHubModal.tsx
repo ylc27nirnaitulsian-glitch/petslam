@@ -13,12 +13,17 @@ import {
   Sparkles,
   Check,
   Copy,
+  Clock,
+  UserCheck,
+  UserX,
+  Radio,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { useGame } from '../../context/GameContext';
 import { FriendsVoiceRoomModal } from './FriendsVoiceRoomModal';
+import { friendNetwork, FriendRequestItem } from '../../services/friendNetworkService';
 
-interface Friend {
+export interface Friend {
   id: string;
   name: string;
   tag: string;
@@ -64,15 +69,6 @@ const INITIAL_FRIENDS: Friend[] = [
     status: 'Online in Arena',
     avatarColor: 'from-cyan-400 to-blue-600',
   },
-  {
-    id: 'f4',
-    name: 'ShadowFang',
-    tag: '#NIGHT-88',
-    beastName: 'Shadow (Black Cat)',
-    trophies: 1410,
-    status: 'Offline',
-    avatarColor: 'from-purple-500 to-indigo-600',
-  },
 ];
 
 interface FriendsHubModalProps {
@@ -84,12 +80,12 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
   onChallengeFriend,
   onClose,
 }) => {
-  const { playerTag, trainerName } = useGame();
-  const [activeTab, setActiveTab] = useState<'friends' | 'chat' | 'add'>('friends');
+  const { playerTag, trainerName, activeBeast } = useGame();
+  const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'chat' | 'add'>('friends');
   const [showVoiceRoom, setShowVoiceRoom] = useState(false);
   const [copiedTag, setCopiedTag] = useState(false);
 
-  // Load friends from localStorage or use defaults
+  // Load friends from localStorage or defaults
   const [friendsList, setFriendsList] = useState<Friend[]>(() => {
     try {
       const saved = localStorage.getItem('petslam_friends_roster');
@@ -101,8 +97,10 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
     return INITIAL_FRIENDS;
   });
 
+  const [pendingRequests, setPendingRequests] = useState<FriendRequestItem[]>([]);
+  const [isSubmittingAdd, setIsSubmittingAdd] = useState(false);
   const [newFriendTag, setNewFriendTag] = useState('');
-  const [addSuccessToast, setAddSuccessToast] = useState<{ msg: string; error?: boolean } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ msg: string; error?: boolean } | null>(null);
 
   const saveFriends = (newList: Friend[]) => {
     setFriendsList(newList);
@@ -110,6 +108,99 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
       localStorage.setItem('petslam_friends_roster', JSON.stringify(newList));
     } catch {}
   };
+
+  // Sync incoming requests and accepted friends from Supabase Realtime
+  useEffect(() => {
+    let active = true;
+
+    async function syncNetworkData() {
+      if (!playerTag) return;
+      const [reqs, accepted] = await Promise.all([
+        friendNetwork.fetchIncomingRequests(playerTag),
+        friendNetwork.fetchAcceptedFriends(playerTag),
+      ]);
+
+      if (!active) return;
+      setPendingRequests(reqs);
+
+      // Merge accepted friends into the active roster
+      if (accepted && accepted.length > 0) {
+        setFriendsList((prev) => {
+          const map = new Map<string, Friend>();
+          prev.forEach((f) => map.set(f.tag.toUpperCase(), f));
+
+          accepted.forEach((a) => {
+            const isMeSender = a.sender_tag.toUpperCase() === playerTag.toUpperCase();
+            const friendTag = isMeSender ? a.receiver_tag : a.sender_tag;
+            const friendName = isMeSender
+              ? `Trainer_${friendTag.replace('#', '')}`
+              : a.sender_name || 'Allied Trainer';
+            const friendBeast = isMeSender ? 'Champion Partner' : a.sender_beast || 'Companion';
+
+            if (!map.has(friendTag.toUpperCase())) {
+              map.set(friendTag.toUpperCase(), {
+                id: a.id,
+                name: friendName,
+                tag: friendTag,
+                beastName: friendBeast,
+                trophies: 1450,
+                status: 'Online in Arena',
+                avatarColor: 'from-[#CCFF00] to-emerald-500',
+              });
+            }
+          });
+
+          const merged = Array.from(map.values());
+          try {
+            localStorage.setItem('petslam_friends_roster', JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+      }
+    }
+
+    syncNetworkData();
+
+    // Subscribe to live broadcast updates
+    const unsub = friendNetwork.init(playerTag, {
+      onIncomingRequest: (req) => {
+        sound.playMatchFound();
+        setPendingRequests((prev) => [req, ...prev.filter((r) => r.id !== req.id)]);
+        setToastMessage({ msg: `New friend request from ${req.sender_tag}!` });
+        setTimeout(() => setToastMessage(null), 4000);
+      },
+      onRequestAccepted: (req) => {
+        sound.playLevelUp();
+        const otherTag =
+          req.sender_tag.toUpperCase() === playerTag.toUpperCase()
+            ? req.receiver_tag
+            : req.sender_tag;
+        const newFriend: Friend = {
+          id: req.id,
+          name: otherTag.replace('#', 'Trainer_'),
+          tag: otherTag,
+          beastName: req.sender_beast || 'Champion Partner',
+          trophies: 1500,
+          status: 'Online in Arena',
+          avatarColor: 'from-cyan-400 to-blue-600',
+        };
+        setFriendsList((prev) => {
+          const updated = [newFriend, ...prev.filter((f) => f.tag.toUpperCase() !== otherTag.toUpperCase())];
+          try {
+            localStorage.setItem('petslam_friends_roster', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+        setToastMessage({ msg: `${otherTag} accepted your friend request! 🎉` });
+        setTimeout(() => setToastMessage(null), 4500);
+      },
+    });
+
+    return () => {
+      active = false;
+      unsub();
+    };
+  }, [playerTag, trainerName]);
 
   const handleCopyMyTag = () => {
     sound.playCoin();
@@ -125,27 +216,19 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
     {
       id: 'm1',
       sender: 'ViperQueen',
-      text: 'Good bout earlier! Your German Shepherd has insane clamp force.',
+      text: 'Good bout earlier! Ready for a 2v2 Tag Team?',
       timestamp: '2m ago',
       isSelf: false,
     },
     {
       id: 'm2',
       sender: 'You',
-      text: 'Thanks! Just upgraded his jaw conditioning. Ready for a 2v2 Tag Team?',
+      text: 'Yes! Let’s queue together in the Lobby!',
       timestamp: '1m ago',
       isSelf: true,
     },
-    {
-      id: 'm3',
-      sender: 'ViperQueen',
-      text: 'Yes! Send the challenge!',
-      timestamp: 'Just now',
-      isSelf: false,
-    },
   ]);
   const [inputMsg, setInputMsg] = useState('');
-
   const quickEmotes = ['Good Game! 🏆', 'Ready to Spar? ⚔️', 'Claw Power! 🐾', 'Well Played! 👏', '2v2 Tag Team? 🛡️'];
 
   const handleSendMessage = (textToSend?: string) => {
@@ -162,72 +245,84 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
     };
     setMessages((prev) => [...prev, newMsg]);
     setInputMsg('');
-
-    // Mock quick reply after 1.5s
-    setTimeout(() => {
-      sound.playClick();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `msg_${Date.now()}`,
-          sender: 'ViperQueen',
-          text: 'Accepted! Let’s crush the arena!',
-          timestamp: 'Just now',
-          isSelf: false,
-        },
-      ]);
-    }, 1500);
   };
 
-  const handleAddFriend = (e: React.FormEvent) => {
+  // SEND FRIEND REQUEST
+  const handleAddFriend = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanTag = newFriendTag.trim();
+    const cleanTag = newFriendTag.trim().toUpperCase();
     if (!cleanTag) return;
 
-    const formattedTag = cleanTag.startsWith('#') ? cleanTag.toUpperCase() : `#${cleanTag.toUpperCase()}`;
+    const formattedTag = cleanTag.startsWith('#') ? cleanTag : `#${cleanTag}`;
 
-    // Cannot add yourself
     if (formattedTag === playerTag.toUpperCase()) {
       sound.playDefeat();
-      setAddSuccessToast({ msg: 'Cannot add yourself! Enter another trainer’s tag.', error: true });
-      setTimeout(() => setAddSuccessToast(null), 3000);
+      setToastMessage({ msg: 'Cannot add yourself! Enter another trainer’s tag.', error: true });
+      setTimeout(() => setToastMessage(null), 3000);
       return;
     }
 
-    // Check if already in friends list
     if (friendsList.some((f) => f.tag.toUpperCase() === formattedTag)) {
       sound.playClick();
-      setAddSuccessToast({ msg: `${formattedTag} is already on your Friends Roster!`, error: true });
-      setTimeout(() => setAddSuccessToast(null), 3000);
+      setToastMessage({ msg: `${formattedTag} is already on your Friends Roster!`, error: true });
+      setTimeout(() => setToastMessage(null), 3000);
       return;
     }
 
+    setIsSubmittingAdd(true);
     sound.playLevelUp();
 
-    const sampleFighters = ['Kaiser (Shepherd)', 'Leonidas (Bengal Cat)', 'Ghost (Husky)', 'Mochi (Siamese)', 'Vulkan (Rottweiler)'];
-    const sampleColors = [
-      'from-amber-400 to-red-500',
-      'from-[#CCFF00] to-emerald-500',
-      'from-cyan-400 to-blue-600',
-      'from-purple-500 to-pink-500',
-      'from-emerald-400 to-teal-600',
-    ];
+    const res = await friendNetwork.sendFriendRequest(
+      formattedTag,
+      playerTag,
+      trainerName || 'Trainer',
+      activeBeast?.name || 'Companion Pet'
+    );
 
+    setIsSubmittingAdd(false);
+    setToastMessage({
+      msg: res.message,
+      error: !res.success,
+    });
+    setNewFriendTag('');
+    setTimeout(() => setToastMessage(null), 4500);
+  };
+
+  // ACCEPT INCOMING FRIEND REQUEST
+  const handleAcceptRequest = async (req: FriendRequestItem) => {
+    sound.playLevelUp();
+    await friendNetwork.acceptFriendRequest(req, playerTag, trainerName || 'Trainer');
+
+    // Add to local friends roster
     const newFriend: Friend = {
-      id: `f_${Date.now()}`,
-      name: cleanTag.replace(/^#/, 'Trainer_'),
-      tag: formattedTag,
-      beastName: sampleFighters[Math.floor(Math.random() * sampleFighters.length)],
-      trophies: 1200 + Math.floor(Math.random() * 400),
+      id: req.id,
+      name: req.sender_name || `Trainer_${req.sender_tag.replace('#', '')}`,
+      tag: req.sender_tag,
+      beastName: req.sender_beast || 'Companion Ally',
+      trophies: 1350 + Math.floor(Math.random() * 200),
       status: 'Online in Arena',
-      avatarColor: sampleColors[Math.floor(Math.random() * sampleColors.length)],
+      avatarColor: 'from-[#CCFF00] to-emerald-500',
     };
 
-    const updated = [newFriend, ...friendsList];
+    const updated = [newFriend, ...friendsList.filter((f) => f.tag.toUpperCase() !== req.sender_tag.toUpperCase())];
     saveFriends(updated);
-    setAddSuccessToast({ msg: `Added ${newFriend.name} (${formattedTag}) to your Friends Roster!` });
-    setNewFriendTag('');
-    setTimeout(() => setAddSuccessToast(null), 3500);
+
+    // Remove from pending
+    setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+
+    setToastMessage({
+      msg: `Accepted request! Added ${newFriend.name} (${req.sender_tag}) to Friends!`,
+    });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // DECLINE INCOMING FRIEND REQUEST
+  const handleDeclineRequest = async (reqId: string) => {
+    sound.playClick();
+    await friendNetwork.declineFriendRequest(reqId);
+    setPendingRequests((prev) => prev.filter((r) => r.id !== reqId));
+    setToastMessage({ msg: 'Friend request declined.' });
+    setTimeout(() => setToastMessage(null), 2500);
   };
 
   return (
@@ -255,13 +350,13 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-3 gap-1 p-2 bg-[#101420] border-b border-white/5 shrink-0">
+        <div className="grid grid-cols-4 gap-1 p-2 bg-[#101420] border-b border-white/5 shrink-0">
           <button
             onClick={() => {
               sound.playClick();
               setActiveTab('friends');
             }}
-            className={`py-2 text-xs font-display font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+            className={`py-2 text-[11px] font-display font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
               activeTab === 'friends'
                 ? 'bg-cyan-400 text-black shadow'
                 : 'text-neutral-400 hover:text-white'
@@ -269,38 +364,59 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
           >
             Friends ({friendsList.length})
           </button>
+
           <button
             onClick={() => {
               sound.playClick();
-              setActiveTab('chat');
+              setActiveTab('requests');
             }}
-            className={`py-2 text-xs font-display font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === 'chat'
-                ? 'bg-[#CCFF00] text-black shadow'
+            className={`py-2 text-[11px] font-display font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer relative flex items-center justify-center gap-1 ${
+              activeTab === 'requests'
+                ? 'bg-emerald-400 text-black shadow'
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>Live Chat</span>
+            <span>Requests</span>
+            {pendingRequests.length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse">
+                {pendingRequests.length}
+              </span>
+            )}
           </button>
+
           <button
             onClick={() => {
               sound.playClick();
               setActiveTab('add');
             }}
-            className={`py-2 text-xs font-display font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
+            className={`py-2 text-[11px] font-display font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
               activeTab === 'add'
                 ? 'bg-amber-400 text-black shadow'
                 : 'text-neutral-400 hover:text-white'
             }`}
           >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>Add Friend</span>
+            <UserPlus className="w-3 h-3" />
+            <span>Add</span>
+          </button>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              setActiveTab('chat');
+            }}
+            className={`py-2 text-[11px] font-display font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 ${
+              activeTab === 'chat'
+                ? 'bg-[#CCFF00] text-black shadow'
+                : 'text-neutral-400 hover:text-white'
+            }`}
+          >
+            <MessageSquare className="w-3 h-3" />
+            <span>Chat</span>
           </button>
         </div>
 
         {/* Quick Voice Party Banner */}
-        <div className="mx-4 mt-2.5 p-2 rounded-2xl bg-gradient-to-r from-purple-950/60 to-cyan-950/60 border border-purple-500/30 flex items-center justify-between">
+        <div className="mx-4 mt-2.5 p-2 rounded-2xl bg-gradient-to-r from-purple-950/60 to-cyan-950/60 border border-purple-500/30 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <div>
@@ -320,140 +436,146 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
         </div>
 
         {/* Dynamic Toast Feedback */}
-        {addSuccessToast && (
+        {toastMessage && (
           <div
-            className={`mx-4 mt-2.5 p-2.5 rounded-xl border text-center animate-in fade-in ${
-              addSuccessToast.error
+            className={`mx-4 mt-2 p-2.5 rounded-xl border text-center animate-in fade-in shrink-0 ${
+              toastMessage.error
                 ? 'bg-rose-500/20 border-rose-500/50 text-rose-300'
                 : 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300'
             }`}
           >
-            <p className="text-xs font-mono font-bold">{addSuccessToast.msg}</p>
+            <p className="text-xs font-mono font-bold">{toastMessage.msg}</p>
           </div>
         )}
 
         {/* TAB 1: FRIENDS ROSTER */}
         {activeTab === 'friends' && (
           <div className="p-4 overflow-y-auto space-y-2.5 flex-1">
-            {friendsList.map((friend) => {
-              const isOnline = friend.status !== 'Offline';
+            {friendsList.length === 0 ? (
+              <div className="text-center p-6 text-neutral-400 font-mono text-xs">
+                No friends on your roster yet. Share your tag to connect!
+              </div>
+            ) : (
+              friendsList.map((friend) => {
+                const isOnline = friend.status !== 'Offline';
 
-              return (
-                <div
-                  key={friend.id}
-                  className="bg-[#121622] hover:bg-[#161c2b] border border-white/10 rounded-2xl p-3 flex items-center justify-between transition-all shadow"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-11 h-11 rounded-xl bg-gradient-to-br ${friend.avatarColor} flex items-center justify-center text-white font-black text-sm shadow shrink-0 relative`}
-                    >
-                      {friend.name.substring(0, 2).toUpperCase()}
-                      <Circle
-                        className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ${
-                          isOnline ? 'text-emerald-400 fill-emerald-400' : 'text-neutral-500 fill-neutral-500'
-                        }`}
-                      />
-                    </div>
-
-                    <div className="text-left">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-display font-black text-xs uppercase text-white">
-                          {friend.name}
-                        </span>
-                        <span className="text-[10px] text-neutral-400 font-mono">{friend.tag}</span>
-                      </div>
-                      <p className="text-[10px] text-[#CCFF00] font-mono">
-                        {friend.beastName} · {friend.trophies} 🏆
-                      </p>
-                      <span
-                        className={`text-[9px] font-mono block ${
-                          friend.status === 'Online in Arena'
-                            ? 'text-emerald-400'
-                            : friend.status === 'In Menu'
-                            ? 'text-cyan-300'
-                            : 'text-neutral-500'
-                        }`}
+                return (
+                  <div
+                    key={friend.id}
+                    className="bg-[#121622] hover:bg-[#161c2b] border border-white/10 rounded-2xl p-3 flex items-center justify-between transition-all shadow"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-11 h-11 rounded-xl bg-gradient-to-br ${friend.avatarColor} flex items-center justify-center text-white font-black text-sm shadow shrink-0 relative`}
                       >
-                        {friend.status}
-                      </span>
-                    </div>
-                  </div>
+                        {friend.name.substring(0, 2).toUpperCase()}
+                        <Circle
+                          className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ${
+                            isOnline ? 'text-emerald-400 fill-emerald-400' : 'text-neutral-500 fill-neutral-500'
+                          }`}
+                        />
+                      </div>
 
-                  {/* Challenge Button */}
-                  {isOnline && (
-                    <button
-                      onClick={() => {
-                        sound.playCardPlay();
-                        onChallengeFriend(friend);
-                      }}
-                      className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-display font-black text-[11px] uppercase tracking-wider shrink-0 cursor-pointer shadow flex items-center gap-1"
-                    >
-                      <Swords className="w-3.5 h-3.5" />
-                      <span>Duel</span>
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                      <div className="text-left">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-display font-black text-xs uppercase text-white">
+                            {friend.name}
+                          </span>
+                          <span className="text-[10px] text-neutral-400 font-mono">{friend.tag}</span>
+                        </div>
+                        <p className="text-[10px] text-[#CCFF00] font-mono">
+                          {friend.beastName} · {friend.trophies} 🏆
+                        </p>
+                        <span
+                          className={`text-[9px] font-mono block ${
+                            friend.status === 'Online in Arena'
+                              ? 'text-emerald-400'
+                              : friend.status === 'In Menu'
+                              ? 'text-cyan-300'
+                              : 'text-neutral-500'
+                          }`}
+                        >
+                          {friend.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Challenge / Lobby Button */}
+                    {isOnline && (
+                      <button
+                        onClick={() => {
+                          sound.playCardPlay();
+                          onChallengeFriend(friend);
+                        }}
+                        className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-display font-black text-[11px] uppercase tracking-wider shrink-0 cursor-pointer shadow flex items-center gap-1.5 active:scale-95 transition-transform"
+                        title="Invite to Battle Lobby or Duel"
+                      >
+                        <Swords className="w-3.5 h-3.5" />
+                        <span>Party / Duel</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
 
-        {/* TAB 2: LIVE IN-GAME CHAT & QUICK BATTLE EMOTES */}
-        {activeTab === 'chat' && (
-          <div className="flex flex-col flex-1 overflow-hidden p-4">
-            {/* Quick Emote Action Pills */}
-            <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-none shrink-0">
-              {quickEmotes.map((emote) => (
-                <button
-                  key={emote}
-                  onClick={() => handleSendMessage(emote)}
-                  className="px-2.5 py-1 rounded-full bg-[#182030] hover:bg-[#222c42] border border-white/10 text-[11px] font-mono font-bold text-white whitespace-nowrap cursor-pointer transition-all active:scale-95 shadow"
-                >
-                  {emote}
-                </button>
-              ))}
-            </div>
-
-            {/* Chat Messages List */}
-            <div className="flex-1 overflow-y-auto space-y-2 py-2 pr-1">
-              {messages.map((msg) => (
+        {/* TAB 2: INCOMING FRIEND REQUESTS */}
+        {activeTab === 'requests' && (
+          <div className="p-4 overflow-y-auto space-y-2.5 flex-1">
+            {pendingRequests.length === 0 ? (
+              <div className="text-center p-8 text-neutral-400 font-mono text-xs space-y-2">
+                <Clock className="w-8 h-8 mx-auto text-neutral-500 opacity-50" />
+                <p className="font-bold text-white">No Pending Friend Requests</p>
+                <p className="text-[10px]">
+                  When someone enters your tag (<span className="text-[#CCFF00]">{playerTag}</span>), their request will show up here!
+                </p>
+              </div>
+            ) : (
+              pendingRequests.map((req) => (
                 <div
-                  key={msg.id}
-                  className={`flex flex-col ${msg.isSelf ? 'items-end' : 'items-start'}`}
+                  key={req.id}
+                  className="bg-[#121622] border-2 border-emerald-500/40 rounded-2xl p-3 flex items-center justify-between shadow-lg"
                 >
-                  <span className="text-[9px] font-mono text-neutral-400 px-1 mb-0.5">
-                    {msg.sender} · {msg.timestamp}
-                  </span>
-                  <div
-                    className={`max-w-[80%] px-3 py-2 rounded-2xl text-xs font-mono shadow ${
-                      msg.isSelf
-                        ? 'bg-[#CCFF00] text-black font-semibold rounded-tr-none'
-                        : 'bg-[#182030] text-white border border-white/10 rounded-tl-none'
-                    }`}
-                  >
-                    {msg.text}
+                  <div className="text-left">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-display font-black text-xs uppercase text-white">
+                        {req.sender_name || 'Trainer'}
+                      </span>
+                      <span className="text-[10px] text-[#CCFF00] font-mono font-bold">
+                        {req.sender_tag}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-neutral-300 font-mono">
+                      🐾 Beast: {req.sender_beast || 'Companion'}
+                    </p>
+                    <span className="text-[9px] font-mono text-neutral-400">
+                      Wants to add you as a rival & teammate
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleAcceptRequest(req)}
+                      className="px-2.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-display font-black text-[10px] uppercase flex items-center gap-1 cursor-pointer active:scale-95 shadow"
+                      title="Accept Friend Request"
+                    >
+                      <UserCheck className="w-3 h-3" />
+                      <span>Accept</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDeclineRequest(req.id)}
+                      className="px-2 py-1.5 rounded-xl bg-white/10 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 font-mono text-[10px] cursor-pointer"
+                      title="Decline"
+                    >
+                      <UserX className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Message Input Box */}
-            <div className="pt-2 flex items-center gap-2 border-t border-white/10 shrink-0">
-              <input
-                type="text"
-                value={inputMsg}
-                onChange={(e) => setInputMsg(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Message clan & friends..."
-                className="flex-1 bg-[#121622] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#CCFF00]"
-              />
-              <button
-                onClick={() => handleSendMessage()}
-                className="p-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#d4ff1a] text-black cursor-pointer shadow active:scale-95"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
+              ))
+            )}
           </div>
         )}
 
@@ -492,38 +614,90 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
                   type="text"
                   value={newFriendTag}
                   onChange={(e) => setNewFriendTag(e.target.value)}
-                  placeholder="e.g. #SLAM-4891 or #VIPER-99"
+                  placeholder="e.g. #SLAM-4363 or #VIPER-99"
                   required
+                  disabled={isSubmittingAdd}
                   className="w-full bg-[#121622] border border-white/10 rounded-xl px-3 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-amber-400"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-black font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow flex items-center justify-center gap-2 active:scale-95"
+                disabled={isSubmittingAdd}
+                className="w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer shadow transition-all active:scale-95 disabled:opacity-50"
               >
-                <UserPlus className="w-4 h-4 text-black fill-black" />
-                <span>Add To Friends Roster</span>
+                {isSubmittingAdd ? 'Sending Request...' : 'Send Friend Request'}
               </button>
             </form>
           </div>
         )}
-        {/* Voice Room Modal */}
+
+        {/* TAB 4: CHAT */}
+        {activeTab === 'chat' && (
+          <div className="flex flex-col flex-1 overflow-hidden p-4">
+            {/* Quick Emotes */}
+            <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-none shrink-0">
+              {quickEmotes.map((emote) => (
+                <button
+                  key={emote}
+                  onClick={() => handleSendMessage(emote)}
+                  className="px-2.5 py-1 rounded-full bg-[#182030] hover:bg-[#222c42] border border-white/10 text-[11px] font-mono font-bold text-white whitespace-nowrap cursor-pointer transition-all active:scale-95 shadow"
+                >
+                  {emote}
+                </button>
+              ))}
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto space-y-2 py-2 pr-1">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col ${msg.isSelf ? 'items-end' : 'items-start'}`}
+                >
+                  <span className="text-[9px] font-mono text-neutral-400 px-1 mb-0.5">
+                    {msg.sender} · {msg.timestamp}
+                  </span>
+                  <div
+                    className={`max-w-[80%] px-3 py-2 rounded-2xl text-xs font-mono shadow ${
+                      msg.isSelf
+                        ? 'bg-[#CCFF00] text-black font-semibold rounded-tr-none'
+                        : 'bg-[#182030] text-white border border-white/10 rounded-tl-none'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Message Input */}
+            <div className="pt-2 flex items-center gap-2 border-t border-white/10 shrink-0">
+              <input
+                type="text"
+                value={inputMsg}
+                onChange={(e) => setInputMsg(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder="Message clan & friends..."
+                className="flex-1 bg-[#121622] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#CCFF00]"
+              />
+              <button
+                onClick={() => handleSendMessage()}
+                className="p-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#d4ff1a] text-black cursor-pointer shadow active:scale-95"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Real-time Voice Room Overlay */}
         {showVoiceRoom && (
           <FriendsVoiceRoomModal
             onClose={() => setShowVoiceRoom(false)}
-            onStartDuelWithFriend={(friendName) => {
+            onStartDuelWithFriend={(_fname) => {
               setShowVoiceRoom(false);
               onClose();
-              onChallengeFriend?.({
-                id: 'f_voice',
-                name: friendName,
-                tag: '#VOICE-1',
-                beastName: 'Ghost (Husky)',
-                trophies: 1500,
-                status: 'Online in Arena',
-                avatarColor: 'from-purple-500 to-cyan-500',
-              });
             }}
           />
         )}

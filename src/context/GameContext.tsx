@@ -272,7 +272,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (supabase && sub) {
       supabase
         .from('profiles')
-        .select('credits, trophies, player_level, trainer_name')
+        .select('credits, trophies, player_level, trainer_name, player_tag')
         .eq('id', sub)
         .single()
         .then(
@@ -289,6 +289,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
               if ((data as any).trainer_name) {
                 setTrainerName((data as any).trainer_name);
+              }
+              if ((data as any).player_tag) {
+                setPlayerTag((data as any).player_tag);
               }
             }
           },

@@ -265,15 +265,71 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   };
 
   // Handle Minimized Pill Dragging & Repositioning
-  const pillDragRef = useRef({
-    isDown: false,
-    hasMoved: false,
+  const pillDragRef = useRef<{
+    isDragging: boolean;
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+    moved: boolean;
+  }>({
+    isDragging: false,
     startX: 0,
     startY: 0,
     originX: 0,
     originY: 0,
+    moved: false,
   });
-  const justDraggedPillRef = useRef(false);
+
+  const handlePillPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    e.stopPropagation();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+    pillDragRef.current = {
+      isDragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      originX: position.x,
+      originY: position.y,
+      moved: false,
+    };
+  };
+
+  const handlePillPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!pillDragRef.current.isDragging) return;
+    e.stopPropagation();
+    const dx = e.clientX - pillDragRef.current.startX;
+    const dy = e.clientY - pillDragRef.current.startY;
+    if (!pillDragRef.current.moved && Math.hypot(dx, dy) > 4) {
+      pillDragRef.current.moved = true;
+      setIsDragging(true);
+    }
+    if (pillDragRef.current.moved) {
+      const pillW = 200;
+      const pillH = 46;
+      const nextX = Math.max(8, Math.min(window.innerWidth - pillW, pillDragRef.current.originX + dx));
+      const nextY = Math.max(8, Math.min(window.innerHeight - pillH, pillDragRef.current.originY + dy));
+      setPosition({ x: nextX, y: nextY });
+    }
+  };
+
+  const handlePillPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!pillDragRef.current.isDragging) return;
+    e.stopPropagation();
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+    const wasMoved = pillDragRef.current.moved;
+    pillDragRef.current.isDragging = false;
+    pillDragRef.current.moved = false;
+    setIsDragging(false);
+
+    if (!wasMoved) {
+      handleExpandPet();
+    }
+  };
 
   const handleExpandPet = useCallback(() => {
     sound.playClick();
@@ -302,57 +358,6 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     },
     [onOpenSanctuary]
   );
-
-  const handlePillPointerDown = (e: React.PointerEvent) => {
-    // Only primary mouse button or touch/pen
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const originX = position.x;
-    const originY = position.y;
-    let hasMoved = false;
-
-    const onPointerMove = (ev: PointerEvent) => {
-      const deltaX = ev.clientX - startX;
-      const deltaY = ev.clientY - startY;
-
-      if (!hasMoved && Math.hypot(deltaX, deltaY) > 3) {
-        hasMoved = true;
-        setIsDragging(true);
-      }
-
-      if (hasMoved) {
-        const pillW = 180;
-        const pillH = 40;
-        const nextX = Math.max(10, Math.min(window.innerWidth - pillW, originX + deltaX));
-        const nextY = Math.max(10, Math.min(window.innerHeight - pillH - 10, originY + deltaY));
-        setPosition({ x: nextX, y: nextY });
-      }
-    };
-
-    const onPointerUp = () => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('pointercancel', onPointerUp);
-
-      if (hasMoved) {
-        setIsDragging(false);
-        justDraggedPillRef.current = true;
-        setTimeout(() => {
-          justDraggedPillRef.current = false;
-        }, 200);
-      } else {
-        handleExpandPet();
-      }
-    };
-
-    window.addEventListener('pointermove', onPointerMove, { passive: false });
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
-  };
 
   // Playful Animated Tricks
   const handlePerformTrick = (trick: PetAnimationState) => {
@@ -593,21 +598,23 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
 
       {/* Pet Canvas Container */}
       {isMinimized ? (
-        <div className={!isDragging ? 'animate-hover-float' : ''}>
+        <div>
           <div
             role="button"
             tabIndex={0}
             onPointerDown={handlePillPointerDown}
+            onPointerMove={handlePillPointerMove}
+            onPointerUp={handlePillPointerUp}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 handleExpandPet();
               }
             }}
-            className={`bg-black/95 hover:bg-[#1E293B] border-2 border-[#CCFF00] hover:border-white text-white px-3.5 py-1.5 rounded-full shadow-[0_0_20px_rgba(204,255,0,0.4)] hover:shadow-[0_0_30px_rgba(204,255,0,0.75)] flex items-center gap-2 text-xs font-mono font-bold select-none touch-none group ${
+            className={`bg-black/95 hover:bg-[#1E293B] border-2 border-[#CCFF00] hover:border-white text-white px-4 py-2 rounded-full shadow-[0_0_25px_rgba(204,255,0,0.5)] hover:shadow-[0_0_35px_rgba(204,255,0,0.85)] flex items-center gap-2.5 text-xs font-mono font-bold select-none touch-none group transition-shadow ${
               isDragging ? 'cursor-grabbing ring-2 ring-[#CCFF00] scale-105' : 'cursor-grab hover:scale-105 active:scale-95'
             }`}
-            title="Drag anywhere to move · Click to expand buddy"
+            title="Drag anywhere to move screen companion · Click to expand"
           >
             <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] animate-pulse pointer-events-none group-hover:scale-125 transition-transform" />
             <span className="text-[#CCFF00] font-black pointer-events-none group-hover:text-white transition-colors">{activeBeast.name}</span>

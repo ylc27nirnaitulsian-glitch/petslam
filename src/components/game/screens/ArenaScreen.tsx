@@ -857,57 +857,71 @@ export const ArenaScreen: React.FC = () => {
           {/* Active Champion or 2v2 Tag Team Showcase */}
           <div className="py-2 flex flex-col items-center">
             {battleMode === '2v2' ? (
-              <div className="flex items-center justify-center gap-3">
-                {/* Lead Fighter Card */}
-                <div className="relative group flex flex-col items-center">
-                  <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.25)] bg-black relative">
-                    <img
-                      src={currentActiveFighter.image}
-                      alt={currentActiveFighter.name}
-                      className="w-full h-full object-cover object-center"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-                    <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-white/20 text-[9px] font-mono font-bold text-[#CCFF00]">
-                      LEAD
-                    </div>
-                    <div className="absolute bottom-1.5 inset-x-1.5 text-center">
-                      <div className="font-display font-black text-xs text-white uppercase truncate">
-                        {currentActiveFighter.name}
+              <>
+                <div className="flex items-center justify-center gap-3">
+                  {/* Lead Fighter Card */}
+                  <div className="relative group flex flex-col items-center">
+                    <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.25)] bg-black relative">
+                      <img
+                        src={currentActiveFighter.image}
+                        alt={currentActiveFighter.name}
+                        className="w-full h-full object-cover object-center"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+                      <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-white/20 text-[9px] font-mono font-bold text-[#CCFF00]">
+                        LEAD
                       </div>
-                      <div className="text-[8px] text-[#CCFF00] font-mono truncate">
-                        {currentActiveFighter.breed}
+                      <div className="absolute bottom-1.5 inset-x-1.5 text-center">
+                        <div className="font-display font-black text-xs text-white uppercase truncate">
+                          {currentActiveFighter.name}
+                        </div>
+                        <div className="text-[8px] text-[#CCFF00] font-mono truncate">
+                          {currentActiveFighter.breed}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="font-display font-black text-lg text-amber-400 tracking-wider">
+                    +
+                  </div>
+
+                  {/* Ally Partner Card */}
+                  <div className="relative group flex flex-col items-center">
+                    <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,229,255,0.25)] bg-black relative">
+                      <img
+                        src={playerAlly.image}
+                        alt={playerAlly.name}
+                        className="w-full h-full object-cover object-center"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+                      <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-white/20 text-[9px] font-mono font-bold text-cyan-300">
+                        PARTNER
+                      </div>
+                      <div className="absolute bottom-1.5 inset-x-1.5 text-center">
+                        <div className="font-display font-black text-xs text-white uppercase truncate">
+                          {playerAlly.name}
+                        </div>
+                        <div className="text-[8px] text-cyan-300 font-mono truncate">
+                          {playerAlly.breed}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="font-display font-black text-lg text-amber-400 tracking-wider">
-                  +
-                </div>
-
-                {/* Ally Partner Card */}
-                <div className="relative group flex flex-col items-center">
-                  <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,229,255,0.25)] bg-black relative">
-                    <img
-                      src={playerAlly.image}
-                      alt={playerAlly.name}
-                      className="w-full h-full object-cover object-center"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-                    <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-white/20 text-[9px] font-mono font-bold text-cyan-300">
-                      PARTNER
-                    </div>
-                    <div className="absolute bottom-1.5 inset-x-1.5 text-center">
-                      <div className="font-display font-black text-xs text-white uppercase truncate">
-                        {playerAlly.name}
-                      </div>
-                      <div className="text-[8px] text-cyan-300 font-mono truncate">
-                        {playerAlly.breed}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                {/* Direct Play With A Friend Button */}
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    window.dispatchEvent(new CustomEvent('petslam:open-friends'));
+                  }}
+                  className="mt-2.5 px-4 py-1.5 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 hover:border-cyan-300 text-xs font-mono font-bold flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,229,255,0.2)] active:scale-95 transition-all cursor-pointer"
+                  title="Invite an online friend to partner with you in 2v2 Tag Team"
+                >
+                  <span>👥 Play With a Friend (Invite Partner)</span>
+                </button>
+              </>
             ) : (
               /* Single 1v1 Champion Card */
               <div className="relative group">
