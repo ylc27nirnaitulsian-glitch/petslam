@@ -122,37 +122,29 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
     };
   }, [activeTab]);
 
-  // Real Google Sign In Handler via Supabase OAuth
+  // Google Sign In Handler (Native in-app on petslam.app)
   const handleGoogleSignIn = async () => {
-    const google = (window as any).google;
-    if (google?.accounts?.id) {
-      try {
-        google.accounts.id.prompt();
-        return;
-      } catch {}
-    }
-
-    setIsSubmitting(true);
     sound.playClick();
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    try {
-      if (isSupabaseConfigured) {
-        const res = await signInWithGoogle();
-        if (res.error) {
-          setErrorMessage(
-            `Google OAuth is not enabled in your Supabase project yet (${res.error}). In the meantime, use your Email/Username & Password below!`
-          );
-        }
-      } else {
-        setErrorMessage('Supabase credentials are not configured in .env.');
+    const google = (window as any).google;
+    if (google?.accounts?.id) {
+      try {
+        google.accounts.id.prompt((notification: any) => {
+          if (notification.isNotDisplayed?.() || notification.isSkippedMoment?.()) {
+            console.log('GSI prompt status:', notification.getNotDisplayedReason?.());
+          }
+        });
+        return;
+      } catch (err: any) {
+        console.warn('GIS prompt error:', err);
       }
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Google authentication failed to connect.');
-    } finally {
-      setIsSubmitting(false);
     }
+
+    setErrorMessage(
+      'Google Sign-In is connecting directly to petslam.app. If the prompt does not appear, please ensure popups are enabled or log in with ID & Password below.'
+    );
   };
 
   // Sign In Handler
