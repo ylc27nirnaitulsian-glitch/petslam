@@ -57,9 +57,11 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
                 const res = await signInWithGoogleIdToken(response.credential);
                 if (!res.error) {
                   sound.playBattleStart();
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 500);
+                  try {
+                    localStorage.setItem('petslam_has_entered_game', 'true');
+                    localStorage.setItem('petslam_remember_me', 'true');
+                  } catch {}
+                  onEnterGame();
                 } else {
                   setAuthOpen(true);
                 }
@@ -357,6 +359,21 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
               <Sparkles className="w-3.5 h-3.5 text-[#CCFF00]" />
               <span>Intro FX</span>
             </button>
+          </div>
+
+          {/* Legal Terms & Policies */}
+          <div className="flex items-center justify-center gap-3 pt-1 text-[11px] text-neutral-400 font-mono">
+            <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="hover:text-[#CCFF00] transition">
+              Privacy Policy
+            </a>
+            <span>•</span>
+            <a href="/terms.html" target="_blank" rel="noopener noreferrer" className="hover:text-[#CCFF00] transition">
+              Terms
+            </a>
+            <span>•</span>
+            <a href="/fair-play.html" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition">
+              Fair Play
+            </a>
           </div>
         </div>
       </main>

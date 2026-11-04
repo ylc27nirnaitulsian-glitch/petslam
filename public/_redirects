@@ -1,2 +1,5 @@
-# Cloudflare Pages SPA Client-Side Routing
-/*    /index.html   200
+# Cloudflare Pages Static Legal & SPA Routing
+/privacy      /privacy.html   200
+/terms        /terms.html     200
+/fair-play    /fair-play.html 200
+/*            /index.html     200

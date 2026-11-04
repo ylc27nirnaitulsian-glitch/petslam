@@ -10,6 +10,15 @@ import { PetSlamIntroSplash } from './components/game/PetSlamIntroSplash';
 export default function App() {
   const [showIntro, setShowIntro] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      if (
+        hash === '#game' ||
+        hash === '#arena' ||
+        hash.includes('access_token') ||
+        window.location.search.includes('code=')
+      ) {
+        return false;
+      }
       const hasEntered = localStorage.getItem('petslam_has_entered_game') === 'true';
       const remember = localStorage.getItem('petslam_remember_me') !== 'false';
       if (hasEntered && remember) return false;
@@ -20,7 +29,14 @@ export default function App() {
   const [hasEnteredGame, setHasEnteredGame] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#game' || hash === '#arena') return true;
+      if (
+        hash === '#game' ||
+        hash === '#arena' ||
+        hash.includes('access_token') ||
+        window.location.search.includes('code=')
+      ) {
+        return true;
+      }
       const hasEntered = localStorage.getItem('petslam_has_entered_game') === 'true';
       const remember = localStorage.getItem('petslam_remember_me') !== 'false';
       if (hasEntered && remember) return true;

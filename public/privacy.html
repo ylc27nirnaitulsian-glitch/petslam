@@ -4,94 +4,506 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy Policy – PET SLAM</title>
-  <meta name="description" content="Privacy Policy for PET SLAM: Turn Your Pet Into a Fighter." />
+  <meta name="description" content="Official Privacy Policy for PET SLAM (petslam.app). Learn how we protect your pet photos, account details, geolocation, and gameplay privacy." />
   <link rel="canonical" href="https://www.petslam.app/privacy.html" />
+  <link rel="icon" type="image/png" href="/app-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-dark: #0B0E14;
+      --card-bg: #121622;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-volt: #CCFF00;
+      --accent-cyan: #22D3EE;
+      --text-main: #E2E8F0;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+    }
+    * {
+      box-sizing: border-box;
+    }
     body {
-      background-color: #0B0E14;
-      color: #E2E8F0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.7;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.75;
       margin: 0;
       padding: 40px 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #FFFFFF;
+    }
+    .nav-brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--accent-volt);
+    }
+    .nav-brand-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #FFFFFF;
+    }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--accent-volt);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-back:hover {
+      background: var(--accent-volt);
+      color: #000000;
     }
     .container {
-      max-width: 760px;
-      margin: 0 auto;
-      background: #121622;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 40px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 48px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    }
+    @media (max-width: 640px) {
+      .container {
+        padding: 24px 20px;
+      }
+      body {
+        padding: 20px 12px;
+      }
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(204, 255, 0, 0.12);
+      border: 1px solid rgba(204, 255, 0, 0.3);
+      color: var(--accent-volt);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
     }
     h1 {
-      color: #CCFF00;
-      font-size: 2rem;
-      margin-top: 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2.75rem;
+      font-weight: 900;
+      text-transform: uppercase;
       letter-spacing: -0.5px;
+      color: #FFFFFF;
+      margin: 0 0 12px 0;
+      line-height: 1.1;
+    }
+    .meta-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 14px 18px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+    .meta-box span strong {
+      color: #FFFFFF;
+    }
+    .toc {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+    }
+    .toc-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+    .toc ol {
+      margin: 0;
+      padding-left: 20px;
+      columns: 2;
+    }
+    @media (max-width: 600px) {
+      .toc ol {
+        columns: 1;
+      }
+    }
+    .toc li {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+    .toc a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .toc a:hover {
+      color: var(--accent-volt);
+      text-decoration: underline;
     }
     h2 {
       color: #FFFFFF;
-      font-size: 1.25rem;
-      margin-top: 28px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      padding-bottom: 8px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-top: 40px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h2 .num {
+      color: var(--accent-volt);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.5rem;
+    }
+    h3 {
+      color: #F1F5F9;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-top: 24px;
+      margin-bottom: 10px;
     }
     p, li {
-      color: #CBD5E1;
+      color: var(--text-main);
       font-size: 0.95rem;
     }
+    ul, ol {
+      padding-left: 24px;
+      margin-top: 8px;
+      margin-bottom: 16px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
     a {
-      color: #CCFF00;
+      color: var(--accent-volt);
       text-decoration: none;
+      transition: color 0.15s ease;
     }
     a:hover {
       text-decoration: underline;
+      color: #FFFFFF;
     }
-    .badge {
-      display: inline-block;
-      background: rgba(204, 255, 0, 0.15);
-      color: #CCFF00;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: bold;
+    .callout {
+      background: rgba(34, 211, 238, 0.08);
+      border-left: 4px solid var(--accent-cyan);
+      border-radius: 0 12px 12px 0;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 0.9rem;
+    }
+    .callout-title {
+      font-weight: 800;
+      color: var(--accent-cyan);
+      margin-bottom: 4px;
       text-transform: uppercase;
-      margin-bottom: 16px;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+    }
+    .callout-warning {
+      background: rgba(204, 255, 0, 0.08);
+      border-left: 4px solid var(--accent-volt);
+    }
+    .callout-warning .callout-title {
+      color: var(--accent-volt);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.88rem;
+    }
+    th, td {
+      border: 1px solid var(--card-border);
+      padding: 12px 14px;
+      text-align: left;
+    }
+    th {
+      background: rgba(255, 255, 255, 0.05);
+      color: #FFFFFF;
+      font-weight: 700;
+    }
+    td {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .footer-links {
+      margin-top: 50px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .legal-nav {
+      display: flex;
+      gap: 20px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <span class="badge">PET SLAM Official Policy</span>
-    <h1>Privacy Policy</h1>
-    <p>Last updated: November 4, 2026</p>
-    <p>Welcome to <strong>PET SLAM</strong> (<a href="https://www.petslam.app">https://www.petslam.app</a>). We respect your privacy and are committed to protecting your personal data.</p>
+  <div class="wrapper">
+    <div class="top-nav">
+      <a href="https://www.petslam.app" class="nav-brand">
+        <img src="/app-logo.png" alt="PET SLAM Logo" />
+        <span class="nav-brand-title">PET SLAM</span>
+      </a>
+      <a href="https://www.petslam.app" class="btn-back">
+        ← Back to Game
+      </a>
+    </div>
 
-    <h2>1. Information We Collect</h2>
-    <p>We collect information necessary to provide the PET SLAM gameplay experience and account authentication:</p>
-    <ul>
-      <li><strong>Account & Auth:</strong> When you sign in with Google or email, we receive your email address, name, and profile avatar solely for authentication and player profile setup.</li>
-      <li><strong>Pet Photos:</strong> Photos uploaded to the Pet Photo Studio are analyzed ephemerally to detect species and breed traits for in-game avatar generation. Photos are not used for public model training.</li>
-      <li><strong>Local Geolocation:</strong> Radar proximity scans process your browser geolocation client-side only to place nearby wild companions on your radar map. Your exact GPS coordinates are never broadcast to other users.</li>
-    </ul>
+    <div class="container">
+      <div class="badge">Official Legal Document</div>
+      <h1>Privacy Policy</h1>
+      
+      <div class="meta-box">
+        <span><strong>Effective Date:</strong> November 4, 2026</span>
+        <span><strong>Last Updated:</strong> November 4, 2026</span>
+        <span><strong>Platform:</strong> petslam.app</span>
+        <span><strong>Data Controller:</strong> Nirnai Tulsian</span>
+      </div>
 
-    <h2>2. How We Use Information</h2>
-    <p>Your information is used strictly to maintain your account, save your in-game companion beasts, synchronize real-time PvP matchmaking, and process purchases via our payment partner.</p>
+      <p>
+        Welcome to <strong>PET SLAM</strong> (<a href="https://www.petslam.app">https://www.petslam.app</a>), the web-based animal battle companion and esports platform. We respect your privacy and are committed to safeguarding your personal data in full transparency. This Privacy Policy details how we collect, process, protect, and handle your information when you register, play, upload pet photographs, access location-based radar discovery, or interact with our services.
+      </p>
 
-    <h2>3. Third-Party Integrations</h2>
-    <ul>
-      <li><strong>Supabase:</strong> For secure database hosting and user authentication under industry-standard encryption.</li>
-      <li><strong>Google Identity:</strong> For secure OAuth sign-in.</li>
-      <li><strong>Dodo Payments:</strong> For digital cosmetic pass processing acting as Merchant of Record.</li>
-    </ul>
+      <div class="toc">
+        <div class="toc-title">Table of Contents</div>
+        <ol>
+          <li><a href="#section-1">1. Who We Are & Controller Information</a></li>
+          <li><a href="#section-2">2. Information We Collect</a></li>
+          <li><a href="#section-3">3. How We Process Your Data</a></li>
+          <li><a href="#section-4">4. Pet Photos & AI Vision Processing</a></li>
+          <li><a href="#section-5">5. Local Geolocation & Radar Scans</a></li>
+          <li><a href="#section-6">6. Google API User Data & Limited Use Disclosure</a></li>
+          <li><a href="#section-7">7. Third-Party Service Providers</a></li>
+          <li><a href="#section-8">8. Cookies, Tokens & Local Storage</a></li>
+          <li><a href="#section-9">9. Your Data Rights & Account Deletion</a></li>
+          <li><a href="#section-10">10. Children's Privacy (COPPA Compliance)</a></li>
+          <li><a href="#section-11">11. Information Security & Encryption</a></li>
+          <li><a href="#section-12">12. Contact Us & Inquiries</a></li>
+        </ol>
+      </div>
 
-    <h2>4. Your Data Rights</h2>
-    <p>You have the right to request deletion of your account and associated in-game data at any time by contacting our support team at <a href="mailto:support@petslam.app">support@petslam.app</a>.</p>
+      <h2 id="section-1"><span class="num">01.</span> Who We Are & Controller Information</h2>
+      <p>
+        PET SLAM is operated by independent developer Nirnai Tulsian. For the purposes of the General Data Protection Regulation (GDPR), California Consumer Privacy Act (CCPA/CPRA), and applicable worldwide privacy legislation, Nirnai Tulsian is the Data Controller responsible for your personal information.
+      </p>
+      <p>
+        If you have any questions or wish to exercise your legal data rights, our dedicated privacy team can be reached directly at <a href="mailto:nirnaitulsian@34gmail.com">nirnaitulsian@34gmail.com</a>.
+      </p>
 
-    <h2>5. Contact Us</h2>
-    <p>If you have any questions regarding this Privacy Policy, please contact us at <a href="mailto:support@petslam.app">support@petslam.app</a>.</p>
-    <p style="margin-top: 30px;"><a href="https://www.petslam.app">← Back to PET SLAM</a></p>
+      <h2 id="section-2"><span class="num">02.</span> Information We Collect</h2>
+      <p>We collect information only when strictly necessary to authenticate your account, save your in-game companion beasts, synchronize multiplayer matches, and provide technical support:</p>
+      
+      <h3>A. Account & Authentication Data</h3>
+      <ul>
+        <li><strong>Google OAuth:</strong> When you choose "Sign in with Google", we receive your Google ID, verified email address, full name, and profile picture provided by Google Identity Services.</li>
+        <li><strong>Email Registration:</strong> When creating an account via email, we collect your email address, chosen Trainer Name, and a salted cryptographic password hash. We never store plaintext passwords.</li>
+        <li><strong>Guest / Demo Mode:</strong> If you play as a guest, gameplay state is stored exclusively in your local browser storage until you choose to link an account.</li>
+      </ul>
+
+      <h3>B. Gameplay & Multiplayer Telemetry</h3>
+      <ul>
+        <li><strong>Battle & Companion Data:</strong> Battle outcomes, deck configurations, pet levels, trophies, unlockable avatars, and in-game gold/credits.</li>
+        <li><strong>Friends & Lobby Network:</strong> Friend requests sent/received, friend tags (e.g. <code>TRAINER#1234</code>), online status, and temporary party lobby codes.</li>
+        <li><strong>Bug Reports & Feedback:</strong> Issue descriptions, browser environment metadata, optional user-submitted screenshots, and email addresses submitted through the in-app Bug Reporting tool.</li>
+      </ul>
+
+      <h3>C. Payment & Transaction Metadata</h3>
+      <p>
+        Digital purchases (such as cosmetic battle passes or virtual credit bundles) are processed directly by our Merchant of Record, <strong>Dodo Payments</strong>. We receive confirmation tokens, order IDs, and entitlement status. <strong>PET SLAM never collects, handles, or stores credit card numbers or financial account credentials.</strong>
+      </p>
+
+      <h2 id="section-3"><span class="num">03.</span> How We Process Your Data</h2>
+      <p>We process your personal information strictly for lawful, legitimate purposes:</p>
+      <ul>
+        <li>To provide, maintain, and authenticate your player profile across devices.</li>
+        <li>To execute real-time matchmaking, friend invitations, and ranked PvP arena clashes.</li>
+        <li>To deliver automated security notifications, transactional verification emails, and password resets via <strong>Resend</strong>.</li>
+        <li>To investigate and remediate game bugs, server synchronization anomalies, and balance exploits.</li>
+        <li>To prevent malicious behavior, cheating, bot attacks, and denial-of-service abuse.</li>
+      </ul>
+
+      <div class="callout callout-warning">
+        <div class="callout-title">Zero Data Sale Guarantee</div>
+        PET SLAM does <strong>not sell, rent, monetize, or trade</strong> your personal information, email address, or pet photos to advertisers, data brokers, or marketing syndicates.
+      </div>
+
+      <h2 id="section-4"><span class="num">04.</span> Pet Photos & AI Vision Processing</h2>
+      <p>
+        PET SLAM features a <em>Pet Photo Studio</em> that allows trainers to upload or take a photograph of their dog, cat, or animal companion to generate a custom combat beast card:
+      </p>
+      <ul>
+        <li><strong>Ephemeral Analysis:</strong> Photographs submitted are securely transmitted over TLS 1.3 to AI vision APIs (including Google Gemini) solely for real-time visual trait extraction (such as detected species, coat coloration, distinct facial features, and archetype estimation).</li>
+        <li><strong>No Public Model Training:</strong> Your pet photographs are <strong>not</strong> used to train public generative foundational models.</li>
+        <li><strong>Image Retention:</strong> Uploaded images are converted client-side into avatar canvas graphics. You may remove or replace your pet's avatar at any time in the companion editor.</li>
+      </ul>
+
+      <h2 id="section-5"><span class="num">05.</span> Local Geolocation & Radar Scans</h2>
+      <p>
+        PET SLAM offers an optional location-based <em>Pet Radar</em> feature to discover wild animal companions in your geographic vicinity:
+      </p>
+      <ul>
+        <li><strong>Client-Side Only:</strong> When you grant browser geolocation permission, coordinates (latitude and longitude) are accessed directly by your client browser to compute local point-of-interest offsets.</li>
+        <li><strong>Never Broadcast:</strong> Your real-time GPS coordinates are <strong>never</strong> broadcast to opponents, displayed on public leaderboards, or stored in multi-tenant databases. Opponents only see your chosen Trainer Tag and battle lineup.</li>
+        <li><strong>Revocable Anytime:</strong> You can deny or revoke location access at any time via your browser permissions without impacting core arena battles.</li>
+      </ul>
+
+      <h2 id="section-6"><span class="num">06.</span> Google API User Data & Limited Use Disclosure</h2>
+      <p>
+        PET SLAM uses Google OAuth 2.0 to offer seamless, passwordless sign-in. In accordance with Google's API Services User Data Policy:
+      </p>
+      <div class="callout">
+        <div class="callout-title">Google Limited Use Statement</div>
+        PET SLAM's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a>, including the Limited Use requirements.
+      </div>
+      <p>Specifically:</p>
+      <ul>
+        <li>We only request access to basic profile scopes: <code>openid</code>, <code>email</code>, and <code>profile</code>.</li>
+        <li>We do not request access to Google Drive, Gmail messages, Contacts, or sensitive cloud data.</li>
+        <li>Google account data is strictly used for authentication and creating your in-game player profile.</li>
+      </ul>
+
+      <h2 id="section-7"><span class="num">07.</span> Third-Party Service Providers</h2>
+      <p>We work with trusted enterprise cloud infrastructure providers to operate PET SLAM securely:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Purpose</th>
+            <th>Data Processed</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Supabase</strong></td>
+            <td>Database, User Auth & Realtime WebSockets</td>
+            <td>User profile, player ID, encrypted credentials, battle records</td>
+          </tr>
+          <tr>
+            <td><strong>Google Identity</strong></td>
+            <td>OAuth Sign-In authentication</td>
+            <td>Email, display name, profile avatar URL</td>
+          </tr>
+          <tr>
+            <td><strong>Resend</strong></td>
+            <td>Transactional emails & bug alerts</td>
+            <td>Email address, verification links, bug report payloads</td>
+          </tr>
+          <tr>
+            <td><strong>Dodo Payments</strong></td>
+            <td>Merchant of Record / Checkout</td>
+            <td>Billing country, transaction status (no raw card data on our end)</td>
+          </tr>
+          <tr>
+            <td><strong>Cloudflare</strong></td>
+            <td>Hosting, CDN, SSL & DDoS mitigation</td>
+            <td>IP address, request headers, caching edge requests</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="section-8"><span class="num">08.</span> Cookies, Tokens & Local Storage</h2>
+      <p>
+        PET SLAM does not use tracking cookies for third-party behavioral advertising. We use browser <code>localStorage</code> and session storage strictly for vital functional mechanisms:
+      </p>
+      <ul>
+        <li><code>petslam_auth_token</code>: Authenticated session token to keep you logged in.</li>
+        <li><code>petslam_audio_config</code>: Your master, music, and sound effect volume levels.</li>
+        <li><code>petslam_active_deck</code>: Cached offline team selection to reduce server round-trips.</li>
+        <li><code>petslam_guest_data</code>: Temporary progression for users who choose to play without signing in.</li>
+      </ul>
+
+      <h2 id="section-9"><span class="num">09.</span> Your Data Rights & Account Deletion</h2>
+      <p>
+        Regardless of your physical jurisdiction (including under GDPR, UK GDPR, and CCPA/CPRA), PET SLAM affords all trainers full sovereignty over their data:
+      </p>
+      <ul>
+        <li><strong>Right to Access:</strong> You can request a complete machine-readable copy of your profile and gameplay data.</li>
+        <li><strong>Right to Rectification:</strong> You can update your trainer username, companion loadout, or email at any time.</li>
+        <li><strong>Right to Erasure (Account Deletion):</strong> You have the absolute right to have your account, player records, companion beasts, match history, and email permanently erased from our systems.</li>
+      </ul>
+      <div class="callout callout-warning">
+        <div class="callout-title">How to Request Full Account Deletion</div>
+        To permanently delete your PET SLAM account and all associated records, email us at <a href="mailto:nirnaitulsian@34gmail.com?subject=PET%20SLAM%20Data%20Deletion%20Request">nirnaitulsian@34gmail.com</a> with the subject <code>PET SLAM Data Deletion Request</code> from your registered email address. We will verify and process your deletion within 30 days and confirm when all records have been expunged.
+      </div>
+
+      <h2 id="section-10"><span class="num">10.</span> Children's Privacy (COPPA Compliance)</h2>
+      <p>
+        Protecting the safety of young players is of paramount importance. PET SLAM is not directed toward children under 13 years of age (or under 16 in the European Economic Area). We do not knowingly collect personal identifiable information from children without verified parental consent. If we discover that personal data from a child under 13 has been collected inadvertently, we will take immediate measures to delete that data from our production databases.
+      </p>
+
+      <h2 id="section-11"><span class="num">11.</span> Information Security & Encryption</h2>
+      <p>
+        We employ industry-standard technical and operational safeguards:
+      </p>
+      <ul>
+        <li>All browser-to-server traffic is enforced over TLS 1.3 / HTTPS encryption.</li>
+        <li>Database tables are protected by PostgreSQL Row Level Security (RLS) policies, ensuring players can only access their own private records.</li>
+        <li>Authentication tokens are cryptographically signed JSON Web Tokens (JWT).</li>
+        <li>Server credentials and API keys are strictly secured behind isolated environment variables.</li>
+      </ul>
+
+      <h2 id="section-12"><span class="num">12.</span> Contact Us & Inquiries</h2>
+      <p>
+        If you have any questions, feedback, or concerns regarding this Privacy Policy or our data handling practices, please contact:
+      </p>
+      <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px; font-size: 0.9rem;">
+        <div><strong>Developer & Data Controller:</strong> Nirnai Tulsian</div>
+        <div><strong>Application:</strong> PET SLAM (<a href="https://www.petslam.app">petslam.app</a>)</div>
+        <div><strong>Official Contact Email:</strong> <a href="mailto:nirnaitulsian@34gmail.com">nirnaitulsian@34gmail.com</a></div>
+        <div><strong>Bug Reports:</strong> In-game "Report Bug" modal or direct email</div>
+      </div>
+
+      <div class="footer-links">
+        <div>© 2026 PET SLAM. All rights reserved.</div>
+        <div class="legal-nav">
+          <a href="/terms.html">Terms of Service</a>
+          <a href="/fair-play.html">Fair Play Policy</a>
+          <a href="https://www.petslam.app">Back to Game</a>
+        </div>
+      </div>
+    </div>
   </div>
 </body>
 </html>

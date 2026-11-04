@@ -20,7 +20,6 @@ import {
   registerPlayerWithSupabase,
   signInPlayerWithSupabase,
   resetPasswordWithSupabase,
-  signInWithGoogle,
   signInWithGoogleIdToken,
   GOOGLE_CLIENT_ID,
 } from '../../services/supabaseClient';
@@ -83,9 +82,14 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                 } else {
                   setSuccessMessage('Successfully signed in with Google! Entering Arena...');
                   sound.playBattleStart();
+                  try {
+                    localStorage.setItem('petslam_has_entered_game', 'true');
+                    localStorage.setItem('petslam_remember_me', 'true');
+                  } catch {}
                   setTimeout(() => {
-                    window.location.reload();
-                  }, 600);
+                    onAuthSuccess?.();
+                    onClose();
+                  }, 500);
                 }
               }
             },
@@ -741,6 +745,38 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                 <span className="text-[10px] font-mono text-neutral-500">
                   Resend SMTP Verification Ready
                 </span>
+              </div>
+
+              {/* Legal Terms & Privacy Disclosures */}
+              <div className="pt-2 text-[11px] text-center text-neutral-400 leading-relaxed border-t border-white/5">
+                By continuing, you agree to PET SLAM's{' '}
+                <a
+                  href="/terms.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#CCFF00] hover:underline font-semibold"
+                >
+                  Terms of Service
+                </a>
+                ,{' '}
+                <a
+                  href="/privacy.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#CCFF00] hover:underline font-semibold"
+                >
+                  Privacy Policy
+                </a>
+                , and{' '}
+                <a
+                  href="/fair-play.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:underline font-semibold"
+                >
+                  Fair Play Rules
+                </a>
+                .
               </div>
             </>
           )}

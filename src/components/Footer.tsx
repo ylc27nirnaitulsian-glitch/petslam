@@ -161,6 +161,16 @@ export const Footer: React.FC<FooterProps> = ({ onJoinWaitlist, onNavigate }) =>
                 </button>
               </li>
               <li>
+                <a
+                  href="/fair-play.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors block text-left"
+                >
+                  Fair Play & Rules
+                </a>
+              </li>
+              <li>
                 <button
                   onClick={() => setActiveModal('contact')}
                   className="hover:text-white transition-colors cursor-pointer"
@@ -220,8 +230,9 @@ export const Footer: React.FC<FooterProps> = ({ onJoinWaitlist, onNavigate }) =>
                     <strong>6. Payment Processing:</strong> Payments for digital cosmetic passes and companion licenses are processed securely by Dodo Payments acting as Merchant of Record. PET SLAM does not store credit card numbers or payment credentials on its servers.
                   </p>
                   <p>
-                    <strong>7. Data Rights & Deletion:</strong> You may request full deletion of your profile data or waitlist registration at any time by contacting support@petslam.gg.
+                    <strong>7. Data Rights & Deletion:</strong> You may request full deletion of your profile data or waitlist registration at any time by contacting nirnaitulsian@34gmail.com.
                   </p>
+                  <div className="pt-2 border-t border-white/10"><a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="text-xs text-[#CCFF00] hover:underline font-bold inline-flex items-center gap-1">Open Full Dedicated Privacy Policy Page →</a></div>
                 </div>
               </div>
             )}
@@ -241,6 +252,7 @@ export const Footer: React.FC<FooterProps> = ({ onJoinWaitlist, onNavigate }) =>
                   <p>
                     <strong>3. Fair Play Protocol:</strong> Automated botting, exploit abuse, and unsanctioned matchmaking collusion are strictly prohibited in all competitive rankings.
                   </p>
+                  <div className="pt-2 border-t border-white/10"><a href="/terms.html" target="_blank" rel="noopener noreferrer" className="text-xs text-[#CCFF00] hover:underline font-bold inline-flex items-center gap-1">Open Full Dedicated Terms of Service Page →</a></div>
                 </div>
               </div>
             )}
@@ -255,8 +267,8 @@ export const Footer: React.FC<FooterProps> = ({ onJoinWaitlist, onNavigate }) =>
                     For press, investor relations, and partnership inquiries regarding the PET SLAM competitive gaming ecosystem:
                   </p>
                   <div className="p-4 bg-black/50 border border-white/10 font-mono text-xs space-y-1.5 text-white">
-                    <div>Direct: <span className="text-[#CCFF00]">contact@petslam.gg</span></div>
-                    <div>Waitlist Helpdesk: <span className="text-[#CCFF00]">support@petslam.gg</span></div>
+                    <div>Direct: <span className="text-[#CCFF00]">nirnaitulsian@34gmail.com</span></div>
+                    <div>Waitlist Helpdesk: <span className="text-[#CCFF00]">nirnaitulsian@34gmail.com</span></div>
                     <div>Arena Headquarters: Singapore & Global Distributed Circuit</div>
                   </div>
                 </div>
