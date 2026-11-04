@@ -27,6 +27,7 @@ import {
   NetFighterSnapshot,
 } from '../../services/multiplayerNetcode';
 import { triggerHeavyImpactHaptic, triggerMediumImpactHaptic } from '../../utils/haptics';
+import { matchmakingService } from '../../services/matchmakingService';
 
 interface RankedMatchmakingModalProps {
   isOpen: boolean;
@@ -302,7 +303,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
     if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
     fallbackTimerRef.current = setTimeout(() => {
       startBotMatch(effectivePet);
-    }, 3800);
+    }, 14000);
 
     multiplayerNetcode.queueRanked({
       playerId: playerTag || 'player_1',
@@ -310,6 +311,39 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
       rating: 1200,
       pet: effectivePet,
     });
+
+    matchmakingService.joinQueue(
+      playerTag || 'player_1',
+      trainerName || 'Trainer',
+      effectivePet,
+      '1v1',
+      1200,
+      {
+        onMatchFound: (data) => {
+          if (fallbackTimerRef.current) {
+            clearTimeout(fallbackTimerRef.current);
+            fallbackTimerRef.current = null;
+          }
+          isBotMatchRef.current = false;
+          setIsBotMatch(false);
+          setMatchData(data);
+          setPhase('matched');
+          sound.playVictory();
+
+          let cd = 3;
+          setCountdown(3);
+          const cdTimer = setInterval(() => {
+            cd -= 1;
+            setCountdown(cd);
+            if (cd <= 0) {
+              clearInterval(cdTimer);
+              setPhase('fighting');
+              initBotFighting(data.p1.fighter, data.p2.fighter, data.p2.name);
+            }
+          }, 1000);
+        },
+      }
+    );
   };
 
   const handleCancelQueue = () => {
@@ -324,6 +358,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
     }
     isBotMatchRef.current = false;
     setIsBotMatch(false);
+    matchmakingService.leaveQueue(playerTag || 'player_1');
     multiplayerNetcode.cancelQueue();
     setPhase('idle');
   };
@@ -522,13 +557,38 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
                 </p>
               </div>
 
-              <button
-                onClick={handleCancelQueue}
-                className="py-2.5 px-6 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white font-mono text-xs font-bold uppercase cursor-pointer border border-rose-400 shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 mx-auto"
-              >
-                <X className="w-4 h-4" />
-                <span>Cancel Search</span>
-              </button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  onClick={() => {
+                    const effectivePet = pet || {
+                      id: activeBeast.id,
+                      name: activeBeast.name,
+                      species: activeBeast.species,
+                      level: activeBeast.level,
+                      health: activeBeast.health,
+                      damage: activeBeast.damage,
+                      defense: activeBeast.strength,
+                      speed: activeBeast.speed,
+                      cp: Math.round(activeBeast.health * 0.4 + activeBeast.damage * 1.5),
+                      image: activeBeast.image,
+                    };
+                    if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+                    matchmakingService.leaveQueue(playerTag || 'player_1');
+                    startBotMatch(effectivePet);
+                  }}
+                  className="py-2.5 px-5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase cursor-pointer shadow active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Swords className="w-3.5 h-3.5 text-black" />
+                  <span>Fight Sparring Rival (Instant)</span>
+                </button>
+                <button
+                  onClick={handleCancelQueue}
+                  className="py-2.5 px-5 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white font-mono text-xs font-bold uppercase cursor-pointer border border-rose-400 shadow active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Cancel Search</span>
+                </button>
+              </div>
             </div>
           )}
 

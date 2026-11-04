@@ -9,6 +9,7 @@ import { GoogleGenAI } from '@google/genai';
 import DodoPayments from 'dodopayments';
 import Exa from 'exa-js';
 import { authoritativeCombatServer } from './src/server/authoritativeCombatServer';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
@@ -973,6 +974,152 @@ app.post('/api/tts/speak', async (req, res) => {
   } catch (err: any) {
     console.error('[KokoroTTS-Server] Error:', err);
     res.status(500).json({ success: false, error: err?.message || 'TTS generation failed' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Bug Report Dispatcher (Direct to nirnaitulsian@34gmail.com & Supabase)
+// ---------------------------------------------------------------------------
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const serverSupabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+app.post('/api/bug-report', async (req, res) => {
+  try {
+    const {
+      title,
+      category = 'general',
+      severity = 'normal',
+      description,
+      stepsToReproduce = '',
+      playerTag = 'Anonymous',
+      trainerName = 'Anonymous Trainer',
+      reporterEmail = null,
+      diagnostics = {},
+    } = req.body;
+
+    if (!title || !description) {
+      res.status(400).json({ success: false, error: 'Title and description are required.' });
+      return;
+    }
+
+    const reportId = `bug_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const destinationEmail = 'nirnaitulsian@34gmail.com';
+    let savedToDb = false;
+
+    // 1. Record in Supabase bug_reports table
+    if (serverSupabase) {
+      try {
+        const { error: dbError } = await serverSupabase.from('bug_reports').insert({
+          id: reportId,
+          player_tag: playerTag,
+          trainer_name: trainerName,
+          reporter_email: reporterEmail,
+          title,
+          category,
+          severity,
+          description,
+          steps_to_reproduce: stepsToReproduce,
+          diagnostics,
+          status: 'open',
+          email_sent: false,
+        });
+        if (!dbError) savedToDb = true;
+        else console.warn('[BugReport] Supabase insert warning:', dbError.message);
+      } catch (dbErr: any) {
+        console.warn('[BugReport] Supabase insert exception:', dbErr.message);
+      }
+    }
+
+    // 2. Dispatch email via Resend to nirnaitulsian@34gmail.com
+    const apiKey = process.env.RESEND_API_KEY;
+    const fromAddress = process.env.RESEND_FROM_EMAIL || 'PET SLAM Bug Tracker <onboarding@resend.dev>';
+    let emailSent = false;
+    let emailStatusMessage = '';
+
+    if (apiKey) {
+      try {
+        const resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey.trim()}`,
+          },
+          body: JSON.stringify({
+            from: fromAddress,
+            to: destinationEmail,
+            reply_to: reporterEmail || undefined,
+            subject: `[PET SLAM Bug Report] [${severity.toUpperCase()}] ${title}`,
+            html: `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #ffffff; padding: 28px; border-radius: 16px; border: 2px solid #CCFF00; max-width: 600px; margin: 0 auto;">
+                <div style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 16px; margin-bottom: 20px;">
+                  <span style="background-color: #CCFF00; color: #000000; font-weight: 900; font-size: 11px; padding: 4px 8px; border-radius: 6px; text-transform: uppercase;">PET SLAM BUG TELEMETRY</span>
+                  <h1 style="color: #ffffff; font-size: 20px; font-weight: 800; margin: 12px 0 4px 0;">${title}</h1>
+                  <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: monospace;">Report ID: ${reportId} · Severity: ${severity.toUpperCase()} · Category: ${category}</p>
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                  <h3 style="color: #CCFF00; font-size: 13px; text-transform: uppercase; margin: 0 0 6px 0; font-family: monospace;">Reporter Profile</h3>
+                  <div style="background-color: #131b2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px; font-size: 13px;">
+                    <div><strong>Trainer:</strong> ${trainerName} (<code style="color: #CCFF00;">${playerTag}</code>)</div>
+                    ${reporterEmail ? `<div style="margin-top: 4px;"><strong>Contact Email:</strong> <a href="mailto:${reporterEmail}" style="color: #38bdf8;">${reporterEmail}</a></div>` : ''}
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 18px;">
+                  <h3 style="color: #CCFF00; font-size: 13px; text-transform: uppercase; margin: 0 0 6px 0; font-family: monospace;">Description</h3>
+                  <div style="background-color: #131b2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${description}</div>
+                </div>
+
+                ${stepsToReproduce ? `
+                  <div style="margin-bottom: 18px;">
+                    <h3 style="color: #CCFF00; font-size: 13px; text-transform: uppercase; margin: 0 0 6px 0; font-family: monospace;">Steps to Reproduce</h3>
+                    <div style="background-color: #131b2e; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; font-size: 13px; font-family: monospace; line-height: 1.5; white-space: pre-wrap;">${stepsToReproduce}</div>
+                  </div>
+                ` : ''}
+
+                <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.15);">
+                  <h4 style="color: #94a3b8; font-size: 11px; text-transform: uppercase; margin: 0 0 8px 0; font-family: monospace;">Client Environment Diagnostics</h4>
+                  <pre style="background-color: #050811; color: #4ade80; padding: 12px; border-radius: 8px; font-size: 11px; overflow-x: auto; margin: 0;">${JSON.stringify(diagnostics, null, 2)}</pre>
+                </div>
+              </div>
+            `,
+          }),
+        });
+
+        if (resendRes.ok) {
+          emailSent = true;
+          emailStatusMessage = 'Delivered to ' + destinationEmail;
+          if (serverSupabase) {
+            await serverSupabase.from('bug_reports').update({ email_sent: true }).eq('id', reportId);
+          }
+        } else {
+          const errText = await resendRes.text();
+          emailStatusMessage = `Resend returned ${resendRes.status}: ${errText}`;
+          console.warn('[BugReport] Resend delivery notice:', emailStatusMessage);
+        }
+      } catch (mailErr: any) {
+        emailStatusMessage = mailErr.message;
+        console.warn('[BugReport] Resend delivery exception:', mailErr);
+      }
+    } else {
+      emailStatusMessage = 'RESEND_API_KEY not configured on server. Saved to database.';
+    }
+
+    res.json({
+      success: true,
+      reportId,
+      destinationEmail,
+      emailSent,
+      savedToDb,
+      message: emailSent
+        ? `Bug report successfully dispatched to ${destinationEmail}.`
+        : `Bug report recorded in database (#${reportId.slice(-6)}).`,
+      emailStatus: emailStatusMessage,
+    });
+  } catch (err: any) {
+    console.error('[BugReport] Error:', err);
+    res.status(500).json({ success: false, error: err.message || 'Failed to process bug report.' });
   }
 });
 

@@ -9,6 +9,9 @@ const cleanUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
 const supabaseAnonKey =
   (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || DEFAULT_SUPABASE_ANON_KEY;
 
+export const GOOGLE_CLIENT_ID =
+  '244777216107-kg93keb8ra4sfr89ka8fmq9ois5okhmn.apps.googleusercontent.com';
+
 export const isSupabaseConfigured = Boolean(
   cleanUrl &&
     supabaseAnonKey &&
@@ -43,7 +46,34 @@ export interface PlayerProfile {
 }
 
 /**
- * Sign in player using Google OAuth via Supabase
+ * Sign in player directly on petslam.app using Google Identity Services (GIS) ID Token.
+ * Stays 100% on petslam.app and never exposes supabase.co to the user!
+ */
+export async function signInWithGoogleIdToken(
+  token: string
+): Promise<{ user?: any; error?: string }> {
+  if (!supabase) {
+    return { error: 'Supabase credentials are not configured.' };
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token,
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return { user: data.user };
+  } catch (err: any) {
+    return { error: err?.message || 'Google token exchange failed.' };
+  }
+}
+
+/**
+ * Sign in player using Google OAuth via Supabase (Fallback redirect)
  */
 export async function signInWithGoogle(): Promise<{ error?: string }> {
   if (!supabase) {
@@ -80,7 +110,9 @@ export async function registerPlayerWithSupabase(
     };
   }
 
-  const cleanUsername = username.trim().replace(/[^a-zA-Z0-9_]/g, '') || `Trainer_${Date.now().toString().slice(-4)}`;
+  const cleanUsername =
+    username.trim().replace(/[^a-zA-Z0-9_]/g, '') ||
+    `Trainer_${Date.now().toString().slice(-4)}`;
 
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
@@ -106,7 +138,12 @@ export async function registerPlayerWithSupabase(
 export async function signInPlayerWithSupabase(
   emailOrUsername: string,
   pass: string
-): Promise<{ user: User | null; session: Session | null; profile?: PlayerProfile | null; error?: string }> {
+): Promise<{
+  user: User | null;
+  session: Session | null;
+  profile?: PlayerProfile | null;
+  error?: string;
+}> {
   if (!supabase) {
     return {
       user: null,
@@ -121,8 +158,10 @@ export async function signInPlayerWithSupabase(
   if (!finalEmail.includes('@')) {
     let resolvedEmail: string | null = null;
     try {
-      const { data: rpcEmail, error: rpcErr } = await supabase
-        .rpc('get_auth_email_by_username', { p_username: finalEmail });
+      const { data: rpcEmail, error: rpcErr } = await supabase.rpc(
+        'get_auth_email_by_username',
+        { p_username: finalEmail }
+      );
       if (!rpcErr && rpcEmail) {
         resolvedEmail = rpcEmail;
       }
@@ -214,7 +253,9 @@ export async function getActivePlayerSession(): Promise<{
     return { session: null, user: null, profile: null };
   }
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session?.user) {
     return { session: null, user: null, profile: null };
   }

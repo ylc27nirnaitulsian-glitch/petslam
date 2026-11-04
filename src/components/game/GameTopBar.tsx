@@ -7,6 +7,7 @@ import {
   HelpCircle,
   Home,
   Plus,
+  Bug,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { sound } from '../../utils/audio';
@@ -156,6 +157,20 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
             title="Game Guide"
           >
             <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+
+          {/* Raise a Bug Report Button */}
+          <button
+            onClick={() => {
+              sound.playClick();
+              window.dispatchEvent(
+                new CustomEvent('petslam:open-bug-report', { detail: { category: 'other' } })
+              );
+            }}
+            className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-500 hover:text-amber-400 transition-colors cursor-pointer shrink-0 shadow-sm"
+            title="Raise a Bug (Direct to nirnaitulsian@34gmail.com)"
+          >
+            <Bug className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
       </header>

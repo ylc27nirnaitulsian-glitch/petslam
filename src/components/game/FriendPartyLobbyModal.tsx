@@ -149,18 +149,26 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
 
     // Auto-create or broadcast lobby if host
     if (isHost) {
-      friendNetwork.createLobby(playerTag, trainerName || 'Trainer', activeBeast, selectedMode).then((l) => {
-        setRoomCode(l.room_code);
-        if (initialFriend) {
-          friendNetwork.sendLobbyInvite(
-            l.room_code,
-            initialFriend.tag,
-            trainerName || 'Trainer',
-            activeBeast,
-            selectedMode
-          );
-        }
-      });
+      friendNetwork
+        .createLobby(
+          playerTag,
+          trainerName || 'Trainer',
+          activeBeast,
+          initialFriend?.tag,
+          selectedMode
+        )
+        .then((l) => {
+          setRoomCode(l.room_code);
+          if (initialFriend) {
+            friendNetwork.sendLobbyInvite(
+              l.room_code,
+              initialFriend.tag,
+              trainerName || 'Trainer',
+              activeBeast,
+              selectedMode
+            );
+          }
+        });
     }
 
     return () => {

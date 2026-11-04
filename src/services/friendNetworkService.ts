@@ -9,6 +9,7 @@ export interface FriendRequestItem {
   receiver_tag: string;
   status: 'pending' | 'accepted' | 'declined';
   created_at: string;
+  updated_at?: string;
 }
 
 export interface FriendLobbyItem {
@@ -23,6 +24,7 @@ export interface FriendLobbyItem {
   mode: 'duel' | '2v2' | 'hangout';
   status: 'waiting' | 'ready' | 'fighting' | 'closed';
   created_at: string;
+  updated_at?: string;
 }
 
 export interface SocialCallbacks {
@@ -32,64 +34,50 @@ export interface SocialCallbacks {
   onLobbyUpdated?: (lobby: FriendLobbyItem) => void;
 }
 
+/**
+ * Normalizes player tags (e.g. "4821" -> "#SLAM-4821", "slam-4821" -> "#SLAM-4821", "#VIPER-99" -> "#VIPER-99")
+ */
+export function normalizePlayerTag(tag: string): string {
+  if (!tag) return '';
+  let clean = tag.trim().toUpperCase();
+  if (!clean.startsWith('#')) {
+    clean = `#${clean}`;
+  }
+  // If user only typed 4 digits like #4821, expand to standard #SLAM-4821 format
+  if (/^#\d{4}$/.test(clean)) {
+    clean = clean.replace('#', '#SLAM-');
+  }
+  return clean;
+}
+
 class FriendNetworkService {
   private activeChannel: any = null;
   private currentTag: string = '';
   private localBroadcast: BroadcastChannel | null = null;
   private listeners: Set<SocialCallbacks> = new Set();
+  private isSubscribed: boolean = false;
 
   constructor() {
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      this.localBroadcast = new BroadcastChannel('petslam_social_local');
-      this.localBroadcast.onmessage = (ev) => {
-        const { type, data } = ev.data || {};
-        this.handleMessage(type, data);
-      };
+      try {
+        this.localBroadcast = new BroadcastChannel('petslam_social_local');
+        this.localBroadcast.onmessage = (ev) => {
+          const { type, data } = ev.data || {};
+          this.handleMessage(type, data);
+        };
+      } catch {}
     }
   }
 
   // Subscribe to real-time incoming requests & invites for current user's tag
   public init(myTag: string, callbacks: SocialCallbacks) {
-    this.currentTag = myTag.trim().toUpperCase();
+    const cleanTag = normalizePlayerTag(myTag);
     this.listeners.add(callbacks);
 
-    if (this.activeChannel) {
-      try { this.activeChannel.unsubscribe(); } catch {}
-    }
-
-    if (supabase && isSupabaseConfigured) {
-      const channel = supabase.channel(`petslam_social_${this.currentTag}`, {
-        config: { broadcast: { self: false } },
-      });
-
-      channel
-        .on('broadcast', { event: 'friend_request' }, ({ payload }) => {
-          if (payload && payload.receiver_tag?.toUpperCase() === this.currentTag) {
-            this.notifyIncomingRequest(payload);
-          }
-        })
-        .on('broadcast', { event: 'friend_accepted' }, ({ payload }) => {
-          if (payload && payload.sender_tag?.toUpperCase() === this.currentTag) {
-            this.notifyRequestAccepted(payload);
-          }
-        })
-        .on('broadcast', { event: 'lobby_invite' }, ({ payload }) => {
-          if (payload && payload.guest_tag?.toUpperCase() === this.currentTag) {
-            this.notifyLobbyInvite(payload);
-          }
-        })
-        .on('broadcast', { event: 'lobby_updated' }, ({ payload }) => {
-          if (
-            payload &&
-            (payload.host_tag?.toUpperCase() === this.currentTag ||
-              payload.guest_tag?.toUpperCase() === this.currentTag)
-          ) {
-            this.notifyLobbyUpdated(payload);
-          }
-        })
-        .subscribe();
-
-      this.activeChannel = channel;
+    // If tag changed or not subscribed yet, setup channel
+    if (cleanTag && (cleanTag !== this.currentTag || !this.isSubscribed)) {
+      this.currentTag = cleanTag;
+      this.setupRealtimeSubscription(cleanTag);
     }
 
     return () => {
@@ -97,17 +85,137 @@ class FriendNetworkService {
     };
   }
 
+  private setupRealtimeSubscription(tag: string) {
+    if (this.activeChannel) {
+      try {
+        this.activeChannel.unsubscribe();
+      } catch {}
+      this.activeChannel = null;
+      this.isSubscribed = false;
+    }
+
+    if (!supabase || !isSupabaseConfigured) return;
+
+    try {
+      const channelName = `petslam_social_${tag.replace('#', '')}`;
+      const channel = supabase.channel(channelName, {
+        config: { broadcast: { self: false } },
+      });
+
+      // 1. Postgres Changes (Guaranteed database-backed push for friend requests)
+      channel
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'friend_requests',
+            filter: `receiver_tag=eq.${tag}`,
+          },
+          (payload: any) => {
+            if (payload.new) {
+              this.notifyIncomingRequest(payload.new as FriendRequestItem);
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'friend_requests',
+            filter: `sender_tag=eq.${tag}`,
+          },
+          (payload: any) => {
+            if (payload.new && payload.new.status === 'accepted') {
+              this.notifyRequestAccepted(payload.new as FriendRequestItem);
+            }
+          }
+        )
+        // 2. Postgres Changes for Friend Lobbies
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'friend_lobbies',
+            filter: `guest_tag=eq.${tag}`,
+          },
+          (payload: any) => {
+            if (payload.new) {
+              this.notifyLobbyInvite(payload.new as FriendLobbyItem);
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'friend_lobbies',
+          },
+          (payload: any) => {
+            const lobby = payload.new as FriendLobbyItem;
+            if (
+              lobby &&
+              (normalizePlayerTag(lobby.host_tag) === tag ||
+                normalizePlayerTag(lobby.guest_tag || '') === tag)
+            ) {
+              this.notifyLobbyUpdated(lobby);
+            }
+          }
+        )
+        // 3. Low-Latency Ephemeral Broadcasts (Immediate instant signal)
+        .on('broadcast', { event: 'friend_request' }, ({ payload }) => {
+          if (payload && normalizePlayerTag(payload.receiver_tag) === tag) {
+            this.notifyIncomingRequest(payload);
+          }
+        })
+        .on('broadcast', { event: 'friend_accepted' }, ({ payload }) => {
+          if (payload && normalizePlayerTag(payload.sender_tag) === tag) {
+            this.notifyRequestAccepted(payload);
+          }
+        })
+        .on('broadcast', { event: 'lobby_invite' }, ({ payload }) => {
+          if (payload && normalizePlayerTag(payload.guest_tag || '') === tag) {
+            this.notifyLobbyInvite(payload);
+          }
+        })
+        .on('broadcast', { event: 'lobby_updated' }, ({ payload }) => {
+          if (
+            payload &&
+            (normalizePlayerTag(payload.host_tag) === tag ||
+              normalizePlayerTag(payload.guest_tag || '') === tag)
+          ) {
+            this.notifyLobbyUpdated(payload);
+          }
+        });
+
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          this.isSubscribed = true;
+        }
+      });
+
+      this.activeChannel = channel;
+    } catch (err) {
+      console.warn('[FriendNetwork] Realtime subscription notice:', err);
+    }
+  }
+
   private handleMessage(type: string, data: any) {
     if (!data) return;
-    if (type === 'friend_request' && data.receiver_tag?.toUpperCase() === this.currentTag) {
+    const currentNorm = normalizePlayerTag(this.currentTag);
+
+    if (type === 'friend_request' && normalizePlayerTag(data.receiver_tag) === currentNorm) {
       this.notifyIncomingRequest(data);
-    } else if (type === 'friend_accepted' && data.sender_tag?.toUpperCase() === this.currentTag) {
+    } else if (type === 'friend_accepted' && normalizePlayerTag(data.sender_tag) === currentNorm) {
       this.notifyRequestAccepted(data);
-    } else if (type === 'lobby_invite' && data.guest_tag?.toUpperCase() === this.currentTag) {
+    } else if (type === 'lobby_invite' && normalizePlayerTag(data.guest_tag || '') === currentNorm) {
       this.notifyLobbyInvite(data);
     } else if (
       type === 'lobby_updated' &&
-      (data.host_tag?.toUpperCase() === this.currentTag || data.guest_tag?.toUpperCase() === this.currentTag)
+      (normalizePlayerTag(data.host_tag) === currentNorm || normalizePlayerTag(data.guest_tag || '') === currentNorm)
     ) {
       this.notifyLobbyUpdated(data);
     }
@@ -135,19 +243,19 @@ class FriendNetworkService {
     senderTag: string,
     senderName: string,
     senderBeastName: string
-  ): Promise<{ success: boolean; message: string }> {
-    const cleanReceiver = receiverTag.trim().toUpperCase();
-    const cleanSender = senderTag.trim().toUpperCase();
+  ): Promise<{ success: boolean; message: string; req?: FriendRequestItem }> {
+    const cleanReceiver = normalizePlayerTag(receiverTag);
+    const cleanSender = normalizePlayerTag(senderTag);
 
-    if (!cleanReceiver) {
-      return { success: false, message: 'Please enter a valid player tag.' };
+    if (!cleanReceiver || cleanReceiver.length < 3) {
+      return { success: false, message: 'Please enter a valid player tag (e.g. #SLAM-1234).' };
     }
     if (cleanReceiver === cleanSender) {
       return { success: false, message: 'You cannot send a friend request to yourself!' };
     }
 
     const payload: FriendRequestItem = {
-      id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
       sender_tag: cleanSender,
       sender_name: senderName || 'Trainer',
       sender_beast: senderBeastName || 'Kaiser (Shepherd)',
@@ -157,9 +265,10 @@ class FriendNetworkService {
     };
 
     // Save to Supabase table
+    let savedToSupabase = false;
     if (supabase && isSupabaseConfigured) {
       try {
-        await supabase.from('friend_requests').insert({
+        const { error } = await supabase.from('friend_requests').insert({
           id: payload.id,
           sender_tag: payload.sender_tag,
           sender_name: payload.sender_name,
@@ -168,8 +277,15 @@ class FriendNetworkService {
           status: 'pending',
         });
 
-        // Broadcast to target player's channel
-        const targetChannel = supabase.channel(`petslam_social_${cleanReceiver}`);
+        if (error) {
+          console.warn('[FriendNetwork] Supabase insert friend_requests error:', error.message);
+        } else {
+          savedToSupabase = true;
+        }
+
+        // Broadcast directly to target player's channel
+        const receiverChannelName = `petslam_social_${cleanReceiver.replace('#', '')}`;
+        const targetChannel = supabase.channel(receiverChannelName);
         targetChannel.subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             targetChannel.send({
@@ -177,15 +293,17 @@ class FriendNetworkService {
               event: 'friend_request',
               payload,
             });
-            setTimeout(() => targetChannel.unsubscribe(), 1000);
+            setTimeout(() => {
+              try { targetChannel.unsubscribe(); } catch {}
+            }, 2500);
           }
         });
-      } catch (err) {
-        console.warn('Could not insert to Supabase friend_requests:', err);
+      } catch (err: any) {
+        console.warn('[FriendNetwork] Could not insert to Supabase friend_requests:', err.message);
       }
     }
 
-    // Broadcast on local channel as well for same-machine tab testing
+    // Broadcast on local channel for same-machine tab testing
     this.localBroadcast?.postMessage({ type: 'friend_request', data: payload });
 
     // Store in sent requests in localStorage
@@ -200,12 +318,13 @@ class FriendNetworkService {
     return {
       success: true,
       message: `Friend request sent to ${cleanReceiver}! Awaiting their confirmation.`,
+      req: payload,
     };
   }
 
   // 2. Fetch Incoming Friend Requests
   public async fetchIncomingRequests(myTag: string): Promise<FriendRequestItem[]> {
-    const cleanTag = myTag.trim().toUpperCase();
+    const cleanTag = normalizePlayerTag(myTag);
     if (!cleanTag) return [];
 
     let requests: FriendRequestItem[] = [];
@@ -218,13 +337,15 @@ class FriendNetworkService {
           .eq('receiver_tag', cleanTag)
           .eq('status', 'pending')
           .order('created_at', { ascending: false })
-          .limit(20);
+          .limit(30);
 
         if (!error && Array.isArray(data)) {
           requests = data as FriendRequestItem[];
+        } else if (error) {
+          console.warn('[FriendNetwork] Error fetching friend requests:', error.message);
         }
-      } catch (err) {
-        console.warn('Error fetching friend requests:', err);
+      } catch (err: any) {
+        console.warn('[FriendNetwork] Error fetching friend requests exception:', err.message);
       }
     }
 
@@ -234,7 +355,7 @@ class FriendNetworkService {
       const map = new Map<string, FriendRequestItem>();
       requests.forEach((r) => map.set(r.id, r));
       cached.forEach((c: FriendRequestItem) => {
-        if (c.receiver_tag === cleanTag && c.status === 'pending') {
+        if (normalizePlayerTag(c.receiver_tag) === cleanTag && c.status === 'pending') {
           map.set(c.id, c);
         }
       });
@@ -246,7 +367,7 @@ class FriendNetworkService {
 
   // 2b. Fetch Accepted Friends from Supabase
   public async fetchAcceptedFriends(myTag: string): Promise<FriendRequestItem[]> {
-    const cleanTag = myTag.trim().toUpperCase();
+    const cleanTag = normalizePlayerTag(myTag);
     if (!cleanTag) return [];
 
     if (supabase && isSupabaseConfigured) {
@@ -262,7 +383,7 @@ class FriendNetworkService {
           return data as FriendRequestItem[];
         }
       } catch (err) {
-        console.warn('Error fetching accepted friends:', err);
+        console.warn('[FriendNetwork] Error fetching accepted friends:', err);
       }
     }
     return [];
@@ -274,18 +395,24 @@ class FriendNetworkService {
     myTag: string,
     myName: string
   ): Promise<boolean> {
-    const updated: FriendRequestItem = { ...request, status: 'accepted' };
+    const cleanTag = normalizePlayerTag(myTag);
+    const updated: FriendRequestItem = { ...request, status: 'accepted', updated_at: new Date().toISOString() };
 
     // Update in Supabase
     if (supabase && isSupabaseConfigured) {
       try {
-        await supabase
+        const { error } = await supabase
           .from('friend_requests')
           .update({ status: 'accepted', updated_at: new Date().toISOString() })
           .eq('id', request.id);
 
+        if (error) {
+          console.warn('[FriendNetwork] Error updating friend request in Supabase:', error.message);
+        }
+
         // Broadcast to sender that request was accepted
-        const senderChannel = supabase.channel(`petslam_social_${request.sender_tag.toUpperCase()}`);
+        const senderChannelName = `petslam_social_${normalizePlayerTag(request.sender_tag).replace('#', '')}`;
+        const senderChannel = supabase.channel(senderChannelName);
         senderChannel.subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             senderChannel.send({
@@ -293,11 +420,13 @@ class FriendNetworkService {
               event: 'friend_accepted',
               payload: updated,
             });
-            setTimeout(() => senderChannel.unsubscribe(), 1000);
+            setTimeout(() => {
+              try { senderChannel.unsubscribe(); } catch {}
+            }, 2500);
           }
         });
-      } catch (err) {
-        console.warn('Error updating friend request in Supabase:', err);
+      } catch (err: any) {
+        console.warn('[FriendNetwork] Error updating friend request in Supabase:', err.message);
       }
     }
 
@@ -339,15 +468,15 @@ class FriendNetworkService {
     hostTag: string,
     hostName: string,
     hostBeast: Animal,
-    guestTag: string,
+    guestTag?: string,
     mode: 'duel' | '2v2' | 'hangout' = 'duel'
   ): Promise<FriendLobbyItem> {
-    const cleanHost = hostTag.trim().toUpperCase();
-    const cleanGuest = guestTag.trim().toUpperCase();
+    const cleanHost = normalizePlayerTag(hostTag);
+    const cleanGuest = guestTag ? normalizePlayerTag(guestTag) : undefined;
     const roomCode = `SLAM-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const lobby: FriendLobbyItem = {
-      id: `lob_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: `lob_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       room_code: roomCode,
       host_tag: cleanHost,
       host_name: hostName || 'Trainer',
@@ -368,7 +497,7 @@ class FriendNetworkService {
 
     if (supabase && isSupabaseConfigured) {
       try {
-        await supabase.from('friend_lobbies').insert({
+        const { error } = await supabase.from('friend_lobbies').insert({
           id: lobby.id,
           room_code: lobby.room_code,
           host_tag: lobby.host_tag,
@@ -379,25 +508,92 @@ class FriendNetworkService {
           status: 'waiting',
         });
 
-        // Broadcast invite to guest's channel
-        const guestChannel = supabase.channel(`petslam_social_${cleanGuest}`);
-        guestChannel.subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            guestChannel.send({
-              type: 'broadcast',
-              event: 'lobby_invite',
-              payload: lobby,
-            });
-            setTimeout(() => guestChannel.unsubscribe(), 1000);
-          }
-        });
-      } catch (err) {
-        console.warn('Error inserting lobby into Supabase:', err);
+        if (error) {
+          console.warn('[FriendNetwork] Supabase insert lobby error:', error.message);
+        }
+
+        // Broadcast invite to guest's channel if specified
+        if (cleanGuest) {
+          const guestChannelName = `petslam_social_${cleanGuest.replace('#', '')}`;
+          const guestChannel = supabase.channel(guestChannelName);
+          guestChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              guestChannel.send({
+                type: 'broadcast',
+                event: 'lobby_invite',
+                payload: lobby,
+              });
+              setTimeout(() => {
+                try { guestChannel.unsubscribe(); } catch {}
+              }, 2500);
+            }
+          });
+        }
+      } catch (err: any) {
+        console.warn('[FriendNetwork] Error inserting lobby into Supabase:', err.message);
       }
     }
 
     this.localBroadcast?.postMessage({ type: 'lobby_invite', data: lobby });
     return lobby;
+  }
+
+  // 5b. Send Lobby Invite to a friend
+  public async sendLobbyInvite(
+    roomCode: string,
+    guestTag: string,
+    hostName: string,
+    hostBeast: Animal,
+    mode: 'duel' | '2v2' = 'duel'
+  ): Promise<boolean> {
+    const cleanGuest = normalizePlayerTag(guestTag);
+    if (!cleanGuest) return false;
+
+    const lobbyData: FriendLobbyItem = {
+      id: `lob_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      room_code: roomCode,
+      host_tag: this.currentTag,
+      host_name: hostName || 'Trainer',
+      host_beast: {
+        id: hostBeast.id,
+        name: hostBeast.name,
+        breed: hostBeast.breed,
+        image: hostBeast.image,
+      },
+      guest_tag: cleanGuest,
+      mode,
+      status: 'waiting',
+      created_at: new Date().toISOString(),
+    };
+
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('friend_lobbies')
+          .update({ guest_tag: cleanGuest })
+          .eq('room_code', roomCode);
+
+        const guestChannelName = `petslam_social_${cleanGuest.replace('#', '')}`;
+        const guestChannel = supabase.channel(guestChannelName);
+        guestChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            guestChannel.send({
+              type: 'broadcast',
+              event: 'lobby_invite',
+              payload: lobbyData,
+            });
+            setTimeout(() => {
+              try { guestChannel.unsubscribe(); } catch {}
+            }, 2500);
+          }
+        });
+      } catch (err) {
+        console.warn('[FriendNetwork] Error sending lobby invite:', err);
+      }
+    }
+
+    this.localBroadcast?.postMessage({ type: 'lobby_invite', data: lobbyData });
+    return true;
   }
 
   // 6. Join / Accept Shared Party Lobby
@@ -407,7 +603,7 @@ class FriendNetworkService {
     guestName: string,
     guestBeast: Animal
   ): Promise<FriendLobbyItem | null> {
-    const cleanGuest = guestTag.trim().toUpperCase();
+    const cleanGuest = normalizePlayerTag(guestTag);
 
     const guestBeastData = {
       id: guestBeast.id,
@@ -440,7 +636,8 @@ class FriendNetworkService {
           updatedLobby = data as FriendLobbyItem;
 
           // Broadcast to host that guest has joined
-          const hostChannel = supabase.channel(`petslam_social_${updatedLobby.host_tag.toUpperCase()}`);
+          const hostChannelName = `petslam_social_${normalizePlayerTag(updatedLobby.host_tag).replace('#', '')}`;
+          const hostChannel = supabase.channel(hostChannelName);
           hostChannel.subscribe((status) => {
             if (status === 'SUBSCRIBED') {
               hostChannel.send({
@@ -448,12 +645,14 @@ class FriendNetworkService {
                 event: 'lobby_updated',
                 payload: updatedLobby,
               });
-              setTimeout(() => hostChannel.unsubscribe(), 1000);
+              setTimeout(() => {
+                try { hostChannel.unsubscribe(); } catch {}
+              }, 2500);
             }
           });
         }
       } catch (err) {
-        console.warn('Error joining lobby in Supabase:', err);
+        console.warn('[FriendNetwork] Error joining lobby in Supabase:', err);
       }
     }
 
@@ -475,6 +674,60 @@ class FriendNetworkService {
 
     this.localBroadcast?.postMessage({ type: 'lobby_updated', data: updatedLobby });
     return updatedLobby;
+  }
+
+  // 6b. Join Lobby by Room Code
+  public async joinLobbyByCode(
+    roomCode: string,
+    guestTag: string,
+    guestName: string,
+    guestBeast: Animal
+  ): Promise<FriendLobbyItem | null> {
+    let cleanCode = roomCode.trim().toUpperCase();
+    if (!cleanCode.startsWith('SLAM-')) {
+      cleanCode = `SLAM-${cleanCode.replace(/[^0-9]/g, '')}`;
+    }
+    const cleanGuest = normalizePlayerTag(guestTag);
+
+    if (supabase && isSupabaseConfigured) {
+      try {
+        const { data: existing, error: fetchErr } = await supabase
+          .from('friend_lobbies')
+          .select('*')
+          .eq('room_code', cleanCode)
+          .single();
+
+        if (existing && !fetchErr) {
+          return this.joinLobby(existing.id, cleanGuest, guestName, guestBeast);
+        }
+      } catch (err) {
+        console.warn('[FriendNetwork] Error fetching lobby by code:', err);
+      }
+    }
+    return null;
+  }
+
+  // 7. Fetch Lobby Details by Code
+  public async getLobbyByCode(roomCode: string): Promise<FriendLobbyItem | null> {
+    let cleanCode = roomCode.trim().toUpperCase();
+    if (!cleanCode.startsWith('SLAM-')) {
+      cleanCode = `SLAM-${cleanCode.replace(/[^0-9]/g, '')}`;
+    }
+
+    if (supabase && isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('friend_lobbies')
+          .select('*')
+          .eq('room_code', cleanCode)
+          .single();
+
+        if (!error && data) {
+          return data as FriendLobbyItem;
+        }
+      } catch {}
+    }
+    return null;
   }
 }
 
