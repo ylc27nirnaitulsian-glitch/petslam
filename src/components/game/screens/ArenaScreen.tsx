@@ -1031,17 +1031,29 @@ export const ArenaScreen: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={handleStartMatchmaking}
-                className="w-full py-3.5 rounded-2xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(204,255,0,0.4)] flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98 mt-1"
-              >
-                <Swords className="w-5 h-5 text-black" />
-                <span>
-                  {battleMode === '2v2'
-                    ? 'Enter Arena (2v2 Tag Team)'
-                    : 'Enter Arena (Ranked 1v1 Slam)'}
-                </span>
-              </button>
+              <div className="space-y-2 mt-1 w-full">
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    window.dispatchEvent(new CustomEvent('petslam:open-ranked-matchmaking'));
+                  }}
+                  className="w-full py-3.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-black font-display font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
+                >
+                  <Swords className="w-5 h-5 text-black" />
+                  <span>🌐 Find Live Match (Ranked PvP Queue)</span>
+                </button>
+
+                <button
+                  onClick={handleStartMatchmaking}
+                  className="w-full py-2.5 rounded-2xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-900 dark:text-neutral-200 font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
+                >
+                  <span>
+                    {battleMode === '2v2'
+                      ? '👥 Solo 2v2 Tag Team Sparring (vs CPU)'
+                      : '⚔️ Solo 1v1 Sparring Bout (vs CPU)'}
+                  </span>
+                </button>
+              </div>
             )}
           </div>
         </div>

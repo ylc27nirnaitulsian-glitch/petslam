@@ -17,11 +17,13 @@ import {
   UserCheck,
   UserX,
   Radio,
+  RefreshCw,
+  Bug,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { useGame } from '../../context/GameContext';
 import { FriendsVoiceRoomModal } from './FriendsVoiceRoomModal';
-import { friendNetwork, FriendRequestItem } from '../../services/friendNetworkService';
+import { friendNetwork, FriendRequestItem, normalizePlayerTag } from '../../services/friendNetworkService';
 
 export interface Friend {
   id: string;
@@ -29,7 +31,7 @@ export interface Friend {
   tag: string;
   beastName: string;
   trophies: number;
-  status: 'Online in Arena' | 'In Menu' | 'Offline';
+  status: 'Online in Arena' | 'In Menu' | 'Offline' | 'In Party Lobby';
   avatarColor: string;
 }
 
@@ -74,16 +76,21 @@ const INITIAL_FRIENDS: Friend[] = [
 interface FriendsHubModalProps {
   onChallengeFriend: (friend: Friend) => void;
   onClose: () => void;
+  initialTab?: 'friends' | 'requests' | 'chat' | 'add';
 }
 
 export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
   onChallengeFriend,
   onClose,
+  initialTab = 'friends',
 }) => {
   const { playerTag, trainerName, activeBeast } = useGame();
-  const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'chat' | 'add'>('friends');
+  const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'chat' | 'add'>(initialTab);
   const [showVoiceRoom, setShowVoiceRoom] = useState(false);
   const [copiedTag, setCopiedTag] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [joinCodeInput, setJoinCodeInput] = useState('');
+  const [isJoiningCode, setIsJoiningCode] = useState(false);
 
   // Load friends from localStorage or defaults
   const [friendsList, setFriendsList] = useState<Friend[]>(() => {
@@ -196,11 +203,98 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
       },
     });
 
+    const pollInterval = setInterval(() => {
+      syncNetworkData();
+    }, 3500);
+
     return () => {
       active = false;
+      clearInterval(pollInterval);
       unsub();
     };
   }, [playerTag, trainerName]);
+
+  const handleManualSync = async () => {
+    sound.playClick();
+    setIsSyncing(true);
+    if (playerTag) {
+      const [reqs, accepted] = await Promise.all([
+        friendNetwork.fetchIncomingRequests(playerTag),
+        friendNetwork.fetchAcceptedFriends(playerTag),
+      ]);
+      setPendingRequests(reqs);
+      if (accepted && accepted.length > 0) {
+        setFriendsList((prev) => {
+          const map = new Map<string, Friend>();
+          prev.forEach((f) => map.set(f.tag.toUpperCase(), f));
+          accepted.forEach((a) => {
+            const isMeSender = a.sender_tag.toUpperCase() === playerTag.toUpperCase();
+            const friendTag = isMeSender ? a.receiver_tag : a.sender_tag;
+            const friendName = isMeSender
+              ? `Trainer_${friendTag.replace('#', '')}`
+              : a.sender_name || 'Allied Trainer';
+            const friendBeast = isMeSender ? 'Champion Partner' : a.sender_beast || 'Companion';
+            if (!map.has(friendTag.toUpperCase())) {
+              map.set(friendTag.toUpperCase(), {
+                id: a.id,
+                name: friendName,
+                tag: friendTag,
+                beastName: friendBeast,
+                trophies: 1450,
+                status: 'Online in Arena',
+                avatarColor: 'from-[#CCFF00] to-emerald-500',
+              });
+            }
+          });
+          return Array.from(map.values());
+        });
+      }
+      setToastMessage({ msg: `Sync complete: ${reqs.length} pending request(s) found.` });
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+    setTimeout(() => setIsSyncing(false), 500);
+  };
+
+  const handleJoinByCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!joinCodeInput.trim()) return;
+    setIsJoiningCode(true);
+    sound.playClick();
+
+    try {
+      const lobby = await friendNetwork.joinLobbyByCode(
+        joinCodeInput.trim(),
+        playerTag,
+        trainerName || 'Trainer',
+        activeBeast
+      );
+
+      if (lobby) {
+        sound.playBattleStart();
+        onClose();
+        onChallengeFriend({
+          id: lobby.id,
+          name: lobby.host_name || 'Trainer Host',
+          tag: lobby.host_tag,
+          beastName: lobby.host_beast?.name || 'Companion Beast',
+          trophies: 1500,
+          status: 'In Party Lobby',
+          avatarColor: 'from-amber-400 to-red-500',
+        });
+      } else {
+        sound.playDefeat();
+        setToastMessage({
+          msg: `Lobby "${joinCodeInput.trim()}" not found or expired.`,
+          error: true,
+        });
+        setTimeout(() => setToastMessage(null), 3500);
+      }
+    } catch (err: any) {
+      setToastMessage({ msg: err.message || 'Error joining lobby', error: true });
+    } finally {
+      setIsJoiningCode(false);
+    }
+  };
 
   const handleCopyMyTag = () => {
     sound.playCoin();
@@ -250,21 +344,19 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
   // SEND FRIEND REQUEST
   const handleAddFriend = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanTag = newFriendTag.trim().toUpperCase();
+    const cleanTag = normalizePlayerTag(newFriendTag);
     if (!cleanTag) return;
 
-    const formattedTag = cleanTag.startsWith('#') ? cleanTag : `#${cleanTag}`;
-
-    if (formattedTag === playerTag.toUpperCase()) {
+    if (cleanTag === normalizePlayerTag(playerTag)) {
       sound.playDefeat();
       setToastMessage({ msg: 'Cannot add yourself! Enter another trainer’s tag.', error: true });
       setTimeout(() => setToastMessage(null), 3000);
       return;
     }
 
-    if (friendsList.some((f) => f.tag.toUpperCase() === formattedTag)) {
+    if (friendsList.some((f) => normalizePlayerTag(f.tag) === cleanTag)) {
       sound.playClick();
-      setToastMessage({ msg: `${formattedTag} is already on your Friends Roster!`, error: true });
+      setToastMessage({ msg: `${cleanTag} is already on your Friends Roster!`, error: true });
       setTimeout(() => setToastMessage(null), 3000);
       return;
     }
@@ -273,7 +365,7 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
     sound.playLevelUp();
 
     const res = await friendNetwork.sendFriendRequest(
-      formattedTag,
+      cleanTag,
       playerTag,
       trainerName || 'Trainer',
       activeBeast?.name || 'Companion Pet'
@@ -284,7 +376,9 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
       msg: res.message,
       error: !res.success,
     });
-    setNewFriendTag('');
+    if (res.success) {
+      setNewFriendTag('');
+    }
     setTimeout(() => setToastMessage(null), 4500);
   };
 
@@ -451,6 +545,23 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
         {/* TAB 1: FRIENDS ROSTER */}
         {activeTab === 'friends' && (
           <div className="p-4 overflow-y-auto space-y-2.5 flex-1">
+            {/* Join Lobby by Room Code Form */}
+            <form onSubmit={handleJoinByCode} className="bg-[#141b2a] border border-cyan-500/30 rounded-2xl p-2.5 flex items-center gap-2 shadow-sm mb-3">
+              <input
+                type="text"
+                value={joinCodeInput}
+                onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
+                placeholder="Enter Room Code (e.g. SLAM-4821)..."
+                className="flex-1 bg-black/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono text-white placeholder-neutral-500 focus:outline-none focus:border-cyan-400"
+              />
+              <button
+                type="submit"
+                disabled={isJoiningCode || !joinCodeInput.trim()}
+                className="px-3 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 disabled:opacity-50 text-black font-display font-black text-xs uppercase cursor-pointer transition-all active:scale-95 shrink-0"
+              >
+                {isJoiningCode ? 'Joining...' : 'Join Code'}
+              </button>
+            </form>
             {friendsList.length === 0 ? (
               <div className="text-center p-6 text-neutral-400 font-mono text-xs">
                 No friends on your roster yet. Share your tag to connect!
@@ -524,6 +635,21 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
         {/* TAB 2: INCOMING FRIEND REQUESTS */}
         {activeTab === 'requests' && (
           <div className="p-4 overflow-y-auto space-y-2.5 flex-1">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
+              <span className="text-[11px] font-mono text-neutral-400 uppercase font-bold">
+                Pending Requests ({pendingRequests.length})
+              </span>
+              <button
+                type="button"
+                onClick={handleManualSync}
+                disabled={isSyncing}
+                className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[#CCFF00] font-mono text-[10px] flex items-center gap-1 cursor-pointer transition-colors"
+                title="Refresh from server"
+              >
+                <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync Server'}</span>
+              </button>
+            </div>
             {pendingRequests.length === 0 ? (
               <div className="text-center p-8 text-neutral-400 font-mono text-xs space-y-2">
                 <Clock className="w-8 h-8 mx-auto text-neutral-500 opacity-50" />
@@ -690,6 +816,24 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
             </div>
           </div>
         )}
+
+        {/* Bug Reporting Help Footer */}
+        <div className="bg-[#0b0e15] border-t border-white/10 px-4 py-2.5 flex items-center justify-between text-[11px] font-mono shrink-0">
+          <span className="text-neutral-400">Issues connecting or requesting?</span>
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(
+                new CustomEvent('petslam:open-bug-report', { detail: { category: 'multiplayer' } })
+              );
+              onClose();
+            }}
+            className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer hover:underline"
+          >
+            <Bug className="w-3.5 h-3.5" />
+            <span>Raise a Bug Report</span>
+          </button>
+        </div>
 
         {/* Real-time Voice Room Overlay */}
         {showVoiceRoom && (

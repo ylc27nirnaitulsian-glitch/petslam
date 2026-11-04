@@ -21,7 +21,8 @@ import { PetAuctionHouseModal } from '../game/pet/PetAuctionHouseModal';
 import { ExtensionExporterModal } from '../game/pet/ExtensionExporterModal';
 import { FriendsHubModal, Friend } from '../game/FriendsHubModal';
 import { FriendPartyLobbyModal } from '../game/FriendPartyLobbyModal';
-import { friendNetwork, FriendLobbyItem } from '../../services/friendNetworkService';
+import { friendNetwork, FriendLobbyItem, FriendRequestItem } from '../../services/friendNetworkService';
+import { ReportBugModal } from '../modals/ReportBugModal';
 import { VipPassesModal } from '../game/VipPassesModal';
 import { SystemDiagnosticsModal } from '../diagnostic/SystemDiagnosticsModal';
 import { RankedMatchmakingModal } from '../game/RankedMatchmakingModal';
@@ -41,7 +42,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   onReturnToTitle,
   onOpenSystemDetails,
 }) => {
-  const { soundEnabled, toggleSound, addCredits, playerTag } = useGame();
+  const { soundEnabled, toggleSound, addCredits, playerTag, trainerName } = useGame();
   const { pet } = usePetCompanion();
 
   const [currentTab, setCurrentTab] = useState<MainNavId>('arena');
@@ -54,6 +55,12 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   const [auctionsModalOpen, setAuctionsModalOpen] = useState<boolean>(false);
   const [buddyModalOpen, setBuddyModalOpen] = useState<boolean>(false);
   const [friendsModalOpen, setFriendsModalOpen] = useState<boolean>(false);
+  const [friendsModalTab, setFriendsModalTab] = useState<'friends' | 'requests' | 'chat' | 'add'>('friends');
+  const [incomingFriendRequest, setIncomingFriendRequest] = useState<FriendRequestItem | null>(null);
+  const [friendAcceptedNotice, setFriendAcceptedNotice] = useState<FriendRequestItem | null>(null);
+  const [isBugReportOpen, setIsBugReportOpen] = useState<boolean>(false);
+  const [bugReportCategory, setBugReportCategory] = useState<'multiplayer' | 'matchmaking' | 'combat' | 'graphics' | 'audio' | 'account' | 'other'>('multiplayer');
+
   const [activePartyLobby, setActivePartyLobby] = useState<{
     roomCode?: string;
     friend?: Friend | { name: string; tag: string; beastName?: string };
@@ -71,20 +78,41 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   useEffect(() => {
     if (!playerTag) return;
     const unsub = friendNetwork.init(playerTag, {
+      onIncomingRequest: (req) => {
+        sound.playMatchFound();
+        setIncomingFriendRequest(req);
+      },
+      onRequestAccepted: (req) => {
+        sound.playLevelUp();
+        setFriendAcceptedNotice(req);
+      },
       onLobbyInvite: (lobby) => {
         sound.playMatchFound();
         setIncomingInvite(lobby);
       },
     });
 
-    const handleOpenFriends = () => setFriendsModalOpen(true);
+    const handleOpenFriends = (e?: any) => {
+      if (e?.detail?.tab) setFriendsModalTab(e.detail.tab);
+      setFriendsModalOpen(true);
+    };
+    const handleOpenRanked = () => setRankedModalOpen(true);
+    const handleOpenBugReport = (e?: any) => {
+      if (e?.detail?.category) setBugReportCategory(e.detail.category);
+      setIsBugReportOpen(true);
+    };
+
     window.addEventListener('petslam:open-friends', handleOpenFriends);
+    window.addEventListener('petslam:open-ranked-matchmaking', handleOpenRanked);
+    window.addEventListener('petslam:open-bug-report', handleOpenBugReport);
 
     return () => {
       unsub();
       window.removeEventListener('petslam:open-friends', handleOpenFriends);
+      window.removeEventListener('petslam:open-ranked-matchmaking', handleOpenRanked);
+      window.removeEventListener('petslam:open-bug-report', handleOpenBugReport);
     };
-  }, [playerTag]);
+  }, [playerTag, trainerName]);
 
   // Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -326,6 +354,92 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
 
       {/* 5. Modals & Hubs */}
       {/* Real-time Incoming Battle / Party Invite Notification Banner */}
+      {incomingFriendRequest && (
+        <div className="fixed top-4 inset-x-4 z-50 flex items-center justify-center animate-in slide-in-from-top duration-300">
+          <div className="bg-[#121824] border-2 border-emerald-400 rounded-2xl p-4 shadow-[0_0_40px_rgba(16,185,129,0.4)] flex items-center justify-between gap-4 max-w-lg w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-400 font-black animate-bounce shrink-0">
+                🐾
+              </div>
+              <div>
+                <div className="font-display font-black text-sm text-white uppercase">
+                  Friend Request from {incomingFriendRequest.sender_name}
+                </div>
+                <div className="text-xs font-mono text-neutral-300">
+                  Tag: <span className="text-[#CCFF00] font-bold">{incomingFriendRequest.sender_tag}</span> · Beast: {incomingFriendRequest.sender_beast || 'Companion'}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={async () => {
+                  sound.playLevelUp();
+                  await friendNetwork.acceptFriendRequest(
+                    incomingFriendRequest,
+                    playerTag,
+                    trainerName || 'Trainer'
+                  );
+                  setIncomingFriendRequest(null);
+                  setCompanionToast(`Added ${incomingFriendRequest.sender_tag} to your Friends Roster!`);
+                  setTimeout(() => setCompanionToast(null), 3500);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-display font-black text-xs uppercase cursor-pointer shadow active:scale-95 transition-all"
+              >
+                Accept
+              </button>
+              <button
+                onClick={() => {
+                  setFriendsModalTab('requests');
+                  setFriendsModalOpen(true);
+                  setIncomingFriendRequest(null);
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-xs cursor-pointer"
+              >
+                View
+              </button>
+              <button
+                onClick={() => setIncomingFriendRequest(null)}
+                className="p-1.5 rounded-xl text-neutral-400 hover:text-white hover:bg-white/10"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {friendAcceptedNotice && (
+        <div className="fixed top-4 inset-x-4 z-50 flex items-center justify-center animate-in slide-in-from-top duration-300">
+          <div className="bg-[#121824] border-2 border-[#CCFF00] rounded-2xl p-4 shadow-[0_0_40px_rgba(204,255,0,0.4)] flex items-center justify-between gap-4 max-w-lg w-full">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#CCFF00]/20 border border-[#CCFF00]/50 flex items-center justify-center text-[#CCFF00] font-black shrink-0">
+                🎉
+              </div>
+              <div>
+                <div className="font-display font-black text-sm text-white uppercase">
+                  Friend Request Accepted!
+                </div>
+                <div className="text-xs font-mono text-neutral-300">
+                  <span className="text-[#CCFF00] font-bold">
+                    {friendAcceptedNotice.receiver_tag || friendAcceptedNotice.sender_tag}
+                  </span>{' '}
+                  is now on your Friends roster!
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setFriendAcceptedNotice(null)}
+              className="p-1.5 rounded-xl text-neutral-400 hover:text-white hover:bg-white/10"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Real-time Incoming Battle / Party Invite Notification Banner */}
       {incomingInvite && (
         <div className="fixed top-4 inset-x-4 z-50 flex items-center justify-center animate-in slide-in-from-top duration-300">
           <div className="bg-[#121824] border-2 border-[#CCFF00] rounded-2xl p-4 shadow-[0_0_40px_rgba(204,255,0,0.4)] flex items-center justify-between gap-4 max-w-lg w-full">
@@ -384,6 +498,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       )}
       {friendsModalOpen && (
         <FriendsHubModal
+          initialTab={friendsModalTab}
           onClose={() => setFriendsModalOpen(false)}
           onChallengeFriend={(friend) => {
             setFriendsModalOpen(false);
@@ -410,6 +525,13 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
         <SystemDiagnosticsModal
           isOpen={isDiagnosticsOpen}
           onClose={() => setIsDiagnosticsOpen(false)}
+        />
+      )}
+      {isBugReportOpen && (
+        <ReportBugModal
+          isOpen={isBugReportOpen}
+          onClose={() => setIsBugReportOpen(false)}
+          defaultCategory={bugReportCategory}
         />
       )}
       {rankedModalOpen && (
