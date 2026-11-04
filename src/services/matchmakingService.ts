@@ -245,7 +245,7 @@ class MatchmakingService {
 
         callbacks.onQueueConfirmed?.({
           poolSize: 1,
-          targetBand: `±150 CP (${Math.max(100, myCp - 150)} - ${myCp + 150})`,
+          targetBand: 'Ranked Queue',
         });
       } catch (err: any) {
         console.warn('[MatchmakingService] Queue error:', err);

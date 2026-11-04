@@ -3,7 +3,7 @@
  * Connects frontend to backend checkout session creation and status verification.
  */
 
-export type DodoPassType = 'extension' | 'avatar' | 'supporter' | 'bundle';
+export type DodoPassType = 'extension' | 'avatar';
 
 export interface DodoProductInfo {
   id: string;

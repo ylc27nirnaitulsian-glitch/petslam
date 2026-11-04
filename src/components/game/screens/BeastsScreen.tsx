@@ -176,12 +176,33 @@ export const BeastsScreen: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-4 gap-2">
-            {battleDeckIds.map((id, idx) => {
-              const beast = ownedBeasts.find((b) => b.id === id) || ownedBeasts[idx] || ownedBeasts[0];
-              const isSelected = beast.id === currentBeast.id;
-              const isLead = beast.id === activeBeastId;
+            {[0, 1, 2, 3].map((idx) => {
+              const id = battleDeckIds[idx];
+              const beast = id ? ownedBeasts.find((b) => b.id === id) : null;
               const slotRoles = ['Slot 1 (Lead)', 'Slot 2 (Striker)', 'Slot 3 (Assassin)', 'Slot 4 (Tank)'];
               const slotElixir = ['0 💧 Lead', '2 💧 Tag', '3 💧 Tag', '4 💧 Tag'];
+
+              if (!beast) {
+                return (
+                  <div
+                    key={idx}
+                    className="p-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] flex flex-col items-center justify-center text-center min-h-[115px]"
+                  >
+                    <div className="w-9 h-9 rounded-lg border border-dashed border-white/20 flex items-center justify-center text-neutral-500 font-bold text-base mb-1">
+                      +
+                    </div>
+                    <span className="font-display font-black text-[9px] text-neutral-400 uppercase">
+                      {slotRoles[idx]}
+                    </span>
+                    <span className="text-[7px] font-mono text-neutral-500 mt-0.5">
+                      Recruit in Market
+                    </span>
+                  </div>
+                );
+              }
+
+              const isSelected = beast.id === currentBeast.id;
+              const isLead = beast.id === activeBeastId;
 
               return (
                 <div

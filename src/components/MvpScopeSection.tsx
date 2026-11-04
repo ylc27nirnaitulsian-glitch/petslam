@@ -137,7 +137,7 @@ export const MvpScopeSection: React.FC<MvpScopeSectionProps> = ({ onJoinWaitlist
       bullets: [
         'Initiate direct dialogue with server moderators and theorycrafters in Smogon VGC and TFT Competitive Discords.',
         'Release raw, unedited gameplay clips demonstrating authentic canine/wildlife bite-force physics and sprint acceleration mechanics.',
-        'Distribute 250 exclusive VIP Alpha Testing Vouchers granting early Founder insignia to trusted community leaders.',
+        'Distribute 250 exclusive Early Alpha Testing Vouchers granting early Founder insignia to trusted community leaders.',
       ],
       funnelState: '250 Community Influencers Engaged',
     },

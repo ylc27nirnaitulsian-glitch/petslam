@@ -96,33 +96,19 @@ if (exaApiKey && exaApiKey !== 'your_exa_api_key_here' && exaApiKey.trim().lengt
 
 // Product Catalog definition for PET SLAM Monetization (Software & AI Utilities)
 const DODO_PRODUCTS = {
+  avatar: {
+    id: process.env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0Nr3oUSO21xdKMqzxV2Bq',
+    title: 'AI Pet Studio Custom Pet Creation Pass',
+    price: '$1.00',
+    amountCents: 100,
+    description: 'Generative AI photo utility converting real dog & cat photos into custom animated digital companion cards.',
+  },
   extension: {
     id: process.env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0Nr3ogcp25O1QY64y7E4w',
     title: 'PET SLAM Desktop & Browser Companion (Lifetime License)',
-    price: '$2.99',
-    amountCents: 299,
+    price: '$1.99',
+    amountCents: 199,
     description: 'Standalone Chrome extension & desktop productivity companion with posture/hydration alerts and voice mimicry.',
-  },
-  avatar: {
-    id: process.env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0Nr3oUSO21xdKMqzxV2Bq',
-    title: 'AI Pet Photo Studio Scanner Pass',
-    price: '$0.99',
-    amountCents: 99,
-    description: 'Generative AI photo utility converting real dog & cat photos into stylized 2D digital trading cards.',
-  },
-  supporter: {
-    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
-    title: 'Genesis Founder Supporter Pack',
-    price: '$4.99',
-    amountCents: 499,
-    description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
-  },
-  bundle: {
-    id: process.env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
-    title: 'Genesis Founder Supporter Pack',
-    price: '$4.99',
-    amountCents: 499,
-    description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
   },
 };
 
@@ -446,7 +432,7 @@ app.post('/api/dodo/webhook', async (req: any, res) => {
     const eventType = event?.type || event?.event_type;
     if (eventType === 'payment.succeeded' || eventType === 'checkout.session.completed') {
       const payloadData = event.data || event;
-      const passType = payloadData?.metadata?.passType || 'bundle';
+      const passType = payloadData?.metadata?.passType || 'extension';
       const customerEmail = payloadData?.customer?.email || payloadData?.metadata?.customerEmail;
       const amountCents = payloadData?.amount || 199;
 

@@ -81,10 +81,17 @@ interface GameContextType {
   // Custom Pet Champion Registration
   registerCustomFighter: (fighter: Animal) => void;
 
-  // VIP Monetization Passes
+  // Software & Extension Licenses (The only 2 payments: $1.00 AI Studio & $1.99 Extension)
   hasAvatarStudioPass: boolean;
   hasExtensionPass: boolean;
-  unlockPass: (passType: 'avatar' | 'extension' | 'bundle' | 'supporter', useCredits?: boolean) => { success: boolean; message: string };
+  unlockPass: (passType: 'avatar' | 'extension', useCredits?: boolean) => { success: boolean; message: string };
+
+  // Slam Royal Pass (100% Free Season Progression)
+  passPoints: number;
+  addPassPoints: (amount: number, reason?: string) => void;
+  royalPassTier: number;
+  claimedRoyalPassTiers: Record<number, boolean>;
+  claimRoyalPassTier: (tier: number, creditReward: number) => boolean;
 
   // Armory
   equippedGear: EquippedGear;
@@ -114,70 +121,65 @@ interface GameContextType {
   };
 }
 
-const STORAGE_KEY = 'petslam_v2_gamestate';
+const STORAGE_KEY = 'petslam_v3_gamestate';
 
 const INITIAL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'ach_first_blood',
     title: 'First Arena Blood',
     desc: 'Win your first real-time championship combat bout.',
-    rewardCredits: 3000,
+    rewardCredits: 400,
     claimed: false,
-    progress: 1,
+    progress: 0,
     target: 1,
   },
   {
     id: 'ach_apex_trainer',
     title: 'Conditioning Specialist',
     desc: 'Complete 5 training sessions across nutrition or agility.',
-    rewardCredits: 4500,
+    rewardCredits: 500,
     claimed: false,
-    progress: 2,
+    progress: 0,
     target: 5,
   },
   {
     id: 'ach_high_roller',
     title: 'Apex Collector',
     desc: 'Acquire at least 3 distinct animal species in your kennel.',
-    rewardCredits: 8000,
+    rewardCredits: 800,
     claimed: false,
-    progress: 3,
+    progress: 1, // Has 1 starter companion (Kaiser)
     target: 3,
   },
   {
     id: 'ach_gear_master',
     title: 'Tactical Outfitter',
     desc: 'Equip your active beast with collar, harness, and paw claws.',
-    rewardCredits: 5000,
+    rewardCredits: 600,
     claimed: false,
-    progress: 2,
+    progress: 0,
     target: 3,
   },
   {
     id: 'ach_grandmaster',
     title: 'Championship Contender',
-    desc: 'Reach 1,500 MMR trophy rating in the Arena.',
-    rewardCredits: 12000,
+    desc: 'Reach 1,000 MMR trophy rating in the Arena.',
+    rewardCredits: 1500,
     claimed: false,
-    progress: 1240,
-    target: 1500,
+    progress: 0,
+    target: 1000,
   },
 ];
 
 export const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Starter dogs and cats
+  // Starter companion: Kaiser (German Shepherd) Level 1
   const defaultOwnedBeasts: Animal[] = [
-    { ...ANIMALS_DATA[0], level: 12 }, // Kaiser (German Shepherd)
-    { ...ANIMALS_DATA[8], level: 13 }, // Leonidas (Bengal Cat)
-    { ...ANIMALS_DATA[3], level: 11 }, // Ghost (Siberian Husky)
-    { ...ANIMALS_DATA[10], level: 11 }, // Mochi (Siamese Cat)
-    { ...ANIMALS_DATA[1], level: 12 }, // Vulkan (Rottweiler)
-    { ...ANIMALS_DATA[11], level: 10 }, // Ginger (Orange Tabby)
+    { ...ANIMALS_DATA[0], level: 1 },
   ];
 
-  const [trainerName, setTrainerName] = useState<string>('Nirn');
+  const [trainerName, setTrainerName] = useState<string>('Trainer');
   const [playerTag, setPlayerTagState] = useState<string>(() => {
     try {
       const saved = localStorage.getItem('petslam_player_tag');
@@ -354,28 +356,75 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const [credits, setCredits] = useState<number>(1000);
+  const [credits, setCredits] = useState<number>(1200);
   const addCredits = (amount: number) => {
     setCredits((prev) => Math.max(0, prev + amount));
   };
-  const [energy, setEnergy] = useState<number>(85);
+  const [energy, setEnergy] = useState<number>(100);
   const maxEnergy = 100;
-  const [trophies, setTrophies] = useState<number>(1240);
-  const [playerLevel, setPlayerLevel] = useState<number>(14);
-  const [playerExp, setPlayerExp] = useState<number>(450);
+  const [trophies, setTrophies] = useState<number>(0);
+  const [playerLevel, setPlayerLevel] = useState<number>(1);
+  const [playerExp, setPlayerExp] = useState<number>(0);
   const playerMaxExp = 1000;
-  const [wins, setWins] = useState<number>(18);
-  const [losses, setLosses] = useState<number>(4);
+  const [wins, setWins] = useState<number>(0);
+  const [losses, setLosses] = useState<number>(0);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
 
   const [ownedBeasts, setOwnedBeasts] = useState<Animal[]>(defaultOwnedBeasts);
   const [activeBeastId, setActiveBeastId] = useState<string>('dog_01');
-  const [battleDeckIds, setBattleDeckIds] = useState<string[]>([
-    'dog_01', // Kaiser (German Shepherd) - Slot 1 (Lead Vanguard)
-    'cat_01', // Leonidas (Bengal Cat) - Slot 2 (Agile Striker)
-    'dog_04', // Ghost (Husky) - Slot 3 (Speed Blitz)
-    'cat_03', // Mochi (Siamese) - Slot 4 (Shadow Assassin)
-  ]);
+  const [battleDeckIds, setBattleDeckIds] = useState<string[]>(['dog_01']);
+
+  // Slam Royal Pass (100% Free Progression Track)
+  const [passPoints, setPassPoints] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('petslam_royal_pass_points');
+      return saved ? Number(saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [claimedRoyalPassTiers, setClaimedRoyalPassTiers] = useState<Record<number, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('petslam_royal_pass_claimed');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const royalPassTier = Math.min(50, Math.max(1, 1 + Math.floor(passPoints / 100)));
+
+  const addPassPoints = (amount: number, _reason?: string) => {
+    setPassPoints((prev) => {
+      const next = prev + amount;
+      try { localStorage.setItem('petslam_royal_pass_points', String(next)); } catch {}
+      return next;
+    });
+  };
+
+  const claimRoyalPassTier = (tier: number, creditReward: number) => {
+    if (tier > royalPassTier || claimedRoyalPassTiers[tier]) return false;
+    sound.playVictory();
+    addCredits(creditReward);
+    setClaimedRoyalPassTiers((prev) => {
+      const next = { ...prev, [tier]: true };
+      try { localStorage.setItem('petslam_royal_pass_claimed', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    return true;
+  };
+
+  // Cross-system reactive pass points listener (e.g. sanctuary pet feeding)
+  useEffect(() => {
+    const handleEarnPassPoints = (e: any) => {
+      if (e.detail?.amount) {
+        addPassPoints(Number(e.detail.amount), e.detail.reason);
+      }
+    };
+    window.addEventListener('petslam:earn-pass-points', handleEarnPassPoints);
+    return () => window.removeEventListener('petslam:earn-pass-points', handleEarnPassPoints);
+  }, []);
 
   const setDeckSlot = (slotIndex: number, beastId: string) => {
     sound.playClick();
@@ -402,21 +451,21 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  const unlockPass = (passType: 'avatar' | 'extension' | 'bundle' | 'supporter', _useCredits = false) => {
+  const unlockPass = (passType: 'avatar' | 'extension', _useCredits = false) => {
     sound.playLevelUp();
 
-    if (passType === 'avatar' || passType === 'bundle' || passType === 'supporter') {
+    if (passType === 'avatar') {
       setHasAvatarStudioPass(true);
       try { localStorage.setItem('petslam_pass_avatar', 'true'); } catch {}
     }
-    if (passType === 'extension' || passType === 'bundle' || passType === 'supporter') {
+    if (passType === 'extension') {
       setHasExtensionPass(true);
       try { localStorage.setItem('petslam_pass_extension', 'true'); } catch {}
     }
 
     return {
       success: true,
-      message: passType === 'bundle' || passType === 'supporter' ? 'All-Access Genesis Supporter Pack Activated!' : `${passType.toUpperCase()} VIP Pass Activated!`,
+      message: passType === 'avatar' ? 'AI Pet Studio Pass Activated!' : 'Desktop Companion License Activated!',
     };
   };
 
@@ -439,7 +488,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const confirmedPass = (result.passType || pass) as any;
             unlockPass(confirmedPass, false);
             trackClarityEvent(`dodo_payment_verified_${confirmedPass}`);
-            setClarityTag('vip_pass_' + confirmedPass, 'active');
+            setClarityTag('license_' + confirmedPass, 'active');
             sound.playVictory();
           } else {
             console.warn('[GameContext] Payment verification failed or pending:', result.error);
@@ -474,51 +523,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sound.playVictory();
   };
 
-  const [equippedGear, setEquippedGear] = useState<EquippedGear>({
-    collar: GEAR_ITEMS[0], // Titanium Spike Collar
-    armor: GEAR_ITEMS[3],  // Kevlar Ballistic Harness
-  });
+  const [equippedGear, setEquippedGear] = useState<EquippedGear>({});
 
-  const [inventoryGear, setInventoryGear] = useState<GearItem[]>([
-    GEAR_ITEMS[1], // Carbon Micro-Sensor Collar
-    GEAR_ITEMS[6], // Agility Traction Claws
-    GEAR_ITEMS[8], // Adrenaline Bio-Stim
-  ]);
+  const [inventoryGear, setInventoryGear] = useState<GearItem[]>([]);
 
   const [achievements, setAchievements] = useState<Achievement[]>(INITIAL_ACHIEVEMENTS);
 
-  const [matchHistory, setMatchHistory] = useState<MatchHistoryEntry[]>([
-    {
-      id: 'match_01',
-      timestamp: Date.now() - 3600000 * 2,
-      beastName: 'Kaiser',
-      opponentName: 'Vulkan (Alex)',
-      result: 'VICTORY',
-      rounds: 3,
-      creditsEarned: 1800,
-      trophiesChange: +32,
-    },
-    {
-      id: 'match_02',
-      timestamp: Date.now() - 3600000 * 5,
-      beastName: 'Fenrir',
-      opponentName: 'Sultan (Devon)',
-      result: 'VICTORY',
-      rounds: 4,
-      creditsEarned: 2400,
-      trophiesChange: +45,
-    },
-    {
-      id: 'match_03',
-      timestamp: Date.now() - 3600000 * 12,
-      beastName: 'Kaiser',
-      opponentName: 'Khan (Soren)',
-      result: 'DEFEAT',
-      rounds: 2,
-      creditsEarned: 400,
-      trophiesChange: -18,
-    },
-  ]);
+  const [matchHistory, setMatchHistory] = useState<MatchHistoryEntry[]>([]);
 
   // Load from localStorage if present
   useEffect(() => {
@@ -536,17 +547,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (parsed.losses !== undefined) setLosses(parsed.losses);
         if (parsed.activeBeastId) setActiveBeastId(parsed.activeBeastId);
         const validAnimalIds = new Set(ANIMALS_DATA.map((a) => a.id));
-        if (parsed.battleDeckIds && Array.isArray(parsed.battleDeckIds) && parsed.battleDeckIds.length === 4) {
-          const cleanDeck = parsed.battleDeckIds.map((id: string, i: number) =>
-            validAnimalIds.has(id) ? id : ['dog_01', 'cat_01', 'dog_04', 'cat_03'][i] || 'dog_01'
-          );
-          setBattleDeckIds(cleanDeck);
+        if (parsed.battleDeckIds && Array.isArray(parsed.battleDeckIds) && parsed.battleDeckIds.length >= 1) {
+          const cleanDeck = parsed.battleDeckIds.filter((id: string) => validAnimalIds.has(id));
+          setBattleDeckIds(cleanDeck.length > 0 ? cleanDeck : ['dog_01']);
         }
         if (parsed.ownedBeasts && parsed.ownedBeasts.length > 0) {
           const cleanOwned = parsed.ownedBeasts.map((b: Animal, i: number) => {
             const matched = ANIMALS_DATA.find((a) => a.id === b.id);
-            if (matched) return { ...matched, level: b.level || matched.level };
-            return { ...ANIMALS_DATA[i % ANIMALS_DATA.length], level: b.level || 10 };
+            if (matched) return { ...matched, level: b.level || 1 };
+            return { ...ANIMALS_DATA[i % ANIMALS_DATA.length], level: b.level || 1 };
           });
           setOwnedBeasts(cleanOwned);
         }
@@ -554,6 +563,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (parsed.inventoryGear) setInventoryGear(parsed.inventoryGear);
         if (parsed.achievements) setAchievements(parsed.achievements);
         if (parsed.matchHistory) setMatchHistory(parsed.matchHistory);
+        if (parsed.passPoints !== undefined) setPassPoints(parsed.passPoints);
+        if (parsed.claimedRoyalPassTiers) setClaimedRoyalPassTiers(parsed.claimedRoyalPassTiers);
       }
     } catch {
       // Local storage read fallback
@@ -579,6 +590,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         inventoryGear,
         achievements,
         matchHistory,
+        passPoints,
+        claimedRoyalPassTiers,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {}
@@ -598,6 +611,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     inventoryGear,
     achievements,
     matchHistory,
+    passPoints,
+    claimedRoyalPassTiers,
   ]);
 
   // Sound sync
@@ -638,7 +653,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const trainBeast = (beastId: string, type: 'nutrition' | 'agility' | 'biteForce') => {
     const energyCost = 15;
-    const creditCost = 800;
+    const creditCost = 400; // Accessible early-game training
 
     if (energy < energyCost) {
       return { success: false, message: 'Insufficient energy! Refill or await recovery.' };
@@ -649,6 +664,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setEnergy((prev) => Math.max(0, prev - energyCost));
     setCredits((prev) => prev - creditCost);
+
+    // Earning Royal Pass points from companion training
+    addPassPoints(50, 'Companion Conditioning');
 
     let leveledUp = false;
     let statMessage = '';
@@ -761,9 +779,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const recordMatchResult = (won: boolean, opponent: Animal, rounds: number) => {
-    const rewardCredits = won ? Math.floor(1800 + Math.random() * 800) : 400;
+    const rewardCredits = won ? Math.floor(650 + Math.random() * 350) : 150;
     const trophiesChange = won ? +35 : -15;
     const expGained = won ? 250 : 80;
+
+    // Slam Royal Pass points progression (+100 win, +40 bout completed)
+    const passPointsGained = won ? 100 : 40;
+    addPassPoints(passPointsGained, won ? 'Arena Victory' : 'Arena Bout');
 
     setCredits((prev) => prev + rewardCredits);
     setTrophies((prev) => Math.max(0, prev + trophiesChange));
@@ -822,7 +844,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refillEnergy = () => {
-    const cost = 1200;
+    const cost = 300;
     if (credits < cost || energy >= maxEnergy) return false;
     sound.playClick();
     setCredits((prev) => prev - cost);
@@ -832,6 +854,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetProgress = () => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('petslam_royal_pass_points');
+    localStorage.removeItem('petslam_royal_pass_claimed');
     window.location.reload();
   };
 
@@ -883,6 +907,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hasExtensionPass,
         unlockPass,
         registerCustomFighter,
+        passPoints,
+        addPassPoints,
+        royalPassTier,
+        claimedRoyalPassTiers,
+        claimRoyalPassTier,
       }}
     >
       {children}

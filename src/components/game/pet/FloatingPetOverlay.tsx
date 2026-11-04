@@ -453,7 +453,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
         position: 'fixed',
         left: `${position.x}px`,
         top: `${position.y}px`,
-        zIndex: 9999,
+        zIndex: 35,
         touchAction: 'none',
       }}
       className={`select-none font-sans ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}

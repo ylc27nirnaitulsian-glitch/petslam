@@ -457,7 +457,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
               <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                 <span>Personal Pet Avatar & Fighter Studio</span>
                 <span className="text-[10px] bg-[#CCFF00] text-black px-2 py-0.5 rounded-full font-black font-mono">
-                  $0.99 PASS
+                  $1.00 PASS
                 </span>
               </h2>
               <p className="text-[11px] text-neutral-400">
@@ -510,7 +510,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
               </span>
             ) : (
               <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                $0.99 Pass
+                $1.00 Pass
               </span>
             )}
           </div>
@@ -1300,7 +1300,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                 Turn your real pet photo into an animated avatar & playable battle fighter!
               </p>
               <div className="p-2.5 bg-black/40 rounded-xl border border-white/10 text-xs font-mono font-bold text-[#CCFF00]">
-                $0.99 USD or 1,000 Slam Credits
+                $1.00 USD or 1,000 Slam Credits
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-2">
@@ -1324,7 +1324,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold text-xs uppercase cursor-pointer shadow-md"
                 >
-                  Unlock AI Photo Pass $0.99 (Dodo Payments)
+                  Unlock AI Photo Pass $1.00 (Dodo Payments)
                 </button>
               </div>
 

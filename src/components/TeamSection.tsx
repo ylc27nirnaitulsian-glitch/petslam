@@ -58,7 +58,7 @@ export const TeamSection: React.FC = () => {
       role: 'Systems Discipline',
       focus: 'Fixed Digital Licensing · Zero Pay-to-Win · Faucet & Quest Sinks',
       experience:
-        'Engineered on transparent fixed digital licensing ($0.99 Studio Pass, $2.99 Companion License, $4.99 Supporter Pack) with zero gambling, zero betting, and zero pay-to-win advantages.',
+        'Engineered on transparent fixed digital licensing ($1.00 AI Studio Pass, $1.99 Companion License) with zero gambling, zero betting, and zero pay-to-win advantages.',
       priorCredits: 'Dodo MoR Compliance · Skill-Only Leaderboard Design',
       badge: 'Fair Economy',
       initials: 'EC',
@@ -219,7 +219,7 @@ export const TeamSection: React.FC = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">›</span>
-                  <span><strong>Compliant Digital Products:</strong> Fixed-price licenses ($0.99 Studio AI Pass, $2.99 Companion License, $4.99 Supporter Pack) with zero gambling, zero betting, and zero pay-to-win advantages.</span>
+                  <span><strong>Compliant Digital Products:</strong> Fixed-price licenses ($1.00 AI Studio Pass, $1.99 Companion License) with zero gambling, zero betting, and zero pay-to-win advantages.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">›</span>

@@ -28,7 +28,7 @@ interface Quest {
   current: number;
   target: number;
   creditsReward: number;
-  xpReward: number;
+  passPointsReward: number;
   isClaimed: boolean;
 }
 
@@ -37,11 +37,11 @@ export const DailyQuestsDrawer: React.FC<DailyQuestsDrawerProps> = ({
   onClose,
   onOpenPass,
 }) => {
-  const { addCredits } = useGame();
+  const { addCredits, addPassPoints } = useGame();
 
   const [quests, setQuests] = useState<Quest[]>(() => {
     try {
-      const saved = localStorage.getItem('petslam_daily_quests');
+      const saved = localStorage.getItem('petslam_daily_quests_v3');
       if (saved) return JSON.parse(saved);
     } catch {}
     return [
@@ -49,30 +49,30 @@ export const DailyQuestsDrawer: React.FC<DailyQuestsDrawerProps> = ({
         id: 'q1',
         title: 'Apex Striker',
         description: 'Land 5 Pounces or Special Moves in Arena Combat',
-        current: 3,
+        current: 0,
         target: 5,
-        creditsReward: 250,
-        xpReward: 60,
+        creditsReward: 350,
+        passPointsReward: 75,
         isClaimed: false,
       },
       {
         id: 'q2',
         title: 'Sanctuary Caretaker',
         description: 'Feed, Wash, or Pet your companion in the Sanctuary',
-        current: 3,
+        current: 0,
         target: 3,
-        creditsReward: 150,
-        xpReward: 40,
+        creditsReward: 250,
+        passPointsReward: 75,
         isClaimed: false,
       },
       {
         id: 'q3',
         title: 'Ranked Gladiator',
         description: 'Compete in 1 Authoritative Ranked 1v1 Multiplayer Duel',
-        current: 1,
+        current: 0,
         target: 1,
-        creditsReward: 350,
-        xpReward: 80,
+        creditsReward: 400,
+        passPointsReward: 75,
         isClaimed: false,
       },
     ];
@@ -88,12 +88,13 @@ export const DailyQuestsDrawer: React.FC<DailyQuestsDrawerProps> = ({
       const updated = prev.map((q) => {
         if (q.id === questId) {
           addCredits(q.creditsReward);
+          addPassPoints(q.passPointsReward, 'Daily Quest Completed');
           return { ...q, isClaimed: true };
         }
         return q;
       });
       try {
-        localStorage.setItem('petslam_daily_quests', JSON.stringify(updated));
+        localStorage.setItem('petslam_daily_quests_v3', JSON.stringify(updated));
       } catch {}
       return updated;
     });
@@ -117,7 +118,7 @@ export const DailyQuestsDrawer: React.FC<DailyQuestsDrawerProps> = ({
               </h2>
               <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 font-mono mt-0.5">
                 <Clock className="w-3 h-3 text-cyan-400" />
-                <span>Resets in: 14h 22m</span>
+                <span>Resets daily at 00:00 UTC</span>
               </div>
             </div>
           </div>
@@ -171,7 +172,7 @@ export const DailyQuestsDrawer: React.FC<DailyQuestsDrawerProps> = ({
                   <div className="flex items-center gap-2 text-[10px] font-mono">
                     <span className="text-[#CCFF00] font-bold">+{q.creditsReward} Credits</span>
                     <span>·</span>
-                    <span className="text-cyan-300 font-bold">+{q.xpReward} Pass XP</span>
+                    <span className="text-amber-300 font-bold">+{q.passPointsReward} Royal PTS</span>
                   </div>
 
                   {q.isClaimed ? (
@@ -197,7 +198,7 @@ export const DailyQuestsDrawer: React.FC<DailyQuestsDrawerProps> = ({
           })}
         </div>
 
-        {/* Footer CTA to Battle Pass */}
+        {/* Footer CTA to Royal Battle Pass */}
         <div className="p-4 border-t border-white/10 bg-[#0A0E18]">
           <button
             onClick={() => {
@@ -207,7 +208,7 @@ export const DailyQuestsDrawer: React.FC<DailyQuestsDrawerProps> = ({
             className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white font-mono text-xs font-bold uppercase flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>View Slam Battle Pass (50 Tiers)</span>
+            <span>Open Slam Royal Pass (50 Free Tiers)</span>
             <ChevronRight className="w-4 h-4 ml-auto" />
           </button>
         </div>

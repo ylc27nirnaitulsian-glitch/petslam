@@ -15,9 +15,8 @@
 - **Product type:** Web Application (React 19 / Canvas 60 FPS) + Chrome Browser Extension (Manifest V3) + Mobile Responsive Web Game.
 - **Business model & pricing (Software Utilities & Freemium):**
   - **Free Tier:** 100% Free Arena Battles, Sanctuary feeding, GPS Radar, and Sanctuary Pet Adoption Shelter.
-  - **Pet Avatar Studio Pass ($0.99):** Generative AI photo utility converting real dog & cat photos into stylized 2D digital combat cards via Gemini vision.
-  - **Browser Extension Lifetime License ($2.99):** Standalone downloadable Chrome Web Extension companion with screen wellness alerts, battery reaction & voice mimicry.
-  - **Genesis Founder Supporter Pack ($4.99):** Extension software license, AI photo studio passes, and exclusive cosmetic stadium livery (100% cosmetic, zero stat advantage).
+  - **Pet Avatar Studio Pass ($1.00):** Generative AI photo utility converting real dog & cat photos into custom animated 2D digital combat cards via Gemini vision.
+  - **Browser Extension Lifetime License ($1.99):** Standalone downloadable Chrome Web Extension companion with screen wellness alerts, battery reaction & voice mimicry.
 
 ---
 
@@ -99,4 +98,4 @@
   1. Complete first battle or rescue first pet on radar.
   2. Upload photo in AI Avatar Studio to create custom fighter.
   3. Export Chrome Extension companion.
-  4. Unlock Genesis VIP Bundle ($4.99) via Dodo Payments.
+  4. Unlock AI Pet Studio ($1.00) or Browser Extension ($1.99) via Dodo Payments.

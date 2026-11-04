@@ -27,7 +27,6 @@ import { sound } from '../../../utils/audio';
 import { getRarityBadgeClasses, mapBeastToSpecies, getPetPhoto } from '../../../utils/petVisuals';
 import { usePetCompanion } from '../../../context/PetCompanionContext';
 import { ProceduralPetCanvas } from '../pet/ProceduralPetCanvas';
-import { FriendsVoiceRoomModal } from '../FriendsVoiceRoomModal';
 import { PetBattleSceneCanvas, BattleAction, ArenaTheme } from '../arena/PetBattleSceneCanvas';
 import { triggerVictoryExplosion } from '../../../utils/confetti';
 
@@ -63,7 +62,6 @@ export const ArenaScreen: React.FC = () => {
     eligibleChallengers[0] || ANIMALS_DATA[1]
   );
   const [opponentTrainer, setOpponentTrainer] = useState<string>('Trainer Axel');
-  const [voiceRoomOpen, setVoiceRoomOpen] = useState<boolean>(false);
   const [arenaTheme, setArenaTheme] = useState<ArenaTheme>('stadium');
   const [currentCanvasAction, setCurrentCanvasAction] = useState<BattleAction | null>(null);
 
@@ -141,6 +139,34 @@ export const ArenaScreen: React.FC = () => {
 
   // Desktop Keyboard Hotkey Press State (for active visual feedback)
   const [pressedHotkey, setPressedHotkey] = useState<string | null>(null);
+
+  // Synchronous combat state refs to prevent timer teardowns and stale closures
+  const opponentElixirRef = useRef<number>(opponentElixir);
+  opponentElixirRef.current = opponentElixir;
+
+  const isOpponentShieldedRef = useRef<boolean>(isOpponentShielded);
+  isOpponentShieldedRef.current = isOpponentShielded;
+
+  const isPlayerShieldedRef = useRef<boolean>(isPlayerShielded);
+  isPlayerShieldedRef.current = isPlayerShielded;
+
+  const selectedOpponentRef = useRef<Animal>(selectedOpponent);
+  selectedOpponentRef.current = selectedOpponent;
+
+  const playerHpRef = useRef<number>(playerHp);
+  playerHpRef.current = playerHp;
+
+  const opponentHpRef = useRef<number>(opponentHp);
+  opponentHpRef.current = opponentHp;
+
+  const battleModeRef = useRef<'1v1' | '2v2'>(battleMode);
+  battleModeRef.current = battleMode;
+
+  const opponentAllyRef = useRef<Animal>(opponentAlly);
+  opponentAllyRef.current = opponentAlly;
+
+  const opponentAllyHpRef = useRef<number>(opponentAllyHp);
+  opponentAllyHpRef.current = opponentAllyHp;
 
   // 30-Second Interactive Combat Practice Drill State
   const [showTutorialPrompt, setShowTutorialPrompt] = useState<boolean>(() => {
@@ -269,25 +295,46 @@ export const ArenaScreen: React.FC = () => {
     setBattleTimerSec(180);
 
     const pHp = Math.round(currentActiveFighter.health || 1000);
-    const oHp = Math.round(opp.health || 1000);
+    const pDmg = Math.round(currentActiveFighter.damage || 200);
+
+    // Fair-play dynamic stat normalization: opponent HP & DMG scaled to match player within ±6%
+    // Preserves breed uniqueness while preventing either side from being overpowered
+    const breedHpRatio = (opp.health || 1000) / 1000;
+    const breedDmgRatio = (opp.damage || 200) / 200;
+    const oHp = Math.round(pHp * Math.max(0.94, Math.min(1.06, breedHpRatio)));
+    const oDmg = Math.round(pDmg * Math.max(0.94, Math.min(1.06, breedDmgRatio)));
+
+    const balancedOpp: Animal = {
+      ...opp,
+      health: oHp,
+      damage: oDmg,
+    };
+    setSelectedOpponent(balancedOpp);
+    selectedOpponentRef.current = balancedOpp;
+
     setPlayerHp(pHp);
     setMaxPlayerHp(pHp);
     setGhostPlayerHp(pHp);
+    playerHpRef.current = pHp;
+
     setOpponentHp(oHp);
     setMaxOpponentHp(oHp);
     setGhostOpponentHp(oHp);
+    opponentHpRef.current = oHp;
 
     if (battleMode === '2v2') {
       const aPet = ally || playerAlly;
       const oaPet = oppAlly || opponentAlly;
       const aHp = Math.round(aPet.health || 850);
-      const oaHp = Math.round(oaPet.health || 850);
+      const oaHp = Math.round(pHp * 0.85);
       setPlayerAlly(aPet);
       setOpponentAlly(oaPet);
+      opponentAllyRef.current = oaPet;
       setPlayerAllyHp(aHp);
       setMaxPlayerAllyHp(aHp);
       setOpponentAllyHp(oaHp);
       setMaxOpponentAllyHp(oaHp);
+      opponentAllyHpRef.current = oaHp;
     }
 
     setElixir(5);
@@ -311,6 +358,82 @@ export const ArenaScreen: React.FC = () => {
     setAnnouncerPulse(true);
     setTimeout(() => setAnnouncerPulse(false), 2400);
   };
+
+  // Listen for Battle Launch Requests (from Friend Party Lobby, Ranked Queue, or External triggers)
+  useEffect(() => {
+    const handleStartBattle = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (!detail) return;
+      const mode: '1v1' | '2v2' = detail.mode === 'duel' || detail.mode === '1v1' ? '1v1' : '2v2';
+      const partner = detail.partner;
+
+      setBattleMode(mode);
+
+      const randomOpp1 = eligibleChallengers[Math.floor(Math.random() * eligibleChallengers.length)] || ANIMALS_DATA[1];
+      const randomOpp2 = eligibleChallengers.find((b) => b.id !== randomOpp1.id) || eligibleChallengers[0] || ANIMALS_DATA[2];
+
+      if (mode === '1v1') {
+        if (partner) {
+          const friendFighter: Animal = {
+            ...randomOpp1,
+            id: `friend_${partner.tag}`,
+            name: partner.beastName || `${partner.name}'s Companion`,
+            image: partner.beastImage || randomOpp1.image,
+            fallbackImage: randomOpp1.fallbackImage,
+            description: `Trained by ${partner.name} (${partner.tag}) for high-stakes friendly exhibition sparring.`,
+            health: 1100,
+            damage: 210,
+          };
+          setSelectedOpponent(friendFighter);
+          setOpponentTrainer(`${partner.name} (${partner.tag})`);
+          setAnnouncerText(`⚔️ 1v1 FRIENDLY DUEL VS ${partner.name.toUpperCase()}!`);
+          startSlamMatch(friendFighter);
+        } else {
+          setSelectedOpponent(randomOpp1);
+          setOpponentTrainer('Trainer Axel (Bot)');
+          setAnnouncerText('⚔️ 1v1 SPARRING DUEL — FIGHT!');
+          startSlamMatch(randomOpp1);
+        }
+      } else {
+        // 2v2 Tag Team Co-Op
+        let allyFighter: Animal;
+        if (partner) {
+          allyFighter = {
+            ...(safeDeck[1] || randomOpp2),
+            id: `partner_${partner.tag}`,
+            name: partner.beastName || `${partner.name}'s Partner`,
+            image: partner.beastImage || (safeDeck[1] ? safeDeck[1].image : randomOpp2.image),
+            description: `Allied partner fighting alongside you from ${partner.tag}.`,
+            health: 1050,
+            damage: 200,
+          };
+          setPlayerAlly(allyFighter);
+          setAnnouncerText(`👥 2v2 TAG TEAM WITH ${partner.name.toUpperCase()}!`);
+        } else {
+          allyFighter = safeDeck.find((b) => b.id !== currentActiveFighter.id) || eligibleChallengers[2] || randomOpp2;
+          setPlayerAlly(allyFighter);
+          setAnnouncerText('👥 2v2 TAG TEAM (VS BOTS) — FIGHT!');
+        }
+
+        setSelectedOpponent(randomOpp1);
+        setOpponentAlly(randomOpp2);
+        setOpponentTrainer('Rival Duo: Master Vance & Maya');
+        startSlamMatch(randomOpp1, randomOpp2, allyFighter);
+      }
+    };
+
+    const handleStartRankedQueue = () => {
+      handleStartMatchmaking();
+    };
+
+    window.addEventListener('petslam:start-battle', handleStartBattle);
+    window.addEventListener('petslam:start-ranked-queue', handleStartRankedQueue);
+
+    return () => {
+      window.removeEventListener('petslam:start-battle', handleStartBattle);
+      window.removeEventListener('petslam:start-ranked-queue', handleStartRankedQueue);
+    };
+  }, [eligibleChallengers, safeDeck, currentActiveFighter]);
 
   // Match Countdown Timer (180s)
   useEffect(() => {
@@ -352,70 +475,144 @@ export const ArenaScreen: React.FC = () => {
         }
         return next;
       });
-      setOpponentElixir((prev) => Math.min(10, Number((prev + 0.32).toFixed(1))));
+      setOpponentElixir((prev) => {
+        const next = Math.min(10, Number((prev + 0.35).toFixed(1)));
+        opponentElixirRef.current = next;
+        return next;
+      });
     }, intervalRate);
 
     return () => clearInterval(interval);
   }, [inBattle, battleOver, battleTimerSec, hasAnnouncedOverdrive]);
 
-  // AI Opponent Tactical Loop
+  // AI Opponent Tactical Loop: Responsive, competitive, fair-play decision engine
   useEffect(() => {
     if (!inBattle || battleOver || isPracticeDrill) return;
+
+    const isDouble = battleTimerSec <= 60;
+    const aiIntervalMs = isDouble ? 850 : 1250;
 
     const aiInterval = setInterval(() => {
       if (battleOver || isPracticeDrill) return;
 
+      const curElixir = opponentElixirRef.current;
+      const opp = selectedOpponentRef.current;
+      const isPlayerShieldedNow = isPlayerShieldedRef.current;
+      const isOppShieldedNow = isOpponentShieldedRef.current;
+      const currentOppHp = opponentHpRef.current;
+
+      // 2v2 Tag-Team: if lead opponent is critical (< 28% HP) and ally is healthy, swap!
+      if (
+        battleModeRef.current === '2v2' &&
+        currentOppHp < maxOpponentHp * 0.28 &&
+        opponentAllyHpRef.current > maxOpponentAllyHp * 0.4 &&
+        Math.random() < 0.55
+      ) {
+        const currentLead = selectedOpponentRef.current;
+        const partner = opponentAllyRef.current;
+        setSelectedOpponent(partner);
+        selectedOpponentRef.current = partner;
+        setOpponentAlly(currentLead);
+        opponentAllyRef.current = currentLead;
+
+        const currentHp = opponentHpRef.current;
+        const partnerHp = opponentAllyHpRef.current;
+        setOpponentHp(partnerHp);
+        opponentHpRef.current = partnerHp;
+        setOpponentAllyHp(currentHp);
+        opponentAllyHpRef.current = currentHp;
+
+        setLastCombatLog(`🔁 Opponent tag-in! ${partner.name} enters the arena!`);
+        sound.playCardPlay();
+        return;
+      }
+
+      if (curElixir < 2) {
+        setOpponentIntent('⚡ Charging Elixir...');
+        return;
+      }
+
       const aiRoll = Math.random();
 
-      if (opponentElixir >= 6 && aiRoll < 0.28) {
-        // AI Ultimate SLAM
-        setOpponentElixir((prev) => Math.max(0, prev - 6));
+      // 1. Ultimate SLAM (costs 6 elixir)
+      // If player is shielded, bot saves ultimate or breaks shield first
+      if (curElixir >= 6 && !isPlayerShieldedNow && aiRoll < 0.50) {
+        const nextElixir = Math.max(0, Number((curElixir - 6).toFixed(1)));
+        opponentElixirRef.current = nextElixir;
+        setOpponentElixir(nextElixir);
         setOpponentIntent('🔥 PET SLAM OVERDRIVE!');
-        executeOpponentAttack(
-          Math.round(selectedOpponent.damage * 1.6),
-          'CLASH SLAM!',
-          true
-        );
-      } else if (opponentElixir >= 4 && aiRoll < 0.55) {
-        // AI Heavy Strike
-        setOpponentElixir((prev) => Math.max(0, prev - 4));
-        setOpponentIntent('🐾 Ripping Claw Strike');
-        executeOpponentAttack(Math.round(selectedOpponent.damage * 1.15), 'Fierce Bite');
-      } else if (opponentElixir >= 2 && !isOpponentShielded && aiRoll < 0.75) {
-        // AI Guard
-        setOpponentElixir((prev) => Math.max(0, prev - 2));
+        executeOpponentAttack(Math.round(opp.damage * 2.0), 'PET SLAM OVERDRIVE!', true);
+        return;
+      }
+
+      // 2. Heavy Fierce Bite (costs 4 elixir)
+      if (curElixir >= 4 && !isPlayerShieldedNow && aiRoll < 0.65) {
+        const nextElixir = Math.max(0, Number((curElixir - 4).toFixed(1)));
+        opponentElixirRef.current = nextElixir;
+        setOpponentElixir(nextElixir);
+        setOpponentIntent('🐾 Fierce Bite Strike');
+        executeOpponentAttack(Math.round(opp.damage * 1.35), 'Fierce Bite');
+        return;
+      }
+
+      // 3. Sonic Roar / Bark (costs 3 elixir)
+      if (curElixir >= 3 && aiRoll < 0.55) {
+        const nextElixir = Math.max(0, Number((curElixir - 3).toFixed(1)));
+        opponentElixirRef.current = nextElixir;
+        setOpponentElixir(nextElixir);
+        setOpponentIntent('📢 Sonic Shockwave');
+        executeOpponentAttack(Math.round(opp.damage * 1.0), 'Sonic Roar');
+        return;
+      }
+
+      // 4. Iron Guard Defense (costs 2 elixir)
+      // Bot raises guard if unshielded and player has ready energy or bot HP < 60%
+      if (curElixir >= 2 && !isOppShieldedNow && (aiRoll < 0.40 || currentOppHp < maxOpponentHp * 0.6)) {
+        const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
+        opponentElixirRef.current = nextElixir;
+        setOpponentElixir(nextElixir);
         setIsOpponentShielded(true);
+        isOpponentShieldedRef.current = true;
         setOpponentIntent('🛡️ Iron Guard Active');
         sound.playBlock();
-      } else if (opponentElixir >= 2) {
-        // AI Quick Pounce
-        setOpponentElixir((prev) => Math.max(0, prev - 2));
-        setOpponentIntent('⚡ Quick Jab Strike');
-        executeOpponentAttack(Math.round(selectedOpponent.damage * 0.75), 'Quick Pounce');
+        return;
       }
-    }, 2800);
+
+      // 5. Quick Pounce Strike (costs 2 elixir)
+      // Break player shield or deal quick chip damage
+      if (curElixir >= 2) {
+        const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
+        opponentElixirRef.current = nextElixir;
+        setOpponentElixir(nextElixir);
+        setOpponentIntent('⚡ Quick Pounce Strike');
+        executeOpponentAttack(Math.round(opp.damage * 0.8), 'Quick Pounce');
+        return;
+      }
+    }, aiIntervalMs);
 
     return () => clearInterval(aiInterval);
-  }, [inBattle, battleOver, opponentElixir, isOpponentShielded, selectedOpponent]);
+  }, [inBattle, battleOver, isPracticeDrill, battleTimerSec, maxOpponentHp, maxOpponentAllyHp]);
 
   // Execute Opponent Attack against Player
   const executeOpponentAttack = (rawDmg: number, moveName: string, isUlt = false) => {
-    setOpponentAnim('clash');
-    setLastCombatLog(`⚠️ ${selectedOpponent.name} launches ${moveName}!`);
+    setOpponentAnim(isUlt ? 'slam' : 'clash');
+    setLastCombatLog(`⚠️ ${selectedOpponentRef.current.name} launches ${moveName}!`);
 
-    const finalDamage = Math.round(isPlayerShielded ? rawDmg * 0.4 : rawDmg);
+    const isBlocked = isPlayerShieldedRef.current;
+    const finalDamage = Math.round(isBlocked ? rawDmg * 0.4 : rawDmg);
     setCurrentCanvasAction({
       id: Date.now(),
       attacker: 'opponent',
       type: isUlt ? 'slam' : 'bite',
       damage: finalDamage,
       isCrit: isUlt,
-      isBlocked: isPlayerShielded,
+      isBlocked: isBlocked,
     });
 
     setTimeout(() => {
-      if (isPlayerShielded) {
+      if (isPlayerShieldedRef.current) {
         setIsPlayerShielded(false);
+        isPlayerShieldedRef.current = false;
         addPopup('BLOCKED 60%!', 'block', 140, 220);
         sound.playBlock();
       } else {
@@ -426,6 +623,7 @@ export const ArenaScreen: React.FC = () => {
 
       setPlayerHp((prev) => {
         const next = Math.max(0, prev - finalDamage);
+        playerHpRef.current = next;
         setTimeout(() => setGhostPlayerHp(next), 350);
         if (next === 0) handleMatchConclusion(false);
         return next;
@@ -456,6 +654,7 @@ export const ArenaScreen: React.FC = () => {
 
     if (cardType === 'shield') {
       setIsPlayerShielded(true);
+      isPlayerShieldedRef.current = true;
       sound.playCardPlay();
       addPopup('SHIELD READY!', 'block', 140, 220);
       setLastCombatLog(`🛡️ ${currentActiveFighter.name} raised Iron Guard!`);
@@ -556,8 +755,9 @@ export const ArenaScreen: React.FC = () => {
       isCrit = true;
     }
 
+    const isBlocked = isOpponentShieldedRef.current;
     let totalDmg = Math.round(baseDamage * multiplier);
-    if (isOpponentShielded) {
+    if (isBlocked) {
       totalDmg = Math.round(totalDmg * 0.4);
     }
 
@@ -568,12 +768,13 @@ export const ArenaScreen: React.FC = () => {
       type: cardType,
       damage: totalDmg,
       isCrit,
-      isBlocked: isOpponentShielded,
+      isBlocked: isBlocked,
     });
 
     setTimeout(() => {
-      if (isOpponentShielded) {
+      if (isOpponentShieldedRef.current) {
         setIsOpponentShielded(false);
+        isOpponentShieldedRef.current = false;
         addPopup('SHIELD DEFLECTED!', 'block', 170, 80);
         sound.playBlock();
       } else {
@@ -582,6 +783,7 @@ export const ArenaScreen: React.FC = () => {
 
       setOpponentHp((prev) => {
         const next = Math.max(0, prev - totalDmg);
+        opponentHpRef.current = next;
         setTimeout(() => setGhostOpponentHp(next), 350);
         if (next === 0) handleMatchConclusion(true);
         return next;
@@ -620,6 +822,7 @@ export const ArenaScreen: React.FC = () => {
       sound.playImpact();
       setOpponentHp((prev) => {
         const next = Math.max(0, prev - 75);
+        opponentHpRef.current = next;
         setTimeout(() => setGhostOpponentHp(next), 350);
         if (next === 0) handleMatchConclusion(true);
         return next;
@@ -1033,14 +1236,11 @@ export const ArenaScreen: React.FC = () => {
             ) : (
               <div className="space-y-2 mt-1 w-full">
                 <button
-                  onClick={() => {
-                    sound.playClick();
-                    window.dispatchEvent(new CustomEvent('petslam:open-ranked-matchmaking'));
-                  }}
+                  onClick={handleStartMatchmaking}
                   className="w-full py-3.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-black font-display font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
                 >
                   <Swords className="w-5 h-5 text-black" />
-                  <span>🌐 Find Live Match (Ranked PvP Queue)</span>
+                  <span>🌐 Find Live Match ({battleMode === '2v2' ? '2v2 Ranked Queue' : '1v1 Ranked Queue'})</span>
                 </button>
 
                 <button
@@ -1170,15 +1370,6 @@ export const ArenaScreen: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              <button
-                onClick={() => setVoiceRoomOpen(true)}
-                className="flex items-center gap-1 text-[10px] font-mono font-bold bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-400/40 px-1.5 py-0.5 rounded-lg transition-colors cursor-pointer"
-                title="Party Voice Chat"
-              >
-                <Radio className="w-3 h-3 text-purple-300" />
-                <span className="hidden sm:inline">Voice</span>
-              </button>
-
               <button
                 onClick={handleForfeit}
                 className="flex items-center gap-1 text-[10px] font-mono font-bold text-neutral-400 hover:text-red-400 hover:bg-red-500/10 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
@@ -1663,13 +1854,6 @@ export const ArenaScreen: React.FC = () => {
             </div>
           )}
         </div>
-      )}
-
-      {/* Multiplayer Voice Room Modal */}
-      {voiceRoomOpen && (
-        <FriendsVoiceRoomModal
-          onClose={() => setVoiceRoomOpen(false)}
-        />
       )}
     </div>
   );

@@ -8,7 +8,6 @@ interface Env {
   DODO_PAYMENTS_ENVIRONMENT?: string;
   DODO_PRODUCT_AVATAR_PASS?: string;
   DODO_PRODUCT_EXTENSION_PASS?: string;
-  DODO_PRODUCT_BUNDLE_PASS?: string;
 }
 
 interface EventContext {
@@ -36,33 +35,19 @@ export async function onRequestGet(context: EventContext): Promise<Response> {
   const isLive = apiKey.startsWith('dodo_live_') || env.DODO_PAYMENTS_ENVIRONMENT === 'live_mode';
 
   const products = {
+    avatar: {
+      id: env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0Nr3oUSO21xdKMqzxV2Bq',
+      title: 'AI Pet Studio Custom Pet Creation Pass',
+      price: '$1.00',
+      amountCents: 100,
+      description: 'Generative AI photo utility converting real dog & cat photos into custom animated digital companion cards.',
+    },
     extension: {
       id: env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0Nr3ogcp25O1QY64y7E4w',
       title: 'PET SLAM Desktop & Browser Companion (Lifetime License)',
-      price: '$2.99',
-      amountCents: 299,
+      price: '$1.99',
+      amountCents: 199,
       description: 'Standalone Chrome extension & desktop productivity companion with posture/hydration alerts and voice mimicry.',
-    },
-    avatar: {
-      id: env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0Nr3oUSO21xdKMqzxV2Bq',
-      title: 'AI Pet Photo Studio Scanner Pass',
-      price: '$0.99',
-      amountCents: 99,
-      description: 'Generative AI photo utility converting real dog & cat photos into stylized 2D digital trading cards.',
-    },
-    supporter: {
-      id: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
-      title: 'Genesis Founder Supporter Pack',
-      price: '$4.99',
-      amountCents: 499,
-      description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
-    },
-    bundle: {
-      id: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
-      title: 'Genesis Founder Supporter Pack',
-      price: '$4.99',
-      amountCents: 499,
-      description: 'Founder cosmetic badge, golden UI livery, and Extension License (100% cosmetic, zero stat advantage).',
     },
   };
 

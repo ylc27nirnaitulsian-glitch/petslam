@@ -23,7 +23,6 @@ import { FriendsHubModal, Friend } from '../game/FriendsHubModal';
 import { FriendPartyLobbyModal } from '../game/FriendPartyLobbyModal';
 import { friendNetwork, FriendLobbyItem, FriendRequestItem } from '../../services/friendNetworkService';
 import { ReportBugModal } from '../modals/ReportBugModal';
-import { VipPassesModal } from '../game/VipPassesModal';
 import { SystemDiagnosticsModal } from '../diagnostic/SystemDiagnosticsModal';
 import { RankedMatchmakingModal } from '../game/RankedMatchmakingModal';
 import { BreedingLabModal } from '../game/pet/BreedingLabModal';
@@ -47,7 +46,6 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
 
   const [currentTab, setCurrentTab] = useState<MainNavId>('arena');
   const [showInfoDrawer, setShowInfoDrawer] = useState<boolean>(false);
-  const [showVipStore, setShowVipStore] = useState<boolean>(false);
   const [companionToast, setCompanionToast] = useState<string | null>(null);
 
   // Dedicated Modal States
@@ -96,7 +94,12 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       if (e?.detail?.tab) setFriendsModalTab(e.detail.tab);
       setFriendsModalOpen(true);
     };
-    const handleOpenRanked = () => setRankedModalOpen(true);
+    const handleOpenRanked = () => {
+      setCurrentTab('arena');
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('petslam:start-ranked-queue'));
+      }, 50);
+    };
     const handleOpenBugReport = (e?: any) => {
       if (e?.detail?.category) setBugReportCategory(e.detail.category);
       setIsBugReportOpen(true);
@@ -341,9 +344,13 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       <DesktopTelemetryDock
         onOpenAuctions={() => setAuctionsModalOpen(true)}
         onOpenBuddyHub={() => setBuddyModalOpen(true)}
-        onOpenVipStore={() => setShowVipStore(true)}
         onOpenStudio={() => setStudioModalOpen(true)}
-        onOpenRanked={() => setRankedModalOpen(true)}
+        onOpenRanked={() => {
+          setCurrentTab('arena');
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('petslam:start-ranked-queue'));
+          }, 50);
+        }}
         onOpenBreeding={() => setBreedingModalOpen(true)}
         onOpenPass={() => setPassModalOpen(true)}
         onOpenQuests={() => setQuestsDrawerOpen(true)}
@@ -512,15 +519,20 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
           initialFriend={activePartyLobby.friend}
           isHost={activePartyLobby.isHost}
           onClose={() => setActivePartyLobby(null)}
-          onLaunchBattle={(_mode) => {
+          onLaunchBattle={(mode, partner) => {
             setActivePartyLobby(null);
-            setRankedModalOpen(true);
+            setCurrentTab('arena');
+            setTimeout(() => {
+              window.dispatchEvent(
+                new CustomEvent('petslam:start-battle', {
+                  detail: { mode, partner },
+                })
+              );
+            }, 60);
           }}
         />
       )}
-      {showVipStore && (
-        <VipPassesModal isOpen={showVipStore} onClose={() => setShowVipStore(false)} />
-      )}
+
       {isDiagnosticsOpen && (
         <SystemDiagnosticsModal
           isOpen={isDiagnosticsOpen}

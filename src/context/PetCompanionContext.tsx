@@ -640,7 +640,7 @@ export const PetCompanionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     }
     // Default kennel with Shiba Inu starter
-    return [createInitialPet('shiba'), createInitialPet('tabby')];
+    return [createInitialPet('germanshepherd')];
   });
 
   // 2. Active buddy pet
@@ -653,7 +653,7 @@ export const PetCompanionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         console.warn('Could not parse saved pet data:', err);
       }
     }
-    return kennelPets[0] || createInitialPet('shiba');
+    return kennelPets[0] || createInitialPet('germanshepherd');
   });
 
   // 3. Desktop overlay active
@@ -870,6 +870,13 @@ export const PetCompanionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     if (leveledUp) {
       sound.playLevelUp();
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('petslam:earn-pass-points', {
+          detail: { amount: 25, reason: 'Pet Nutrition & Care' },
+        })
+      );
     }
 
     return {

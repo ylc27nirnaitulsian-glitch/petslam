@@ -261,7 +261,7 @@ export class AuthoritativeCombatServer {
       poolSize: this.matchmakingQueue.length,
       playerCp: cp,
       playerRating: player.rating,
-      targetBand: `±150 CP (${Math.max(100, cp - 150)} - ${cp + 150})`,
+      targetBand: 'Ranked Queue',
     });
   }
 

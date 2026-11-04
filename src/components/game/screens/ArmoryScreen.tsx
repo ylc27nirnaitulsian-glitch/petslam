@@ -127,8 +127,7 @@ export const ArmoryScreen: React.FC = () => {
       id: 'cosm_crown',
       name: 'Royal Sovereign Crown',
       price: 500,
-      priceUsd: '$0.49',
-      category: 'Headwear',
+            category: 'Headwear',
       icon: Crown,
       description: 'Gilded monarch crown with ruby gems. Visible in arena duels, sanctuary, and browser extension buddy.',
     },
@@ -136,8 +135,7 @@ export const ArmoryScreen: React.FC = () => {
       id: 'cosm_shades',
       name: 'Cyber Matrix Shades',
       price: 500,
-      priceUsd: '$0.49',
-      category: 'Eyewear',
+            category: 'Eyewear',
       icon: Sparkles,
       description: 'Ultraviolet polarized cyber shades. Equips directly to your dog or cat avatar.',
     },
@@ -145,8 +143,7 @@ export const ArmoryScreen: React.FC = () => {
       id: 'cosm_detective',
       name: 'Sherlock Tweed Cap',
       price: 500,
-      priceUsd: '$0.49',
-      category: 'Headwear',
+            category: 'Headwear',
       icon: Award,
       description: 'Classic British houndstooth detective cap. Stylish and charming for both canines and felines.',
     },
@@ -154,8 +151,7 @@ export const ArmoryScreen: React.FC = () => {
       id: 'cosm_party',
       name: 'Festive Party Cone',
       price: 500,
-      priceUsd: '$0.49',
-      category: 'Headwear',
+            category: 'Headwear',
       icon: Smile,
       description: 'Neon confetti party hat with sparkler tassel. Makes your companion celebrate with cheerful bobs.',
     },
@@ -167,8 +163,7 @@ export const ArmoryScreen: React.FC = () => {
       id: 'treat_salmon',
       name: 'Alaskan Wild Salmon Filet',
       price: 300,
-      priceUsd: '$0.49',
-      icon: '🐟',
+            icon: '🐟',
       bonus: '+30 Happiness & Lustrous Fur',
       description: 'Fresh omega-rich wild salmon steak. A favorite gourmet delicacy for cats and athletic dogs.',
     },
@@ -176,8 +171,7 @@ export const ArmoryScreen: React.FC = () => {
       id: 'treat_wagyu',
       name: 'A5 Wagyu Beef Cube',
       price: 300,
-      priceUsd: '$0.49',
-      icon: '🥩',
+            icon: '🥩',
       bonus: '+35 Morale & Full Satiety',
       description: 'Tender gourmet beef morsel. Boosts buddy loyalty hearts instantly.',
     },
@@ -185,8 +179,7 @@ export const ArmoryScreen: React.FC = () => {
       id: 'treat_bacon',
       name: 'Crispy Honey Bacon Chew',
       price: 300,
-      priceUsd: '$0.49',
-      icon: '🥓',
+            icon: '🥓',
       bonus: '+25 Energy & Playfulness',
       description: 'Slow-smoked artisan bacon strip. Dogs go wild and cats eagerly purr.',
     },
@@ -448,7 +441,7 @@ export const ArmoryScreen: React.FC = () => {
                   </span>
                 </div>
                 <p className="text-[11px] text-neutral-300 mt-1 leading-snug">
-                  Pet Slam is strictly skill-based. Outfits, crowns, and gourmet treats are purely aesthetic customizations or accessible at micro-prices ($0.49). Battle outcomes depend 100% on elixir management and timing!
+                  Pet Slam is strictly skill-based. Outfits, crowns, and gourmet treats are purely aesthetic customizations or accessible via free in-game Slam Credits earned in arena bouts. Battle outcomes depend 100% on elixir management and timing!
                 </p>
               </div>
             </div>
@@ -543,7 +536,7 @@ export const ArmoryScreen: React.FC = () => {
                   </h3>
                 </div>
                 <span className="text-[10px] font-mono text-purple-300">
-                  Micro-Price $0.49 (or 500 Cr)
+                  Free Progression Item (500 Cr)
                 </span>
               </div>
 
@@ -561,7 +554,7 @@ export const ArmoryScreen: React.FC = () => {
                             {cosm.category}
                           </span>
                           <span className="text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                            {cosm.priceUsd} or {cosm.price} Cr
+                            {cosm.price} Credits
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
@@ -586,7 +579,7 @@ export const ArmoryScreen: React.FC = () => {
                         }}
                         className="mt-3 w-full py-1.5 rounded-lg text-[10px] font-display font-black uppercase tracking-wider bg-purple-600 hover:bg-purple-500 text-white transition-all cursor-pointer shadow"
                       >
-                        Unlock ({cosm.priceUsd})
+                        Unlock ({cosm.price} Cr)
                       </button>
                     </div>
                   );
@@ -604,7 +597,7 @@ export const ArmoryScreen: React.FC = () => {
                   </h3>
                 </div>
                 <span className="text-[10px] font-mono text-cyan-300">
-                  Micro-Price $0.49 (or 300 Cr)
+                  Free Progression Item (300 Cr)
                 </span>
               </div>
 
@@ -632,7 +625,7 @@ export const ArmoryScreen: React.FC = () => {
                       }}
                       className="mt-2.5 w-full py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase bg-cyan-500 hover:bg-cyan-400 text-black transition-all cursor-pointer shadow"
                     >
-                      Feed ({treat.priceUsd})
+                      Feed ({treat.price} Cr)
                     </button>
                   </div>
                 ))}

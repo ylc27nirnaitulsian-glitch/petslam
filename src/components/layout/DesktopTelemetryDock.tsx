@@ -5,7 +5,6 @@ import {
   Home,
   Tv,
   Sparkles,
-  Crown,
   ChevronRight,
   TrendingUp,
   Flame,
@@ -21,7 +20,6 @@ import { sound } from '../../utils/audio';
 interface DesktopTelemetryDockProps {
   onOpenAuctions: () => void;
   onOpenBuddyHub: () => void;
-  onOpenVipStore: () => void;
   onOpenStudio: () => void;
   onOpenRanked?: () => void;
   onOpenBreeding?: () => void;
@@ -32,7 +30,6 @@ interface DesktopTelemetryDockProps {
 export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
   onOpenAuctions,
   onOpenBuddyHub,
-  onOpenVipStore,
   onOpenStudio,
   onOpenRanked,
   onOpenBreeding,
@@ -44,8 +41,8 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
     battleDeckIds,
     activeBeast,
     selectActiveBeast,
-    hasAvatarStudioPass,
-    hasExtensionPass,
+    passPoints,
+    royalPassTier,
   } = useGame();
 
   const { isOverlayActive, toggleOverlay, pet } = usePetCompanion();
@@ -82,7 +79,7 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
         <div className="flex items-center justify-between mb-2.5">
           <span className="text-xs font-mono font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
             <Shield className="w-4 h-4 text-emerald-600 dark:text-[#CCFF00]" />
-            Active Squad Deck (4)
+            Active Squad Deck ({battleDeck.length}/4)
           </span>
           <span className="text-xs font-mono text-emerald-600 dark:text-[#CCFF00] font-bold">Tag-In Ready</span>
         </div>
@@ -264,11 +261,11 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
           onClick={onOpenPass}
           className="p-2.5 rounded-xl bg-amber-100/70 dark:bg-amber-950/60 border border-amber-400/50 hover:border-amber-400 text-left transition-all cursor-pointer shadow-xs active:scale-95 group"
         >
-          <div className="text-xs font-mono text-amber-700 dark:text-amber-400 font-bold">50 TIERS</div>
+          <div className="text-xs font-mono text-amber-700 dark:text-amber-400 font-bold">TIER {royalPassTier}</div>
           <div className="text-xs font-bold text-slate-900 dark:text-white uppercase mt-0.5 group-hover:text-amber-600 dark:group-hover:text-amber-200">
-            Slam Pass
+            Royal Pass
           </div>
-          <div className="text-xs font-mono text-slate-500 dark:text-neutral-400">Season 1 Live</div>
+          <div className="text-xs font-mono text-slate-500 dark:text-neutral-400">Season 1 Free</div>
         </button>
 
         <button
@@ -283,28 +280,35 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
         </button>
       </div>
 
-      {/* 4. VIP Genesis Store Promotion */}
+      {/* 4. Slam Royal Pass Progress Bar (100% Free Progression) */}
       <div className="mt-auto pt-2">
         <button
-          onClick={onOpenVipStore}
-          className="w-full relative overflow-hidden group p-3.5 rounded-2xl bg-gradient-to-r from-fuchsia-500/15 via-pink-500/15 to-purple-500/15 dark:from-fuchsia-600/30 dark:via-pink-600/30 dark:to-purple-600/30 border-2 border-fuchsia-400/60 hover:border-fuchsia-500 cursor-pointer shadow-lg transition-all"
+          onClick={onOpenPass}
+          className="w-full p-3 rounded-2xl bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-600/10 dark:from-amber-950/40 dark:via-yellow-950/30 dark:to-neutral-900 border border-amber-400/40 hover:border-amber-400 cursor-pointer shadow-md transition-all group"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-fuchsia-500 text-white shadow-sm">
-                <Crown className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-amber-400 text-black flex items-center justify-center font-display font-black text-xs shadow-sm">
+                T{royalPassTier}
               </div>
               <div className="text-left">
-                <div className="font-display font-black text-sm uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-1">
-                  Genesis VIP Passes
-                  <Sparkles className="w-3.5 h-3.5 text-lime-600 dark:text-[#CCFF00]" />
+                <div className="font-display font-black text-xs uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-1 group-hover:text-amber-500 dark:group-hover:text-amber-300">
+                  Slam Royal Pass
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-300" />
                 </div>
-                <div className="text-xs font-mono text-slate-600 dark:text-slate-200 font-medium">
-                  Dodo Payments · Cards & Apple Pay
+                <div className="text-[10px] font-mono text-slate-600 dark:text-slate-300 font-medium">
+                  {passPoints % 100} / 100 PTS · Tier {Math.min(50, royalPassTier + 1)}
                 </div>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-fuchsia-600 dark:text-fuchsia-300 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-4 h-4 text-amber-500 dark:text-amber-400 group-hover:translate-x-1 transition-transform" />
+          </div>
+
+          <div className="mt-2.5 w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-300"
+              style={{ width: `${passPoints % 100}%` }}
+            />
           </div>
         </button>
       </div>

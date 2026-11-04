@@ -2,10 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Users,
   Swords,
-  Mic,
-  MicOff,
-  Volume2,
-  VolumeX,
   X,
   Copy,
   Check,
@@ -13,8 +9,8 @@ import {
   Sparkles,
   Zap,
   Play,
-  PhoneOff,
-  Radio,
+  MessageSquare,
+  Bot,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { useGame } from '../../context/GameContext';
@@ -22,7 +18,7 @@ import { friendNetwork, FriendLobbyItem } from '../../services/friendNetworkServ
 
 interface FriendPartyLobbyModalProps {
   initialRoomCode?: string;
-  initialFriend?: { name: string; tag: string; beastName?: string };
+  initialFriend?: { name: string; tag: string; beastName?: string; beastImage?: string };
   isHost?: boolean;
   onClose: () => void;
   onLaunchBattle: (mode: 'duel' | '2v2', partner?: any) => void;
@@ -37,11 +33,17 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
 }) => {
   const { trainerName, playerTag, activeBeast } = useGame();
 
-  const [roomCode, setRoomCode] = useState<string>(
-    initialRoomCode || `LOBBY-${Math.floor(1000 + Math.random() * 9000)}`
-  );
+  const [roomCode, setRoomCode] = useState<string>(() => {
+    if (initialRoomCode) return initialRoomCode.toUpperCase();
+    return `SLAM-${Math.floor(1000 + Math.random() * 9000)}`;
+  });
+  const roomCodeRef = useRef<string>(roomCode);
+  roomCodeRef.current = roomCode;
+
   const [copiedCode, setCopiedCode] = useState(false);
   const [lobbyStatus, setLobbyStatus] = useState<'waiting' | 'ready' | 'launching'>('waiting');
+  const [tacticalToast, setTacticalToast] = useState<string | null>(null);
+  const [selectedMode, setSelectedMode] = useState<'duel' | '2v2'>('2v2');
   const [friendData, setFriendData] = useState<{
     name: string;
     tag: string;
@@ -54,85 +56,24 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
           tag: initialFriend.tag,
           beastName: initialFriend.beastName || 'Khan (Bengal Tiger)',
           beastImage:
+            initialFriend.beastImage ||
             'https://images.unsplash.com/photo-1574063413132-355dbfd83e25?auto=format&fit=crop&w=400&q=80',
         }
       : null
   );
 
-  // Voice Chat State
-  const [isMicMuted, setIsMicMuted] = useState(false);
-  const [isDeafened, setIsDeafened] = useState(false);
-  const [micVolume, setMicVolume] = useState<number>(0);
-  const [selectedMode, setSelectedMode] = useState<'duel' | '2v2'>('2v2');
-
-  const micStreamRef = useRef<MediaStream | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-
-  // Initialize Real Microphone Audio & Volume Meter
-  useEffect(() => {
-    let active = true;
-
-    async function initMic() {
-      try {
-        if (!navigator.mediaDevices?.getUserMedia) return;
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-        });
-        if (!active) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        micStreamRef.current = stream;
-
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        audioCtxRef.current = ctx;
-        const source = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 64;
-        source.connect(analyser);
-        analyserRef.current = analyser;
-
-        const buffer = new Uint8Array(analyser.frequencyBinCount);
-        const pollAudio = () => {
-          if (!active) return;
-          if (analyserRef.current && !isMicMuted) {
-            analyserRef.current.getByteFrequencyData(buffer);
-            let sum = 0;
-            for (let i = 0; i < buffer.length; i++) sum += buffer[i];
-            const avg = sum / buffer.length;
-            setMicVolume(Math.min(100, Math.round((avg / 128) * 100)));
-          } else {
-            setMicVolume(0);
-          }
-          animFrameRef.current = requestAnimationFrame(pollAudio);
-        };
-        animFrameRef.current = requestAnimationFrame(pollAudio);
-      } catch (err) {
-        console.warn('Microphone access denied or unavailable:', err);
-      }
-    }
-
-    initMic();
-
-    return () => {
-      active = false;
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      if (micStreamRef.current) {
-        micStreamRef.current.getTracks().forEach((t) => t.stop());
-      }
-      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-        try { audioCtxRef.current.close(); } catch {}
-      }
-    };
-  }, [isMicMuted]);
+  const hasCreatedLobbyRef = useRef<boolean>(false);
+  const lobbyIdRef = useRef<string | undefined>(undefined);
 
   // Subscribe to real-time lobby updates
   useEffect(() => {
+    let mounted = true;
+
     const unsub = friendNetwork.init(playerTag, {
       onLobbyUpdated: (lobby: FriendLobbyItem) => {
-        if (lobby.room_code === roomCode) {
+        if (!mounted) return;
+        if (lobby.room_code === roomCodeRef.current) {
+          // If a guest joined
           if (lobby.guest_tag && lobby.guest_tag !== playerTag) {
             setFriendData({
               name: lobby.guest_name || 'Friend Trainer',
@@ -143,12 +84,29 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
             setLobbyStatus('ready');
             sound.playMatchFound();
           }
+
+          // If Host launched the battle, guest follows into battle arena!
+          if (lobby.status === 'fighting' && !isHost) {
+            setLobbyStatus('launching');
+            sound.playBattleStart();
+            setTimeout(() => {
+              if (mounted) {
+                onLaunchBattle(lobby.mode as 'duel' | '2v2', {
+                  name: lobby.host_name,
+                  tag: lobby.host_tag,
+                  beastName: lobby.host_beast?.name,
+                  beastImage: lobby.host_beast?.image,
+                });
+              }
+            }, 500);
+          }
         }
       },
     });
 
-    // Auto-create or broadcast lobby if host
-    if (isHost) {
+    // Auto-create or broadcast lobby exactly once if host
+    if (isHost && !hasCreatedLobbyRef.current) {
+      hasCreatedLobbyRef.current = true;
       friendNetwork
         .createLobby(
           playerTag,
@@ -158,7 +116,10 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
           selectedMode
         )
         .then((l) => {
+          if (!mounted) return;
+          lobbyIdRef.current = l.id;
           setRoomCode(l.room_code);
+          roomCodeRef.current = l.room_code;
           if (initialFriend) {
             friendNetwork.sendLobbyInvite(
               l.room_code,
@@ -172,9 +133,10 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
     }
 
     return () => {
+      mounted = false;
       unsub();
     };
-  }, [playerTag, trainerName, activeBeast, isHost, roomCode, selectedMode, initialFriend]);
+  }, [playerTag, trainerName, activeBeast, isHost, initialFriend, selectedMode, onLaunchBattle]);
 
   const handleCopyCode = () => {
     sound.playCoin();
@@ -185,19 +147,29 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleToggleMic = () => {
+  const handleSendQuickChat = (phrase: string) => {
     sound.playClick();
-    setIsMicMuted((prev) => !prev);
-    if (micStreamRef.current) {
-      micStreamRef.current.getAudioTracks().forEach((t) => {
-        t.enabled = isMicMuted;
-      });
-    }
+    setTacticalToast(phrase);
+    setTimeout(() => setTacticalToast(null), 2500);
   };
 
   const handleStartGame = () => {
     sound.playBattleStart();
     setLobbyStatus('launching');
+
+    // Notify guest if host
+    if (isHost) {
+      friendNetwork.launchPartyMatch(
+        lobbyIdRef.current,
+        roomCode,
+        selectedMode,
+        playerTag,
+        trainerName || 'Trainer',
+        activeBeast,
+        friendData?.tag
+      );
+    }
+
     setTimeout(() => {
       onLaunchBattle(selectedMode, friendData);
     }, 600);
@@ -218,12 +190,12 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
                   Friend Party Lobby
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   Live Netcode
                 </span>
               </div>
               <p className="text-xs font-mono text-neutral-400">
-                Squad up, strategize over live voice, and launch together
+                Squad up, strategize via quick chat, and launch into the battle arena
               </p>
             </div>
           </div>
@@ -235,16 +207,29 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
               title="Copy Room Code"
             >
               <span className="text-[#CCFF00] font-black">{roomCode}</span>
-              {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-neutral-400" />}
+              {copiedCode ? (
+                <span className="text-emerald-400 font-bold flex items-center gap-1 text-[11px]">
+                  <Check className="w-3.5 h-3.5" /> Copied
+                </span>
+              ) : (
+                <Copy className="w-3.5 h-3.5 text-neutral-400" />
+              )}
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
+
+        {/* Quick Tactical Chat Toast */}
+        {tacticalToast && (
+          <div className="bg-[#CCFF00]/20 border-b border-[#CCFF00]/40 px-4 py-1.5 text-center text-xs font-mono font-bold text-[#CCFF00] animate-in fade-in">
+            {tacticalToast}
+          </div>
+        )}
 
         {/* Side-by-Side Player Showcase */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gradient-to-b from-transparent to-black/40">
@@ -272,28 +257,13 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
               🐾 {activeBeast.name} ({activeBeast.breed || 'Companion'})
             </div>
 
-            {/* Mic Meter for Host */}
-            <div className="mt-3 w-full bg-black/60 rounded-xl p-2 border border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {isMicMuted ? (
-                  <MicOff className="w-3.5 h-3.5 text-red-400" />
-                ) : (
-                  <Mic className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                )}
-                <span className="text-[10px] font-mono text-neutral-300">
-                  {isMicMuted ? 'Muted' : 'Speaking'}
-                </span>
-              </div>
-              <div className="w-20 h-2 bg-neutral-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#CCFF00] transition-all duration-75"
-                  style={{ width: `${isMicMuted ? 0 : micVolume}%` }}
-                />
-              </div>
+            <div className="mt-3 w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2 text-center text-xs font-mono text-emerald-400 flex items-center justify-center gap-1.5">
+              <Check className="w-3.5 h-3.5" />
+              <span>Ready in Party Lobby</span>
             </div>
           </div>
 
-          {/* Partner Card (Friend) */}
+          {/* Partner Card (Friend or Bot) */}
           <div className="bg-[#121824] border-2 border-cyan-400/50 rounded-2xl p-4 flex flex-col items-center relative overflow-hidden shadow-lg">
             <div className="absolute top-2 left-2 bg-cyan-400 text-black font-display font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
               PARTNER (FRIEND)
@@ -303,7 +273,10 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
               <>
                 <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,229,255,0.3)] my-2 bg-black">
                   <img
-                    src={friendData.beastImage || 'https://images.unsplash.com/photo-1574063413132-355dbfd83e25?auto=format&fit=crop&w=400&q=80'}
+                    src={
+                      friendData.beastImage ||
+                      'https://images.unsplash.com/photo-1574063413132-355dbfd83e25?auto=format&fit=crop&w=400&q=80'
+                    }
                     alt={friendData.beastName}
                     className="w-full h-full object-cover"
                   />
@@ -320,19 +293,22 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
 
                 <div className="mt-3 w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2 text-center text-xs font-mono text-emerald-400 flex items-center justify-center gap-1.5">
                   <Check className="w-3.5 h-3.5" />
-                  <span>Ready in Party Lobby</span>
+                  <span>Friend Joined · Ready!</span>
                 </div>
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-                <div className="w-16 h-16 rounded-full border-2 border-dashed border-cyan-400/40 flex items-center justify-center text-cyan-400 animate-spin mb-3">
-                  <Users className="w-6 h-6" />
+                <div className="w-16 h-16 rounded-full border-2 border-dashed border-cyan-400/40 flex items-center justify-center text-cyan-400 mb-3">
+                  <Users className="w-6 h-6 animate-pulse" />
                 </div>
                 <p className="text-xs font-display font-bold text-white uppercase">
-                  Waiting for Partner...
+                  Waiting for Friend...
                 </p>
                 <p className="text-[10px] font-mono text-neutral-400 mt-1">
-                  Share Room Code <span className="text-[#CCFF00] font-black">{roomCode}</span> or friend invite sent
+                  Share Room Code <span className="text-[#CCFF00] font-black">{roomCode}</span>
+                </p>
+                <p className="text-[10px] font-mono text-cyan-400/80 mt-1.5 flex items-center gap-1">
+                  <Bot className="w-3 h-3" /> Can also launch directly with AI bots!
                 </p>
               </div>
             )}
@@ -363,7 +339,7 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
                 </span>
               </div>
               <p className="text-[10px] font-mono text-neutral-400">
-                Team up with your friend as a duo against global challengers!
+                Team up with your friend against a challenging rival duo!
               </p>
             </button>
 
@@ -385,39 +361,28 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
                 </span>
               </div>
               <p className="text-[10px] font-mono text-neutral-400">
-                Spar against friend in friendly exhibition bout (no trophy loss).
+                Spar head-to-head against your friend in the battle arena!
               </p>
             </button>
           </div>
         </div>
 
-        {/* Bottom Voice Bar & Launch Actions */}
+        {/* Bottom Bar: Text-Friendly Tactical Chat & Launch Actions */}
         <div className="bg-[#141b2a] border-t border-white/10 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-          {/* Voice Controls */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleToggleMic}
-              className={`px-3 py-2 rounded-xl font-mono text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
-                isMicMuted
-                  ? 'bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30'
-                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-              }`}
-            >
-              {isMicMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-              <span>{isMicMuted ? 'Mic Muted' : 'Voice Chat Live'}</span>
-            </button>
-
-            <button
-              onClick={() => setIsDeafened((p) => !p)}
-              className={`p-2 rounded-xl font-mono text-xs border cursor-pointer ${
-                isDeafened
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                  : 'bg-white/10 text-neutral-300 border-white/10 hover:text-white'
-              }`}
-              title="Toggle Sound"
-            >
-              {isDeafened ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
+          {/* Quick Chat Buttons */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-mono text-neutral-400 hidden sm:inline mr-1">
+              💬 Quick Chat:
+            </span>
+            {['⚔️ Ready!', '🔥 Let\'s Win!', '🛡️ Protect!', '🐾 Teamwork!'].map((phrase) => (
+              <button
+                key={phrase}
+                onClick={() => handleSendQuickChat(phrase)}
+                className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/15 text-neutral-200 border border-white/10 hover:border-[#CCFF00]/50 text-[11px] font-mono cursor-pointer transition-all active:scale-95"
+              >
+                {phrase}
+              </button>
+            ))}
           </div>
 
           {/* Action Launch Buttons */}
@@ -431,10 +396,15 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
 
             <button
               onClick={handleStartGame}
-              className="px-6 py-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#d8ff33] text-black font-display font-black text-sm uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_rgba(204,255,0,0.5)] cursor-pointer active:scale-95 transition-all"
+              disabled={lobbyStatus === 'launching'}
+              className="px-6 py-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#d8ff33] text-black font-display font-black text-sm uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_rgba(204,255,0,0.5)] cursor-pointer active:scale-95 transition-all disabled:opacity-50"
             >
               <Play className="w-4 h-4 fill-current" />
-              <span>Launch {selectedMode === '2v2' ? '2v2 Queue' : '1v1 Duel'}</span>
+              <span>
+                {selectedMode === '2v2'
+                  ? (friendData ? 'Launch 2v2 (w/ Friend)' : 'Launch 2v2 (vs Bots)')
+                  : (friendData ? 'Launch 1v1 Friendly Duel' : 'Launch 1v1 Duel (vs Bot)')}
+              </span>
             </button>
           </div>
         </div>

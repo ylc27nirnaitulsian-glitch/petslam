@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { useGame } from '../../context/GameContext';
-import { FriendsVoiceRoomModal } from './FriendsVoiceRoomModal';
 import { friendNetwork, FriendRequestItem, normalizePlayerTag } from '../../services/friendNetworkService';
 
 export interface Friend {
@@ -86,7 +85,6 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
 }) => {
   const { playerTag, trainerName, activeBeast } = useGame();
   const [activeTab, setActiveTab] = useState<'friends' | 'requests' | 'chat' | 'add'>(initialTab);
-  const [showVoiceRoom, setShowVoiceRoom] = useState(false);
   const [copiedTag, setCopiedTag] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState('');
@@ -509,26 +507,6 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
           </button>
         </div>
 
-        {/* Quick Voice Party Banner */}
-        <div className="mx-4 mt-2.5 p-2 rounded-2xl bg-gradient-to-r from-purple-950/60 to-cyan-950/60 border border-purple-500/30 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <div>
-              <div className="text-[11px] font-bold text-white flex items-center gap-1.5">
-                <span>Multiplayer Voice Room</span>
-                <span className="text-[8px] font-mono bg-purple-500/40 text-purple-200 px-1 rounded">LIVE</span>
-              </div>
-              <div className="text-[9px] text-neutral-400 font-mono">Talk with friends while clashing</div>
-            </div>
-          </div>
-          <button
-            onClick={() => setShowVoiceRoom(true)}
-            className="px-2.5 py-1 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-mono text-[10px] font-bold cursor-pointer transition-all active:scale-95 shadow"
-          >
-            🎙️ Join Voice
-          </button>
-        </div>
-
         {/* Dynamic Toast Feedback */}
         {toastMessage && (
           <div
@@ -834,17 +812,6 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
             <span>Raise a Bug Report</span>
           </button>
         </div>
-
-        {/* Real-time Voice Room Overlay */}
-        {showVoiceRoom && (
-          <FriendsVoiceRoomModal
-            onClose={() => setShowVoiceRoom(false)}
-            onStartDuelWithFriend={(_fname) => {
-              setShowVoiceRoom(false);
-              onClose();
-            }}
-          />
-        )}
       </div>
     </div>
   );

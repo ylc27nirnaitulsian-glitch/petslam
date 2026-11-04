@@ -2778,7 +2778,7 @@ Includes:
                 Unlock lifetime desktop companion, screen roaming, battery charging detector & Chrome extension package!
               </p>
               <div className="p-2.5 bg-black/40 rounded-xl border border-white/10 text-xs font-mono font-bold text-[#CCFF00]">
-                $2.99 USD Companion License (Dodo Payments)
+                $1.99 USD Companion License (Dodo Payments)
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-2">
@@ -2802,7 +2802,7 @@ Includes:
                   }}
                   className="w-full py-2.5 px-4 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold text-xs uppercase cursor-pointer shadow-md"
                 >
-                  Unlock Companion License $2.99 (Dodo Payments)
+                  Unlock Companion License $1.99 (Dodo Payments)
                 </button>
               </div>
 

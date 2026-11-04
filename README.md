@@ -14,7 +14,7 @@ PET SLAM combines real-world domestic and wildlife species with competitive 60 F
 - **Vision & Avatar Studio**: Multimodal real pet photo analysis via Google Gemini Vision API (`functions/api/pet/analyze-photo.ts`).
 - **World Map Radar**: Leaflet map with **OpenFreeMap** (free, zero-key, unlimited tile CDN), CartoDB Dark Matter, and Geoapify fallback.
 - **Database & Auth**: Supabase Auth (Google OAuth & Guest sessions) with Row Level Security (RLS), protected profiles, and progression tamper protection.
-- **Payments & Compliance**: 100% compliant Merchant of Record architecture via **Dodo Payments** ($0.99 Studio AI Pass, $2.99 Companion License, $4.99 Supporter Pack) with WebCrypto HMAC signature verification and server-side payment confirmation. Zero gambling, zero wagering, zero auctions.
+- **Payments & Compliance**: 100% compliant Merchant of Record architecture via **Dodo Payments** ($1.00 AI Studio Pass, $1.99 Companion License) with WebCrypto HMAC signature verification and server-side payment confirmation. Zero gambling, zero wagering, zero auctions.
 - **Production Edge Hosting**: **Cloudflare Pages** + Cloudflare Pages Functions (`/functions/api/`), zero-dependency edge functions calling REST endpoints.
 
 ---

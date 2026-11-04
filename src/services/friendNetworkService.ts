@@ -676,6 +676,59 @@ class FriendNetworkService {
     return updatedLobby;
   }
 
+  // 6b. Host Launches Battle from Party Lobby (Broadcasts to guest so both launch together)
+  public async launchPartyMatch(
+    lobbyId: string | undefined,
+    roomCode: string,
+    mode: 'duel' | '2v2',
+    hostTag: string,
+    hostName: string,
+    hostBeast: Animal,
+    guestTag?: string
+  ): Promise<void> {
+    const cleanRoom = roomCode.trim().toUpperCase();
+    const payload: Partial<FriendLobbyItem> = {
+      room_code: cleanRoom,
+      host_tag: hostTag,
+      host_name: hostName,
+      host_beast: hostBeast,
+      guest_tag: guestTag,
+      mode,
+      status: 'fighting',
+      updated_at: new Date().toISOString(),
+    };
+
+    if (supabase && isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('friend_lobbies')
+          .update({ status: 'fighting', mode, updated_at: new Date().toISOString() })
+          .eq('room_code', cleanRoom);
+
+        if (guestTag) {
+          const guestChannelName = `petslam_social_${normalizePlayerTag(guestTag).replace('#', '')}`;
+          const guestChannel = supabase.channel(guestChannelName);
+          guestChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              guestChannel.send({
+                type: 'broadcast',
+                event: 'lobby_updated',
+                payload,
+              });
+              setTimeout(() => {
+                try { guestChannel.unsubscribe(); } catch {}
+              }, 2500);
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('[FriendNetwork] Error updating lobby status to fighting:', err);
+      }
+    }
+
+    this.localBroadcast?.postMessage({ type: 'lobby_updated', data: payload });
+  }
+
   // 6b. Join Lobby by Room Code
   public async joinLobbyByCode(
     roomCode: string,

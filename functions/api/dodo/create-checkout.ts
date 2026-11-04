@@ -6,11 +6,8 @@
 interface Env {
   DODO_PAYMENTS_API_KEY?: string;
   DODO_PAYMENTS_ENVIRONMENT?: string;
-  DODO_PRODUCT_AUCTION_PASS?: string;
   DODO_PRODUCT_AVATAR_PASS?: string;
   DODO_PRODUCT_EXTENSION_PASS?: string;
-  DODO_PRODUCT_BUNDLE_PASS?: string;
-  DODO_PRODUCT_CREDITS_5K?: string;
 }
 
 interface EventContext {
@@ -19,7 +16,7 @@ interface EventContext {
 }
 
 interface CreateCheckoutBody {
-  passType: 'avatar' | 'extension' | 'bundle' | 'supporter';
+  passType: 'avatar' | 'extension';
   customerEmail?: string;
   customerName?: string;
   returnUrl?: string;
@@ -53,8 +50,6 @@ export async function onRequestPost(context: EventContext): Promise<Response> {
   const productCatalog: Record<string, string> = {
     avatar: env.DODO_PRODUCT_AVATAR_PASS || 'pdt_0Nr3oUSO21xdKMqzxV2Bq',
     extension: env.DODO_PRODUCT_EXTENSION_PASS || 'pdt_0Nr3ogcp25O1QY64y7E4w',
-    supporter: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
-    bundle: env.DODO_PRODUCT_BUNDLE_PASS || 'pdt_0Nr3orAQScqvnahROnSmg',
   };
 
   try {

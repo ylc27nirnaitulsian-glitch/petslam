@@ -151,11 +151,9 @@ npx playwright test
 
 ### E. Dodo Payments Integration (`dodopayments` & `server.ts`)
 - Uses official `dodopayments` SDK.
-- Products:
-  - `extension` ($2.99 Lifetime Companion License)
-  - `avatar` ($0.99 AI Photo Studio Pass)
-  - `supporter` / `bundle` ($4.99 Genesis Founder Pack)
-  - `credits_5000` ($4.99 5k Slam Credits)
+- Products (strictly 2 payment points across entire app):
+  - `avatar` ($1.00 AI Pet Studio Pass)
+  - `extension` ($1.99 Lifetime Companion License)
 - Webhooks verify cryptographic signatures via `dodoClient.webhooks.unwrap()`. Note: `server.ts` preserves `req.rawBody` for webhook verification.
 - In test environments without API keys, a realistic simulated checkout completes successfully.
 

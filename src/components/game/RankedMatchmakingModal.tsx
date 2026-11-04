@@ -303,7 +303,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
     if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
     fallbackTimerRef.current = setTimeout(() => {
       startBotMatch(effectivePet);
-    }, 14000);
+    }, 2800);
 
     multiplayerNetcode.queueRanked({
       playerId: playerTag || 'player_1',
@@ -495,7 +495,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
                   Enter Ranked Arena Queue
                 </h3>
                 <p className="text-xs text-neutral-400 max-w-sm mx-auto mt-1">
-                  Queue with your active beast or companion avatar. The server pairs you with trainers within ±150 CP!
+                  Queue with your active beast or companion avatar. The server pairs you with live trainers and ranked contenders!
                 </p>
               </div>
 
@@ -531,7 +531,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
                 className="w-full max-w-md mx-auto bg-cyan-400 hover:bg-cyan-300 text-black font-black text-xs py-3.5 px-4 rounded-xl shadow-[0_0_25px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2 font-mono uppercase tracking-wider cursor-pointer active:scale-98 transition-all"
               >
                 <Swords className="w-4 h-4 text-black" />
-                <span>Find Ranked Match (±150 CP)</span>
+                <span>Find Ranked Match</span>
               </button>
             </div>
           )}
@@ -550,7 +550,7 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
                   Searching for Ranked Opponent...
                 </h3>
                 <p className="text-xs font-mono text-cyan-300 mt-1">
-                  Authoritative Netcode Filter: Band ±150 Combat Power
+                  Connecting across edge nodes · Ping: {latency}ms
                 </p>
                 <p className="text-[11px] text-neutral-400 mt-1">
                   Connecting across edge nodes · Ping: {latency}ms
