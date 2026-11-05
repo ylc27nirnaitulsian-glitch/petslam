@@ -23,6 +23,7 @@ export interface FriendLobbyItem {
   guest_beast?: any;
   mode: 'duel' | '2v2' | 'hangout';
   status: 'waiting' | 'ready' | 'fighting' | 'closed';
+  opponents?: any[];
   created_at: string;
   updated_at?: string;
 }
@@ -485,6 +486,8 @@ class FriendNetworkService {
         name: hostBeast.name,
         breed: hostBeast.breed,
         image: hostBeast.image,
+        rarity: hostBeast.rarity,
+        category: hostBeast.category,
         health: hostBeast.health,
         damage: hostBeast.damage,
         level: hostBeast.level || 10,
@@ -610,6 +613,8 @@ class FriendNetworkService {
       name: guestBeast.name,
       breed: guestBeast.breed,
       image: guestBeast.image,
+      rarity: guestBeast.rarity,
+      category: guestBeast.category,
       health: guestBeast.health,
       damage: guestBeast.damage,
       level: guestBeast.level || 10,
@@ -684,7 +689,8 @@ class FriendNetworkService {
     hostTag: string,
     hostName: string,
     hostBeast: Animal,
-    guestTag?: string
+    guestTag?: string,
+    opponents?: Animal[]
   ): Promise<void> {
     const cleanRoom = roomCode.trim().toUpperCase();
     const payload: Partial<FriendLobbyItem> = {
@@ -695,6 +701,7 @@ class FriendNetworkService {
       guest_tag: guestTag,
       mode,
       status: 'fighting',
+      opponents,
       updated_at: new Date().toISOString(),
     };
 
@@ -702,7 +709,12 @@ class FriendNetworkService {
       try {
         await supabase
           .from('friend_lobbies')
-          .update({ status: 'fighting', mode, updated_at: new Date().toISOString() })
+          .update({
+            status: 'fighting',
+            mode,
+            opponents,
+            updated_at: new Date().toISOString(),
+          })
           .eq('room_code', cleanRoom);
 
         if (guestTag) {

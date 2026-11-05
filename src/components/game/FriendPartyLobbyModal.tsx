@@ -15,13 +15,26 @@ import {
 import { sound } from '../../utils/audio';
 import { useGame } from '../../context/GameContext';
 import { friendNetwork, FriendLobbyItem } from '../../services/friendNetworkService';
+import { Animal, ANIMALS_DATA } from '../../data/animals';
 
 interface FriendPartyLobbyModalProps {
   initialRoomCode?: string;
-  initialFriend?: { name: string; tag: string; beastName?: string; beastImage?: string };
+  initialFriend?: {
+    name: string;
+    tag: string;
+    beastName?: string;
+    beastBreed?: string;
+    beastImage?: string;
+    beast?: any;
+  };
   isHost?: boolean;
   onClose: () => void;
-  onLaunchBattle: (mode: 'duel' | '2v2', partner?: any) => void;
+  onLaunchBattle: (
+    mode: 'duel' | '2v2',
+    partner?: any,
+    roomCode?: string,
+    opponents?: Animal[]
+  ) => void;
 }
 
 export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
@@ -48,16 +61,21 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
     name: string;
     tag: string;
     beastName: string;
+    beastBreed?: string;
     beastImage?: string;
+    beast?: any;
   } | null>(
     initialFriend
       ? {
           name: initialFriend.name,
           tag: initialFriend.tag,
-          beastName: initialFriend.beastName || 'Khan (Bengal Tiger)',
+          beastName: initialFriend.beastName || initialFriend.beast?.name || 'Khan',
+          beastBreed: initialFriend.beastBreed || initialFriend.beast?.breed || 'Bengal Tiger',
           beastImage:
             initialFriend.beastImage ||
+            initialFriend.beast?.image ||
             'https://images.unsplash.com/photo-1574063413132-355dbfd83e25?auto=format&fit=crop&w=400&q=80',
+          beast: initialFriend.beast,
         }
       : null
   );
@@ -79,24 +97,33 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
               name: lobby.guest_name || 'Friend Trainer',
               tag: lobby.guest_tag,
               beastName: lobby.guest_beast?.name || 'Allied Companion',
+              beastBreed: lobby.guest_beast?.breed || 'Companion',
               beastImage: lobby.guest_beast?.image,
+              beast: lobby.guest_beast,
             });
             setLobbyStatus('ready');
             sound.playMatchFound();
           }
 
-          // If Host launched the battle, guest follows into battle arena!
+          // If Host launched the battle, guest follows into battle arena with identical opponents!
           if (lobby.status === 'fighting' && !isHost) {
             setLobbyStatus('launching');
             sound.playBattleStart();
             setTimeout(() => {
               if (mounted) {
-                onLaunchBattle(lobby.mode as 'duel' | '2v2', {
-                  name: lobby.host_name,
-                  tag: lobby.host_tag,
-                  beastName: lobby.host_beast?.name,
-                  beastImage: lobby.host_beast?.image,
-                });
+                onLaunchBattle(
+                  lobby.mode as 'duel' | '2v2',
+                  {
+                    name: lobby.host_name,
+                    tag: lobby.host_tag,
+                    beastName: lobby.host_beast?.name,
+                    beastBreed: lobby.host_beast?.breed,
+                    beastImage: lobby.host_beast?.image,
+                    beast: lobby.host_beast,
+                  },
+                  lobby.room_code,
+                  lobby.opponents
+                );
               }
             }, 500);
           }
@@ -157,6 +184,17 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
     sound.playBattleStart();
     setLobbyStatus('launching');
 
+    // Pick identical opponents for 2v2 from eligible challengers
+    let matchOpponents: Animal[] = [];
+    if (selectedMode === '2v2') {
+      const eligible = ANIMALS_DATA.filter(
+        (b) => (b.category === 'Canines' || b.category === 'Felines') && b.id !== activeBeast.id
+      );
+      const opp1 = eligible[Math.floor(Math.random() * eligible.length)] || ANIMALS_DATA[1];
+      const opp2 = eligible.find((b) => b.id !== opp1.id) || eligible[0] || ANIMALS_DATA[2];
+      matchOpponents = [opp1, opp2];
+    }
+
     // Notify guest if host
     if (isHost) {
       friendNetwork.launchPartyMatch(
@@ -166,12 +204,13 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
         playerTag,
         trainerName || 'Trainer',
         activeBeast,
-        friendData?.tag
+        friendData?.tag,
+        matchOpponents
       );
     }
 
     setTimeout(() => {
-      onLaunchBattle(selectedMode, friendData);
+      onLaunchBattle(selectedMode, friendData, roomCode, matchOpponents);
     }, 600);
   };
 
@@ -253,8 +292,12 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
             <div className="text-xs font-mono text-[#CCFF00] font-bold">
               {playerTag}
             </div>
-            <div className="text-xs font-mono text-neutral-300 mt-1">
-              🐾 {activeBeast.name} ({activeBeast.breed || 'Companion'})
+            <div className="text-xs font-mono text-neutral-200 mt-1 flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded-lg border border-white/10">
+              <span>🐾</span>
+              <span className="font-bold text-white">{activeBeast.name}</span>
+              <span className="text-[#CCFF00] text-[11px] font-bold">
+                · {activeBeast.breed || 'Companion'}
+              </span>
             </div>
 
             <div className="mt-3 w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2 text-center text-xs font-mono text-emerald-400 flex items-center justify-center gap-1.5">
@@ -271,15 +314,21 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
 
             {friendData ? (
               <>
-                <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,229,255,0.3)] my-2 bg-black">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,229,255,0.3)] my-2 bg-black relative">
                   <img
                     src={
                       friendData.beastImage ||
+                      friendData.beast?.image ||
                       'https://images.unsplash.com/photo-1574063413132-355dbfd83e25?auto=format&fit=crop&w=400&q=80'
                     }
                     alt={friendData.beastName}
                     className="w-full h-full object-cover"
                   />
+                  {friendData.beast?.rarity && (
+                    <div className="absolute top-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold text-cyan-300 border border-cyan-400/30 uppercase">
+                      {friendData.beast.rarity}
+                    </div>
+                  )}
                 </div>
                 <h4 className="font-display font-black text-base text-white uppercase tracking-wider mt-1">
                   {friendData.name}
@@ -287,8 +336,12 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
                 <div className="text-xs font-mono text-cyan-300 font-bold">
                   {friendData.tag}
                 </div>
-                <div className="text-xs font-mono text-neutral-300 mt-1">
-                  🐾 {friendData.beastName}
+                <div className="text-xs font-mono text-neutral-200 mt-1 flex items-center gap-1.5 bg-black/40 px-2 py-0.5 rounded-lg border border-white/10">
+                  <span>🐾</span>
+                  <span className="font-bold text-white">{friendData.beastName}</span>
+                  <span className="text-cyan-400 text-[11px] font-bold">
+                    · {friendData.beastBreed || friendData.beast?.breed || 'Companion'}
+                  </span>
                 </div>
 
                 <div className="mt-3 w-full bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2 text-center text-xs font-mono text-emerald-400 flex items-center justify-center gap-1.5">

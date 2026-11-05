@@ -29,6 +29,13 @@ import { usePetCompanion } from '../../../context/PetCompanionContext';
 import { ProceduralPetCanvas } from '../pet/ProceduralPetCanvas';
 import { PetBattleSceneCanvas, BattleAction, ArenaTheme } from '../arena/PetBattleSceneCanvas';
 import { triggerVictoryExplosion } from '../../../utils/confetti';
+import {
+  multiplayerBattleSync,
+  BattlePlayerAction,
+  BattleOpponentAction,
+  BattleSyncState,
+  BattleConclusion,
+} from '../../../services/multiplayerBattleSync';
 
 interface DamagePopup {
   id: number;
@@ -49,6 +56,7 @@ export const ArenaScreen: React.FC = () => {
     credits,
     addCredits,
     trainerName,
+    playerTag,
     playerLevel,
   } = useGame();
   const { pet } = usePetCompanion();
@@ -167,6 +175,32 @@ export const ArenaScreen: React.FC = () => {
 
   const opponentAllyHpRef = useRef<number>(opponentAllyHp);
   opponentAllyHpRef.current = opponentAllyHp;
+
+  const playerAllyHpRef = useRef<number>(playerAllyHp);
+  playerAllyHpRef.current = playerAllyHp;
+
+  // Real-time Multiplayer Party Battle State (2v2 Co-Op & 1v1 Friendly Duel)
+  const [isMultiplayerBattle, setIsMultiplayerBattle] = useState<boolean>(false);
+  const [isBattleHost, setIsBattleHost] = useState<boolean>(false);
+  const [partyRoomCode, setPartyRoomCode] = useState<string | null>(null);
+  const [partnerPlayer, setPartnerPlayer] = useState<any | null>(null);
+  const [isPartySynced, setIsPartySynced] = useState<boolean>(false);
+
+  const isMultiplayerBattleRef = useRef<boolean>(false);
+  isMultiplayerBattleRef.current = isMultiplayerBattle;
+
+  const isBattleHostRef = useRef<boolean>(false);
+  isBattleHostRef.current = isBattleHost;
+
+  const partnerPlayerRef = useRef<any | null>(null);
+  partnerPlayerRef.current = partnerPlayer;
+
+  // Cleanup multiplayer battle sync on component unmount
+  useEffect(() => {
+    return () => {
+      multiplayerBattleSync.leaveBattle();
+    };
+  }, []);
 
   // 30-Second Interactive Combat Practice Drill State
   const [showTutorialPrompt, setShowTutorialPrompt] = useState<boolean>(() => {
@@ -326,12 +360,13 @@ export const ArenaScreen: React.FC = () => {
       const aPet = ally || playerAlly;
       const oaPet = oppAlly || opponentAlly;
       const aHp = Math.round(aPet.health || 850);
-      const oaHp = Math.round(pHp * 0.85);
+      const oaHp = Math.round(oaPet.health || (pHp * 0.85));
       setPlayerAlly(aPet);
       setOpponentAlly(oaPet);
       opponentAllyRef.current = oaPet;
       setPlayerAllyHp(aHp);
       setMaxPlayerAllyHp(aHp);
+      playerAllyHpRef.current = aHp;
       setOpponentAllyHp(oaHp);
       setMaxOpponentAllyHp(oaHp);
       opponentAllyHpRef.current = oaHp;
@@ -359,6 +394,179 @@ export const ArenaScreen: React.FC = () => {
     setTimeout(() => setAnnouncerPulse(false), 2400);
   };
 
+  // Real-Time Multiplayer Network Handlers
+  const handleReceivedPlayerAction = (action: BattlePlayerAction) => {
+    if (action.senderTag.toUpperCase() === (playerTag || '').toUpperCase()) return;
+
+    if (battleModeRef.current === '2v2') {
+      // In 2v2: Partner executed an action against the opponents!
+      setOpponentHp(action.newOpponentHp);
+      opponentHpRef.current = action.newOpponentHp;
+      setTimeout(() => setGhostOpponentHp(action.newOpponentHp), 350);
+
+      if (action.newOpponentAllyHp !== undefined) {
+        setOpponentAllyHp(action.newOpponentAllyHp);
+        opponentAllyHpRef.current = action.newOpponentAllyHp;
+      }
+
+      if (action.cardType === 'shield') {
+        sound.playBlock();
+        addPopup('PARTNER GUARD!', 'block', 100, 240);
+        setLastCombatLog(`🛡️ [Partner] ${action.senderName} raised Iron Guard!`);
+        return;
+      }
+
+      setCurrentCanvasAction({
+        id: Date.now(),
+        attacker: 'player',
+        type: action.cardType === 'tag' ? 'slam' : action.cardType,
+        damage: action.damage,
+        isCrit: action.isCrit,
+        isBlocked: action.isBlocked,
+      });
+
+      sound.playImpact();
+      setOpponentAnim('hit');
+      addPopup(
+        `PARTNER -${action.damage}!`,
+        action.isCrit ? 'crit' : 'player',
+        170 + Math.floor(Math.random() * 20 - 10),
+        80 + Math.floor(Math.random() * 20 - 10)
+      );
+      setLastCombatLog(`🤝 [Partner] ${action.senderName}: ${action.log}`);
+
+      setTimeout(() => {
+        setOpponentAnim('idle');
+      }, 400);
+
+      if (action.newOpponentHp <= 0 && (!action.newOpponentAllyHp || action.newOpponentAllyHp <= 0)) {
+        handleMatchConclusion(true);
+      }
+    } else {
+      // In 1v1 Friendly Duel: Friend attacked you!
+      const finalDmg = action.damage;
+      const isBlocked = isPlayerShieldedRef.current;
+      setCurrentCanvasAction({
+        id: Date.now(),
+        attacker: 'opponent',
+        type: action.cardType === 'tag' ? 'slam' : action.cardType,
+        damage: finalDmg,
+        isCrit: action.isCrit,
+        isBlocked,
+      });
+
+      if (isBlocked) {
+        setIsPlayerShielded(false);
+        isPlayerShieldedRef.current = false;
+        sound.playBlock();
+        addPopup('BLOCKED 60%!', 'block', 140, 220);
+      } else {
+        sound.playImpact();
+      }
+
+      setPlayerHp((prev) => {
+        const next = Math.max(0, prev - finalDmg);
+        playerHpRef.current = next;
+        setTimeout(() => setGhostPlayerHp(next), 350);
+        if (next === 0) handleMatchConclusion(false);
+        return next;
+      });
+
+      setPlayerAnim('hit');
+      setLastCombatLog(`⚔️ ${action.senderName} attacked you with ${action.cardType.toUpperCase()} (-${finalDmg} DMG)!`);
+
+      setTimeout(() => {
+        setPlayerAnim('idle');
+      }, 400);
+    }
+  };
+
+  const handleReceivedOpponentAction = (action: BattleOpponentAction) => {
+    // Only non-host (guest) executes authoritative AI attacks broadcast by host
+    if (isBattleHostRef.current) return;
+
+    const isMeTarget = action.targetTag.toUpperCase() === (playerTag || '').toUpperCase();
+
+    setCurrentCanvasAction({
+      id: Date.now(),
+      attacker: 'opponent',
+      type: action.isUlt ? 'slam' : 'bite',
+      damage: action.damage,
+      isCrit: action.isUlt,
+      isBlocked: action.isBlocked,
+    });
+
+    if (isMeTarget) {
+      setPlayerHp(action.newPartnerHp);
+      playerHpRef.current = action.newPartnerHp;
+      setTimeout(() => setGhostPlayerHp(action.newPartnerHp), 350);
+
+      setPlayerAnim('hit');
+      setScreenShake(true);
+      setTimeout(() => setScreenShake(false), 350);
+      sound.playImpact();
+      addPopup(`-${action.damage}!`, 'opponent', 140, 220);
+
+      setTimeout(() => {
+        setPlayerAnim('idle');
+        setOpponentAnim('idle');
+      }, 400);
+
+      if (action.newPartnerHp <= 0 && action.newHostHp <= 0) {
+        handleMatchConclusion(false);
+      }
+    } else {
+      setPlayerAllyHp(action.newHostHp);
+      playerAllyHpRef.current = action.newHostHp;
+
+      sound.playImpact();
+      addPopup(`ALLY -${action.damage}!`, 'opponent', 100, 240);
+
+      setTimeout(() => {
+        setOpponentAnim('idle');
+      }, 400);
+
+      if (action.newPartnerHp <= 0 && action.newHostHp <= 0) {
+        handleMatchConclusion(false);
+      }
+    }
+
+    setLastCombatLog(action.log);
+  };
+
+  const handleReceivedSyncState = (state: BattleSyncState) => {
+    if (isBattleHostRef.current) return;
+    setBattleTimerSec(state.timerSec);
+    setOpponentHp(state.opponentHp);
+    opponentHpRef.current = state.opponentHp;
+    setOpponentAllyHp(state.opponentAllyHp);
+    opponentAllyHpRef.current = state.opponentAllyHp;
+    setPlayerAllyHp(state.hostHp);
+    playerAllyHpRef.current = state.hostHp;
+    setIsPartySynced(true);
+  };
+
+  const handleReceivedBattleConclusion = (conclusion: BattleConclusion) => {
+    handleMatchConclusion(conclusion.won, true);
+  };
+
+  // Periodic State Sync Heartbeat from Host
+  useEffect(() => {
+    if (!inBattle || battleOver || !isMultiplayerBattle || !isBattleHost) return;
+
+    const syncInterval = setInterval(() => {
+      multiplayerBattleSync.sendSyncState({
+        timerSec: battleTimerSec,
+        opponentHp: opponentHpRef.current,
+        opponentAllyHp: opponentAllyHpRef.current,
+        hostHp: playerHpRef.current,
+        partnerHp: playerAllyHpRef.current,
+      });
+    }, 2000);
+
+    return () => clearInterval(syncInterval);
+  }, [inBattle, battleOver, isMultiplayerBattle, isBattleHost, battleTimerSec]);
+
   // Listen for Battle Launch Requests (from Friend Party Lobby, Ranked Queue, or External triggers)
   useEffect(() => {
     const handleStartBattle = (e: Event) => {
@@ -366,23 +574,71 @@ export const ArenaScreen: React.FC = () => {
       if (!detail) return;
       const mode: '1v1' | '2v2' = detail.mode === 'duel' || detail.mode === '1v1' ? '1v1' : '2v2';
       const partner = detail.partner;
+      const roomCode = detail.roomCode;
+      const isHost = detail.isHost ?? true;
+      const customOpponents = detail.opponents as Animal[] | undefined;
 
       setBattleMode(mode);
 
-      const randomOpp1 = eligibleChallengers[Math.floor(Math.random() * eligibleChallengers.length)] || ANIMALS_DATA[1];
-      const randomOpp2 = eligibleChallengers.find((b) => b.id !== randomOpp1.id) || eligibleChallengers[0] || ANIMALS_DATA[2];
+      // Setup Real-time Multiplayer Party Battle Sync
+      if (roomCode && partner) {
+        setIsMultiplayerBattle(true);
+        isMultiplayerBattleRef.current = true;
+        setIsBattleHost(isHost);
+        isBattleHostRef.current = isHost;
+        setPartyRoomCode(roomCode);
+        setPartnerPlayer(partner);
+        partnerPlayerRef.current = partner;
+
+        multiplayerBattleSync.initBattle(roomCode, playerTag, isHost, {
+          onPlayerAction: (action) => handleReceivedPlayerAction(action),
+          onOpponentAction: (action) => handleReceivedOpponentAction(action),
+          onSyncState: (state) => handleReceivedSyncState(state),
+          onBattleConclusion: (conclusion) => handleReceivedBattleConclusion(conclusion),
+          onTacticalChat: (chat) => {
+            setLastCombatLog(`💬 ${chat.senderName}: "${chat.phrase}"`);
+            addPopup(chat.phrase, 'crit', 170, 120);
+          },
+        });
+      } else {
+        setIsMultiplayerBattle(false);
+        isMultiplayerBattleRef.current = false;
+        setIsBattleHost(true);
+        isBattleHostRef.current = true;
+        setPartyRoomCode(null);
+        setPartnerPlayer(null);
+        partnerPlayerRef.current = null;
+      }
+
+      // Determine Opponents: Use customOpponents from host so both screens have 100% IDENTICAL opponents!
+      let randomOpp1: Animal;
+      let randomOpp2: Animal;
+
+      if (customOpponents && customOpponents.length >= 2) {
+        randomOpp1 = customOpponents[0];
+        randomOpp2 = customOpponents[1];
+      } else if (customOpponents && customOpponents.length === 1) {
+        randomOpp1 = customOpponents[0];
+        randomOpp2 = eligibleChallengers.find((b) => b.id !== randomOpp1.id) || eligibleChallengers[0] || ANIMALS_DATA[2];
+      } else {
+        randomOpp1 = eligibleChallengers[Math.floor(Math.random() * eligibleChallengers.length)] || ANIMALS_DATA[1];
+        randomOpp2 = eligibleChallengers.find((b) => b.id !== randomOpp1.id) || eligibleChallengers[0] || ANIMALS_DATA[2];
+      }
 
       if (mode === '1v1') {
         if (partner) {
+          const partnerPet = partner.beast || partner;
           const friendFighter: Animal = {
             ...randomOpp1,
+            ...partnerPet,
             id: `friend_${partner.tag}`,
-            name: partner.beastName || `${partner.name}'s Companion`,
-            image: partner.beastImage || randomOpp1.image,
-            fallbackImage: randomOpp1.fallbackImage,
+            name: partner.beastName || partnerPet.name || `${partner.name}'s Companion`,
+            breed: partner.beastBreed || partnerPet.breed || 'Companion',
+            image: partner.beastImage || partnerPet.image || randomOpp1.image,
+            fallbackImage: partnerPet.fallbackImage || randomOpp1.fallbackImage,
             description: `Trained by ${partner.name} (${partner.tag}) for high-stakes friendly exhibition sparring.`,
-            health: 1100,
-            damage: 210,
+            health: partnerPet.health || 1100,
+            damage: partnerPet.damage || 210,
           };
           setSelectedOpponent(friendFighter);
           setOpponentTrainer(`${partner.name} (${partner.tag})`);
@@ -398,14 +654,19 @@ export const ArenaScreen: React.FC = () => {
         // 2v2 Tag Team Co-Op
         let allyFighter: Animal;
         if (partner) {
+          const partnerPet = partner.beast || partner;
           allyFighter = {
             ...(safeDeck[1] || randomOpp2),
+            ...partnerPet,
             id: `partner_${partner.tag}`,
-            name: partner.beastName || `${partner.name}'s Partner`,
-            image: partner.beastImage || (safeDeck[1] ? safeDeck[1].image : randomOpp2.image),
+            name: partner.beastName || partnerPet.name || `${partner.name}'s Partner`,
+            breed: partner.beastBreed || partnerPet.breed || 'Companion',
+            category: partnerPet.category || 'Canines',
+            rarity: partnerPet.rarity || 'Epic',
+            image: partner.beastImage || partnerPet.image || (safeDeck[1] ? safeDeck[1].image : randomOpp2.image),
             description: `Allied partner fighting alongside you from ${partner.tag}.`,
-            health: 1050,
-            damage: 200,
+            health: partnerPet.health || 1050,
+            damage: partnerPet.damage || 200,
           };
           setPlayerAlly(allyFighter);
           setAnnouncerText(`👥 2v2 TAG TEAM WITH ${partner.name.toUpperCase()}!`);
@@ -417,7 +678,11 @@ export const ArenaScreen: React.FC = () => {
 
         setSelectedOpponent(randomOpp1);
         setOpponentAlly(randomOpp2);
-        setOpponentTrainer('Rival Duo: Master Vance & Maya');
+        setOpponentTrainer(
+          customOpponents
+            ? `Rival Duo: ${randomOpp1.name} & ${randomOpp2.name}`
+            : 'Rival Duo: Master Vance & Maya'
+        );
         startSlamMatch(randomOpp1, randomOpp2, allyFighter);
       }
     };
@@ -495,6 +760,9 @@ export const ArenaScreen: React.FC = () => {
     const aiInterval = setInterval(() => {
       if (battleOver || isPracticeDrill) return;
 
+      // In multiplayer battle with a friend, ONLY the HOST runs the enemy AI loop!
+      if (isMultiplayerBattleRef.current && !isBattleHostRef.current) return;
+
       const curElixir = opponentElixirRef.current;
       const opp = selectedOpponentRef.current;
       const isPlayerShieldedNow = isPlayerShieldedRef.current;
@@ -535,7 +803,6 @@ export const ArenaScreen: React.FC = () => {
       const aiRoll = Math.random();
 
       // 1. Ultimate SLAM (costs 6 elixir)
-      // If player is shielded, bot saves ultimate or breaks shield first
       if (curElixir >= 6 && !isPlayerShieldedNow && aiRoll < 0.50) {
         const nextElixir = Math.max(0, Number((curElixir - 6).toFixed(1)));
         opponentElixirRef.current = nextElixir;
@@ -566,7 +833,6 @@ export const ArenaScreen: React.FC = () => {
       }
 
       // 4. Iron Guard Defense (costs 2 elixir)
-      // Bot raises guard if unshielded and player has ready energy or bot HP < 60%
       if (curElixir >= 2 && !isOppShieldedNow && (aiRoll < 0.40 || currentOppHp < maxOpponentHp * 0.6)) {
         const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
         opponentElixirRef.current = nextElixir;
@@ -579,7 +845,6 @@ export const ArenaScreen: React.FC = () => {
       }
 
       // 5. Quick Pounce Strike (costs 2 elixir)
-      // Break player shield or deal quick chip damage
       if (curElixir >= 2) {
         const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
         opponentElixirRef.current = nextElixir;
@@ -593,12 +858,22 @@ export const ArenaScreen: React.FC = () => {
     return () => clearInterval(aiInterval);
   }, [inBattle, battleOver, isPracticeDrill, battleTimerSec, maxOpponentHp, maxOpponentAllyHp]);
 
-  // Execute Opponent Attack against Player
+  // Execute Opponent Attack against Player or Partner
   const executeOpponentAttack = (rawDmg: number, moveName: string, isUlt = false) => {
+    let targetWho: 'host' | 'partner' = 'host';
+    let targetTag = playerTag;
+
+    if (isMultiplayerBattleRef.current && battleModeRef.current === '2v2' && partnerPlayerRef.current) {
+      // In 2v2 multiplayer, randomly target either host or partner
+      const targetPartner = Math.random() < 0.5;
+      targetWho = targetPartner ? 'partner' : 'host';
+      targetTag = targetPartner ? partnerPlayerRef.current.tag : playerTag;
+    }
+
     setOpponentAnim(isUlt ? 'slam' : 'clash');
     setLastCombatLog(`⚠️ ${selectedOpponentRef.current.name} launches ${moveName}!`);
 
-    const isBlocked = isPlayerShieldedRef.current;
+    const isBlocked = targetWho === 'host' ? isPlayerShieldedRef.current : false;
     const finalDamage = Math.round(isBlocked ? rawDmg * 0.4 : rawDmg);
     setCurrentCanvasAction({
       id: Date.now(),
@@ -610,31 +885,61 @@ export const ArenaScreen: React.FC = () => {
     });
 
     setTimeout(() => {
-      if (isPlayerShieldedRef.current) {
-        setIsPlayerShielded(false);
-        isPlayerShieldedRef.current = false;
-        addPopup('BLOCKED 60%!', 'block', 140, 220);
-        sound.playBlock();
+      let nextHostHp = playerHpRef.current;
+      let nextPartnerHp = playerAllyHpRef.current;
+
+      if (targetWho === 'host') {
+        if (isPlayerShieldedRef.current) {
+          setIsPlayerShielded(false);
+          isPlayerShieldedRef.current = false;
+          addPopup('BLOCKED 60%!', 'block', 140, 220);
+          sound.playBlock();
+        } else {
+          sound.playImpact();
+          setComboCount(0);
+          setComboLabel('');
+        }
+
+        nextHostHp = Math.max(0, playerHpRef.current - finalDamage);
+        setPlayerHp(nextHostHp);
+        playerHpRef.current = nextHostHp;
+        setTimeout(() => setGhostPlayerHp(nextHostHp), 350);
+        setPlayerAnim('hit');
       } else {
+        // Target was partner
         sound.playImpact();
-        setComboCount(0);
-        setComboLabel('');
+        nextPartnerHp = Math.max(0, playerAllyHpRef.current - finalDamage);
+        setPlayerAllyHp(nextPartnerHp);
+        playerAllyHpRef.current = nextPartnerHp;
+        addPopup(`PARTNER -${finalDamage}!`, 'opponent', 100, 240);
       }
-
-      setPlayerHp((prev) => {
-        const next = Math.max(0, prev - finalDamage);
-        playerHpRef.current = next;
-        setTimeout(() => setGhostPlayerHp(next), 350);
-        if (next === 0) handleMatchConclusion(false);
-        return next;
-      });
-
-      setPlayerAnim('hit');
 
       setTimeout(() => {
         setOpponentAnim('idle');
         setPlayerAnim('idle');
       }, 400);
+
+      // Broadcast to guest so guest's screen stays in exact lockstep!
+      if (isMultiplayerBattleRef.current && isBattleHostRef.current) {
+        multiplayerBattleSync.sendOpponentAction({
+          attacker: 'opponent',
+          target: targetWho,
+          targetTag,
+          moveName,
+          damage: finalDamage,
+          isUlt,
+          newHostHp: nextHostHp,
+          newPartnerHp: nextPartnerHp,
+          isBlocked,
+          log: `⚠️ ${selectedOpponentRef.current.name} hit ${
+            targetWho === 'host' ? (trainerName || 'Host') : (partnerPlayerRef.current?.name || 'Partner')
+          } with ${moveName} (-${finalDamage} DMG)!`,
+        });
+      }
+
+      if (nextHostHp === 0 && (battleModeRef.current !== '2v2' || nextPartnerHp === 0)) {
+        handleMatchConclusion(false);
+      }
     }, isUlt ? 550 : 320);
   };
 
@@ -666,6 +971,21 @@ export const ArenaScreen: React.FC = () => {
         isCrit: false,
         isBlocked: false,
       });
+
+      if (isMultiplayerBattleRef.current) {
+        multiplayerBattleSync.sendPlayerAction({
+          senderTag: playerTag,
+          senderName: trainerName || 'Trainer',
+          cardType: 'shield',
+          target: 'opponent',
+          damage: 0,
+          isCrit: false,
+          isBlocked: false,
+          newOpponentHp: opponentHpRef.current,
+          newOpponentAllyHp: opponentAllyHpRef.current,
+          log: `${currentActiveFighter.name} raised Iron Guard!`,
+        });
+      }
 
       if (isPracticeDrill && practiceStep === 2) {
         setTimeout(() => {
@@ -781,11 +1101,31 @@ export const ArenaScreen: React.FC = () => {
         sound.playImpact();
       }
 
+      let nextOppHp = 0;
       setOpponentHp((prev) => {
         const next = Math.max(0, prev - totalDmg);
+        nextOppHp = next;
         opponentHpRef.current = next;
         setTimeout(() => setGhostOpponentHp(next), 350);
-        if (next === 0) handleMatchConclusion(true);
+
+        if (next === 0 && battleModeRef.current === '2v2' && opponentAllyHpRef.current > 0) {
+          // In 2v2: Enemy lead knocked out, enemy partner tags in!
+          const currentLead = selectedOpponentRef.current;
+          const partner = opponentAllyRef.current;
+          setSelectedOpponent(partner);
+          selectedOpponentRef.current = partner;
+          setOpponentAlly(currentLead);
+          opponentAllyRef.current = currentLead;
+          const partnerHp = opponentAllyHpRef.current;
+          setOpponentHp(partnerHp);
+          opponentHpRef.current = partnerHp;
+          setOpponentAllyHp(0);
+          opponentAllyHpRef.current = 0;
+          setLastCombatLog(`💥 Lead K.O.! Rival Ally ${partner.name} enters!`);
+          nextOppHp = partnerHp;
+        } else if (next === 0 && (battleModeRef.current !== '2v2' || opponentAllyHpRef.current === 0)) {
+          handleMatchConclusion(true);
+        }
         return next;
       });
 
@@ -795,6 +1135,22 @@ export const ArenaScreen: React.FC = () => {
         setPlayerAnim('idle');
         setOpponentAnim('idle');
       }, 400);
+
+      // Broadcast move to partner so both screens match in real-time!
+      if (isMultiplayerBattleRef.current) {
+        multiplayerBattleSync.sendPlayerAction({
+          senderTag: playerTag,
+          senderName: trainerName || 'Trainer',
+          cardType,
+          target: 'opponent',
+          damage: totalDmg,
+          isCrit,
+          isBlocked,
+          newOpponentHp: nextOppHp,
+          newOpponentAllyHp: opponentAllyHpRef.current,
+          log: `${currentActiveFighter.name} used ${moveNames[cardType]} (-${totalDmg} DMG)!`,
+        });
+      }
     }, cardType === 'slam' ? 550 : 320);
   };
 
@@ -820,11 +1176,15 @@ export const ArenaScreen: React.FC = () => {
     setPlayerAnim('slam');
     setTimeout(() => {
       sound.playImpact();
+      let nextOppHp = 0;
       setOpponentHp((prev) => {
         const next = Math.max(0, prev - 75);
+        nextOppHp = next;
         opponentHpRef.current = next;
         setTimeout(() => setGhostOpponentHp(next), 350);
-        if (next === 0) handleMatchConclusion(true);
+        if (next === 0 && (battleModeRef.current !== '2v2' || opponentAllyHpRef.current === 0)) {
+          handleMatchConclusion(true);
+        }
         return next;
       });
       addPopup('TAG IMPACT -75!', 'crit', 170, 80);
@@ -833,6 +1193,22 @@ export const ArenaScreen: React.FC = () => {
         setPlayerAnim('idle');
         setOpponentAnim('idle');
       }, 350);
+
+      // If multiplayer battle, broadcast tag action!
+      if (isMultiplayerBattleRef.current) {
+        multiplayerBattleSync.sendPlayerAction({
+          senderTag: playerTag,
+          senderName: trainerName || 'Trainer',
+          cardType: 'tag',
+          target: 'opponent',
+          damage: 75,
+          isCrit: true,
+          isBlocked: false,
+          newOpponentHp: nextOppHp,
+          newOpponentAllyHp: opponentAllyHpRef.current,
+          log: `Tag-in! ${beast.name} enters with 75 DMG slam!`,
+        });
+      }
 
       // Complete 30-Second Practice Drill
       if (isPracticeDrill && practiceStep === 4) {
@@ -856,7 +1232,8 @@ export const ArenaScreen: React.FC = () => {
   };
 
   // Match Finished
-  const handleMatchConclusion = (won: boolean) => {
+  const handleMatchConclusion = (won: boolean, fromRemote = false) => {
+    if (battleOver) return;
     setBattleOver(true);
     setBattleResult(won ? 'victory' : 'defeat');
     setAnnouncerText(won ? '🏆 K.O.! VICTORY!' : '💀 K.O.! DEFEATED');
@@ -864,11 +1241,21 @@ export const ArenaScreen: React.FC = () => {
 
     if (won) {
       sound.playVictory();
+      triggerVictoryExplosion();
     } else {
       sound.playDefeat();
     }
 
     recordMatchResult(won, selectedOpponent, 3);
+
+    // If in multiplayer battle, broadcast conclusion so both screens finish at the exact same moment!
+    if (isMultiplayerBattleRef.current && !fromRemote) {
+      multiplayerBattleSync.sendBattleConclusion({
+        won,
+        reason: 'ko',
+        senderTag: playerTag,
+      });
+    }
   };
 
   // Desktop Hotkey Listener ([1] Pounce, [2] Bark, [3] Guard, [4] Bite, [SPACE] SLAM, [Q/W/E/R] Tag-in)
@@ -1093,21 +1480,31 @@ export const ArenaScreen: React.FC = () => {
                   <div className="relative group flex flex-col items-center">
                     <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,229,255,0.25)] bg-black relative">
                       <img
-                        src={playerAlly.image}
+                        src={getPetPhoto(playerAlly)}
                         alt={playerAlly.name}
                         className="w-full h-full object-cover object-center"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
                       <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-white/20 text-[9px] font-mono font-bold text-cyan-300">
-                        PARTNER
+                        {isMultiplayerBattle ? 'FRIEND' : 'PARTNER'}
                       </div>
+                      {playerAlly.rarity && (
+                        <div className="absolute top-1.5 right-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-cyan-400/30 text-[8px] font-mono font-bold text-cyan-300 uppercase">
+                          {playerAlly.rarity}
+                        </div>
+                      )}
                       <div className="absolute bottom-1.5 inset-x-1.5 text-center">
                         <div className="font-display font-black text-xs text-white uppercase truncate">
                           {playerAlly.name}
                         </div>
-                        <div className="text-[8px] text-cyan-300 font-mono truncate">
-                          {playerAlly.breed}
+                        <div className="text-[9px] text-cyan-300 font-mono font-bold truncate">
+                          🐾 {playerAlly.breed || 'Companion'}
                         </div>
+                        {partnerPlayer?.name && (
+                          <div className="text-[8px] text-neutral-300 font-mono truncate">
+                            {partnerPlayer.name}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1369,6 +1766,14 @@ export const ArenaScreen: React.FC = () => {
               )}
             </div>
 
+            {isMultiplayerBattle && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-[10px] font-mono text-cyan-300 shrink-0 shadow">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                <span className="font-black text-[#CCFF00]">LIVE CO-OP</span>
+                <span className="text-neutral-400 hidden sm:inline">[{partyRoomCode}]</span>
+              </div>
+            )}
+
             <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={handleForfeit}
@@ -1558,8 +1963,11 @@ export const ArenaScreen: React.FC = () => {
                   />
                 </div>
                 <div className="leading-tight">
-                  <div className="text-[9px] font-bold text-cyan-300 truncate max-w-[65px]">
+                  <div className="text-[9px] font-bold text-cyan-300 truncate max-w-[85px]">
                     {playerAlly.name}
+                  </div>
+                  <div className="text-[7px] text-cyan-300/80 font-mono truncate max-w-[85px]">
+                    🐾 {playerAlly.breed || 'Companion'}
                   </div>
                   <div className="w-14 sm:w-20 h-1.5 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-0.5">
                     <div

@@ -41,7 +41,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   onReturnToTitle,
   onOpenSystemDetails,
 }) => {
-  const { soundEnabled, toggleSound, addCredits, playerTag, trainerName } = useGame();
+  const { soundEnabled, toggleSound, addCredits, playerTag, trainerName, activeBeast } = useGame();
   const { pet } = usePetCompanion();
 
   const [currentTab, setCurrentTab] = useState<MainNavId>('arena');
@@ -61,7 +61,16 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
 
   const [activePartyLobby, setActivePartyLobby] = useState<{
     roomCode?: string;
-    friend?: Friend | { name: string; tag: string; beastName?: string };
+    friend?:
+      | Friend
+      | {
+          name: string;
+          tag: string;
+          beastName?: string;
+          beastBreed?: string;
+          beastImage?: string;
+          beast?: any;
+        };
     isHost?: boolean;
   } | null>(null);
   const [incomingInvite, setIncomingInvite] = useState<FriendLobbyItem | null>(null);
@@ -466,8 +475,18 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => {
+                onClick={async () => {
                   sound.playBattleStart();
+                  try {
+                    await friendNetwork.joinLobby(
+                      incomingInvite.id,
+                      playerTag,
+                      trainerName || 'Trainer',
+                      activeBeast
+                    );
+                  } catch (err) {
+                    console.warn('[Party] Error syncing joinLobby:', err);
+                  }
                   setActivePartyLobby({
                     roomCode: incomingInvite.room_code,
                     isHost: false,
@@ -475,6 +494,9 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
                       name: incomingInvite.host_name,
                       tag: incomingInvite.host_tag,
                       beastName: incomingInvite.host_beast?.name,
+                      beastBreed: incomingInvite.host_beast?.breed,
+                      beastImage: incomingInvite.host_beast?.image,
+                      beast: incomingInvite.host_beast,
                     },
                   });
                   setIncomingInvite(null);
@@ -511,6 +533,14 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
             setFriendsModalOpen(false);
             setActivePartyLobby({ isHost: true, friend });
           }}
+          onJoinLobby={(payload) => {
+            setFriendsModalOpen(false);
+            setActivePartyLobby({
+              isHost: false,
+              roomCode: payload.roomCode,
+              friend: payload.friend,
+            });
+          }}
         />
       )}
       {activePartyLobby && (
@@ -519,13 +549,21 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
           initialFriend={activePartyLobby.friend}
           isHost={activePartyLobby.isHost}
           onClose={() => setActivePartyLobby(null)}
-          onLaunchBattle={(mode, partner) => {
+          onLaunchBattle={(mode, partner, roomCode, opponents) => {
+            const finalRoomCode = roomCode || activePartyLobby.roomCode;
+            const finalIsHost = activePartyLobby.isHost ?? true;
             setActivePartyLobby(null);
             setCurrentTab('arena');
             setTimeout(() => {
               window.dispatchEvent(
                 new CustomEvent('petslam:start-battle', {
-                  detail: { mode, partner },
+                  detail: {
+                    mode,
+                    partner,
+                    roomCode: finalRoomCode,
+                    isHost: finalIsHost,
+                    opponents,
+                  },
                 })
               );
             }, 60);

@@ -29,9 +29,29 @@ export interface Friend {
   name: string;
   tag: string;
   beastName: string;
+  beastBreed?: string;
+  beastImage?: string;
+  beast?: any;
   trophies: number;
   status: 'Online in Arena' | 'In Menu' | 'Offline' | 'In Party Lobby';
   avatarColor: string;
+}
+
+export interface JoinLobbyPayload {
+  roomCode: string;
+  isHost: boolean;
+  friend: {
+    id: string;
+    name: string;
+    tag: string;
+    beastName: string;
+    beastBreed?: string;
+    beastImage?: string;
+    beast?: any;
+    trophies: number;
+    status: 'Online in Arena' | 'In Menu' | 'Offline' | 'In Party Lobby';
+    avatarColor: string;
+  };
 }
 
 interface ChatMessage {
@@ -74,12 +94,14 @@ const INITIAL_FRIENDS: Friend[] = [
 
 interface FriendsHubModalProps {
   onChallengeFriend: (friend: Friend) => void;
+  onJoinLobby?: (payload: JoinLobbyPayload) => void;
   onClose: () => void;
   initialTab?: 'friends' | 'requests' | 'chat' | 'add';
 }
 
 export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
   onChallengeFriend,
+  onJoinLobby,
   onClose,
   initialTab = 'friends',
 }) => {
@@ -270,15 +292,27 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
       if (lobby) {
         sound.playBattleStart();
         onClose();
-        onChallengeFriend({
-          id: lobby.id,
-          name: lobby.host_name || 'Trainer Host',
-          tag: lobby.host_tag,
-          beastName: lobby.host_beast?.name || 'Companion Beast',
-          trophies: 1500,
-          status: 'In Party Lobby',
-          avatarColor: 'from-amber-400 to-red-500',
-        });
+        const payload: JoinLobbyPayload = {
+          roomCode: lobby.room_code,
+          isHost: false,
+          friend: {
+            id: lobby.id,
+            name: lobby.host_name || 'Trainer Host',
+            tag: lobby.host_tag,
+            beastName: lobby.host_beast?.name || 'Companion Beast',
+            beastBreed: lobby.host_beast?.breed || 'Companion',
+            beastImage: lobby.host_beast?.image,
+            beast: lobby.host_beast,
+            trophies: 1500,
+            status: 'In Party Lobby',
+            avatarColor: 'from-amber-400 to-red-500',
+          },
+        };
+        if (onJoinLobby) {
+          onJoinLobby(payload);
+        } else {
+          onChallengeFriend(payload.friend);
+        }
       } else {
         sound.playDefeat();
         setToastMessage({
