@@ -1,5 +1,5 @@
 import React from 'react';
-import { Swords, Heart, Camera, Home, PawPrint, Compass } from 'lucide-react';
+import { Swords, Heart, Camera, Home, PawPrint, Compass, Trophy } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { MainNavId } from './DesktopNavRail';
 
