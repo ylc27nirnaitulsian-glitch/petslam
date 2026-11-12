@@ -19,6 +19,9 @@ import {
   Check,
   Flag,
   Timer,
+  PawPrint,
+  Coins,
+  Target,
 } from 'lucide-react';
 import { useGame } from '../../../context/GameContext';
 import { Animal, ANIMALS_DATA } from '../../../data/animals';
@@ -1329,7 +1332,7 @@ export const ArenaScreen: React.FC = () => {
 
   return (
     <div
-      className={`flex flex-col h-full bg-slate-50 text-slate-900 dark:bg-[#080B12] dark:text-white select-none overflow-hidden transition-colors duration-300 ${
+      className={`flex flex-col h-full bg-[#0B0F17] text-[#F8FAFC] select-none overflow-hidden transition-colors duration-150 ${
         screenShake ? 'animate-bounce' : ''
       }`}
     >
@@ -1339,108 +1342,113 @@ export const ArenaScreen: React.FC = () => {
       {!inBattle && (
         <div className="flex-1 flex flex-col p-3 sm:p-5 overflow-y-auto space-y-4 max-w-lg mx-auto w-full pb-28 overscroll-contain">
           {/* Header Stadium Banner */}
-          <div className="shrink-0 bg-gradient-to-r from-slate-100 via-white to-slate-100 dark:from-[#131B2D] dark:via-[#1A2640] dark:to-[#131B2D] border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 shadow-md dark:shadow-xl text-center relative overflow-hidden transition-colors">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#CCFF00]/10 rounded-full blur-2xl pointer-events-none" />
-
-            <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-slate-600 dark:text-neutral-400 mb-2">
-              <span className="flex items-center gap-1.5 text-slate-900 dark:text-white font-bold">
-                <Crown className="w-4 h-4 text-amber-500 dark:text-amber-400" />
+          <div className="shrink-0 bg-[#151C28] border border-[#2A364F] rounded-2xl p-4 sm:p-5 shadow-sm text-center relative overflow-hidden transition-colors">
+            <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-[#CBD5E1] mb-2">
+              <span className="flex items-center gap-1.5 text-[#F8FAFC] font-bold">
+                <Crown className="w-4 h-4 text-[#F59E0B]" />
                 <span>Colosseum League</span>
               </span>
-              <span className="text-emerald-700 dark:text-[#CCFF00] font-black">{trophies} 🏆 Trophies</span>
+              <span className="flex items-center gap-1 text-[#F59E0B] font-bold tabular-nums">
+                <Trophy className="w-4 h-4" />
+                <span>{trophies} Trophies</span>
+              </span>
             </div>
 
-            <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-wider text-slate-900 dark:text-white">
+            <h2 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-wider text-[#F8FAFC]">
               Pet Slam Arena
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-neutral-300 font-mono mt-1">
-              Real-Time 1v1 Pet Duels · Purebred Canines & Felines · 60 FPS Animated Combat
+            <p className="text-sm sm:text-base text-[#CBD5E1] font-medium mt-1">
+              Real-Time 1v1 Pet Duels · Purebred Canines & Felines
             </p>
           </div>
 
-          {/* Interactive Combat Practice Drill Banner (Auto-prompted for 1st-time visitors, replayable anytime) */}
+          {/* Interactive Combat Practice Drill Banner */}
           {showTutorialPrompt ? (
-            <div className="shrink-0 bg-amber-50/90 dark:bg-gradient-to-r dark:from-amber-950/70 dark:via-[#151F35] dark:to-amber-950/70 border-2 border-amber-400 dark:border-[#CCFF00]/60 rounded-2xl p-3.5 shadow-md dark:shadow-[0_0_20px_rgba(204,255,0,0.2)] relative overflow-hidden animate-in fade-in transition-colors">
-              <div className="flex items-start justify-between gap-2.5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#CCFF00] text-black font-black flex items-center justify-center text-lg shadow shrink-0">
-                    🥋
+            <div className="shrink-0 bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 shadow-sm relative overflow-hidden animate-in fade-in transition-colors">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#F59E0B] text-[#0B0F17] font-bold flex items-center justify-center shrink-0">
+                    <Target className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-display font-black text-sm uppercase text-slate-900 dark:text-white tracking-wider">
-                        Interactive Combat Practice Drill
+                    <div className="flex items-center gap-2">
+                      <span className="font-display font-bold text-base uppercase text-[#F8FAFC] tracking-wider">
+                        Combat Practice Drill
                       </span>
-                      <span className="text-xs font-mono bg-[#CCFF00] text-black px-1.5 py-0.5 rounded font-bold">
+                      <span className="text-xs font-mono bg-[#151C28] border border-[#2A364F] text-[#F59E0B] px-2 py-0.5 rounded font-bold tabular-nums">
                         +250 CR
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-slate-700 dark:text-neutral-300 font-mono mt-0.5 leading-snug">
-                      Master Pounce [1], Iron Guard [3], Overdrive [SPACE], and Tag-Ins in 30 seconds!
+                    <p className="text-sm text-[#CBD5E1] mt-0.5 leading-snug">
+                      Master Pounce [1], Iron Guard [3], Overdrive [SPACE], and Tag-Ins in 30 seconds.
                     </p>
                   </div>
                 </div>
 
                 <button
                   onClick={handleSkipTutorial}
-                  className="text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white text-xs font-mono underline cursor-pointer shrink-0"
+                  className="text-[#94A3B8] hover:text-[#F8FAFC] text-xs font-mono underline cursor-pointer shrink-0"
                   title="Skip practice tutorial"
                 >
                   Skip
                 </button>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-white/10 flex items-center gap-2">
+              <div className="mt-3 pt-3 border-t border-[#2A364F] flex items-center gap-2">
                 <button
                   onClick={startPracticeDrill}
-                  className="flex-1 py-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-sm uppercase tracking-wider cursor-pointer shadow active:scale-95 transition-transform"
+                  className="flex-1 py-3 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-bold text-sm uppercase tracking-wider cursor-pointer shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
                 >
-                  Start 30s Practice Drill 🥋
+                  <Play className="w-4 h-4 fill-[#0B0F17]" />
+                  <span>Start 30s Practice Drill</span>
                 </button>
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-mono">
-              <span className="text-slate-700 dark:text-neutral-300 flex items-center gap-1.5 font-bold">
-                <span>🥋</span>
-                <span>Dojo Practice Complete</span>
+            <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#151C28] border border-[#2A364F] text-sm font-mono">
+              <span className="text-[#CBD5E1] flex items-center gap-2 font-medium">
+                <Target className="w-4 h-4 text-[#F59E0B]" />
+                <span>Combat Training Complete</span>
               </span>
               <button
                 onClick={startPracticeDrill}
-                className="text-emerald-700 dark:text-[#CCFF00] hover:underline font-black text-xs cursor-pointer"
+                className="text-[#F59E0B] hover:underline font-bold text-xs cursor-pointer flex items-center gap-1"
               >
-                Replay 30s Drill ↺
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Replay Drill</span>
               </button>
             </div>
           )}
 
           {/* 1v1 vs 2v2 Mode Switcher */}
-          <div className="flex items-center p-1 bg-slate-200/80 dark:bg-black/60 border border-slate-300 dark:border-white/10 rounded-2xl max-w-xs mx-auto w-full shadow-md">
+          <div className="flex items-center p-1 bg-[#151C28] border border-[#2A364F] rounded-2xl max-w-xs mx-auto w-full shadow-sm">
             <button
               onClick={() => {
                 sound.playClick();
                 setBattleMode('1v1');
               }}
-              className={`flex-1 py-2 px-3 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
+              className={`flex-1 py-2.5 px-3 rounded-xl font-display font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 battleMode === '1v1'
-                  ? 'bg-[#CCFF00] text-black shadow-md'
-                  : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white'
+                  ? 'bg-[#F59E0B] text-[#0B0F17] shadow-sm'
+                  : 'text-[#CBD5E1] hover:text-[#F8FAFC]'
               }`}
             >
-              ⚔️ 1v1 Ranked
+              <Swords className="w-4 h-4" />
+              <span>1v1 Ranked</span>
             </button>
             <button
               onClick={() => {
                 sound.playClick();
                 setBattleMode('2v2');
               }}
-              className={`flex-1 py-2 px-3 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all cursor-pointer ${
+              className={`flex-1 py-2.5 px-3 rounded-xl font-display font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 battleMode === '2v2'
-                  ? 'bg-[#CCFF00] text-black shadow-md'
-                  : 'text-slate-600 dark:text-neutral-400 hover:text-slate-950 dark:hover:text-white'
+                  ? 'bg-[#F59E0B] text-[#0B0F17] shadow-sm'
+                  : 'text-[#CBD5E1] hover:text-[#F8FAFC]'
               }`}
             >
-              👥 2v2 Tag Team
+              <Users className="w-4 h-4" />
+              <span>2v2 Tag Team</span>
             </button>
           </div>
 
@@ -1451,57 +1459,58 @@ export const ArenaScreen: React.FC = () => {
                 <div className="flex items-center justify-center gap-3">
                   {/* Lead Fighter Card */}
                   <div className="relative group flex flex-col items-center">
-                    <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.25)] bg-black relative">
+                    <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border border-[#2A364F] bg-[#151C28] relative">
                       <img
                         src={currentActiveFighter.image}
                         alt={currentActiveFighter.name}
                         className="w-full h-full object-cover object-center"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-                      <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-white/20 text-[9px] font-mono font-bold text-[#CCFF00]">
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17]/90 via-transparent to-transparent" />
+                      <div className="absolute top-2 left-2 bg-[#0B0F17]/90 px-2 py-0.5 rounded-full border border-[#2A364F] text-[11px] font-mono font-bold text-[#F59E0B]">
                         LEAD
                       </div>
-                      <div className="absolute bottom-1.5 inset-x-1.5 text-center">
-                        <div className="font-display font-black text-xs text-white uppercase truncate">
+                      <div className="absolute bottom-2 inset-x-2 text-center">
+                        <div className="font-display font-bold text-sm text-[#F8FAFC] uppercase truncate">
                           {currentActiveFighter.name}
                         </div>
-                        <div className="text-[8px] text-[#CCFF00] font-mono truncate">
+                        <div className="text-xs text-[#CBD5E1] font-medium truncate">
                           {currentActiveFighter.breed}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="font-display font-black text-lg text-amber-400 tracking-wider">
+                  <div className="font-display font-black text-xl text-[#F59E0B] tracking-wider">
                     +
                   </div>
 
                   {/* Ally Partner Card */}
                   <div className="relative group flex flex-col items-center">
-                    <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-[0_0_20px_rgba(0,229,255,0.25)] bg-black relative">
+                    <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border border-[#2A364F] bg-[#151C28] relative">
                       <img
                         src={getPetPhoto(playerAlly)}
                         alt={playerAlly.name}
                         className="w-full h-full object-cover object-center"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-                      <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-white/20 text-[9px] font-mono font-bold text-cyan-300">
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17]/90 via-transparent to-transparent" />
+                      <div className="absolute top-2 left-2 bg-[#0B0F17]/90 px-2 py-0.5 rounded-full border border-[#2A364F] text-[11px] font-mono font-bold text-[#CBD5E1]">
                         {isMultiplayerBattle ? 'FRIEND' : 'PARTNER'}
                       </div>
                       {playerAlly.rarity && (
-                        <div className="absolute top-1.5 right-1.5 bg-black/80 px-1.5 py-0.2 rounded-full border border-cyan-400/30 text-[8px] font-mono font-bold text-cyan-300 uppercase">
+                        <div className="absolute top-2 right-2 bg-[#0B0F17]/90 px-2 py-0.5 rounded-full border border-[#2A364F] text-[10px] font-mono font-bold text-[#F59E0B] uppercase">
                           {playerAlly.rarity}
                         </div>
                       )}
-                      <div className="absolute bottom-1.5 inset-x-1.5 text-center">
-                        <div className="font-display font-black text-xs text-white uppercase truncate">
+                      <div className="absolute bottom-2 inset-x-2 text-center">
+                        <div className="font-display font-bold text-sm text-[#F8FAFC] uppercase truncate">
                           {playerAlly.name}
                         </div>
-                        <div className="text-[9px] text-cyan-300 font-mono font-bold truncate">
-                          🐾 {playerAlly.breed || 'Companion'}
+                        <div className="text-xs text-[#CBD5E1] font-medium truncate flex items-center justify-center gap-1">
+                          <PawPrint className="w-3 h-3 text-[#F59E0B]" />
+                          <span>{playerAlly.breed || 'Companion'}</span>
                         </div>
                         {partnerPlayer?.name && (
-                          <div className="text-[8px] text-neutral-300 font-mono truncate">
+                          <div className="text-xs text-[#94A3B8] font-mono truncate">
                             {partnerPlayer.name}
                           </div>
                         )}
@@ -1516,36 +1525,37 @@ export const ArenaScreen: React.FC = () => {
                     sound.playClick();
                     window.dispatchEvent(new CustomEvent('petslam:open-friends'));
                   }}
-                  className="mt-2.5 px-4 py-1.5 rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 hover:border-cyan-300 text-xs font-mono font-bold flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,229,255,0.2)] active:scale-95 transition-all cursor-pointer"
+                  className="mt-3 px-4 py-2 rounded-xl bg-[#1E2738] hover:bg-[#2A364F] text-[#F8FAFC] border border-[#2A364F] text-xs font-mono font-bold flex items-center gap-2 cursor-pointer transition-all duration-150"
                   title="Invite an online friend to partner with you in 2v2 Tag Team"
                 >
-                  <span>👥 Play With a Friend (Invite Partner)</span>
+                  <Users className="w-4 h-4 text-[#F59E0B]" />
+                  <span>Play With a Friend (Invite Partner)</span>
                 </button>
               </>
             ) : (
               /* Single 1v1 Champion Card */
               <div className="relative group">
-                <div className="w-40 h-48 sm:w-48 sm:h-56 rounded-3xl overflow-hidden border-3 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.25)] bg-black relative">
+                <div className="w-44 h-52 sm:w-52 sm:h-60 rounded-3xl overflow-hidden border border-[#2A364F] group-hover:border-[#F59E0B]/50 bg-[#151C28] relative shadow-md transition-all duration-200">
                   <img
                     src={currentActiveFighter.image}
                     alt={currentActiveFighter.name}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17]/95 via-[#0B0F17]/30 to-transparent" />
 
-                  <div className="absolute top-2.5 left-2.5 bg-black/80 px-2 py-0.5 rounded-full border border-white/20 text-[10px] font-mono font-bold text-[#CCFF00]">
+                  <div className="absolute top-3 left-3 bg-[#0B0F17]/90 px-2.5 py-0.5 rounded-full border border-[#2A364F] text-xs font-mono font-bold text-[#F59E0B] tabular-nums">
                     LVL {currentActiveFighter.level || 10}
                   </div>
 
-                  <div className={`absolute top-2.5 right-2.5 ${getRarityBadgeClasses(currentActiveFighter.rarity)}`}>
+                  <div className={`absolute top-3 right-3 ${getRarityBadgeClasses(currentActiveFighter.rarity)} text-xs font-mono font-bold`}>
                     {currentActiveFighter.rarity}
                   </div>
 
-                  <div className="absolute bottom-2.5 inset-x-3 text-center">
-                    <h3 className="font-display font-black text-base sm:text-lg text-white uppercase tracking-wider truncate">
+                  <div className="absolute bottom-3 inset-x-3 text-center">
+                    <h3 className="font-display font-black text-lg sm:text-xl text-[#F8FAFC] uppercase tracking-wider truncate">
                       {currentActiveFighter.name}
                     </h3>
-                    <div className="text-[10px] text-[#CCFF00] font-mono font-bold">
+                    <div className="text-xs text-[#CBD5E1] font-medium mt-0.5">
                       {currentActiveFighter.breed} · {currentActiveFighter.combatArchetype}
                     </div>
                   </div>
@@ -1554,17 +1564,17 @@ export const ArenaScreen: React.FC = () => {
             )}
 
             {/* Combat Specs Pills */}
-            <div className="flex items-center gap-2.5 mt-2.5 text-xs font-mono">
-              <span className="bg-red-500/15 text-red-300 border border-red-500/30 px-2.5 py-0.5 rounded-xl font-bold flex items-center gap-1">
-                <Heart className="w-3.5 h-3.5 text-red-400" />
+            <div className="flex items-center gap-2.5 mt-3 text-sm font-mono">
+              <span className="bg-[#10B981]/15 text-[#10B981] border border-[#10B981]/40 px-3 py-1 rounded-xl font-bold flex items-center gap-1.5 tabular-nums">
+                <Heart className="w-4 h-4 text-[#10B981]" />
                 <span>{currentActiveFighter.health} HP</span>
               </span>
-              <span className="bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-xl font-bold flex items-center gap-1">
-                <Swords className="w-3.5 h-3.5 text-amber-400" />
+              <span className="bg-[#F43F5E]/15 text-[#F43F5E] border border-[#F43F5E]/40 px-3 py-1 rounded-xl font-bold flex items-center gap-1.5 tabular-nums">
+                <Swords className="w-4 h-4 text-[#F43F5E]" />
                 <span>{currentActiveFighter.damage} DMG</span>
               </span>
-              <span className="bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 px-2.5 py-0.5 rounded-xl font-bold flex items-center gap-1">
-                <Zap className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="bg-sky-500/15 text-sky-300 border border-sky-500/40 px-3 py-1 rounded-xl font-bold flex items-center gap-1.5 tabular-nums">
+                <Zap className="w-4 h-4 text-sky-400" />
                 <span>{currentActiveFighter.topSpeedKmh} KM/H</span>
               </span>
             </div>
@@ -1572,9 +1582,9 @@ export const ArenaScreen: React.FC = () => {
 
           {/* 4-Pet Battle Squad Drawer */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-neutral-400">
-              <span className="font-bold text-slate-900 dark:text-white uppercase">Your 4-Pet Battle Squad</span>
-              <span>Tap pet to set Lead</span>
+            <div className="flex items-center justify-between text-xs font-mono text-[#CBD5E1]">
+              <span className="font-bold text-[#F8FAFC] uppercase">Your 4-Pet Battle Squad</span>
+              <span className="text-[#94A3B8]">Tap pet to set Lead</span>
             </div>
 
             <div className="grid grid-cols-4 gap-2">
@@ -1590,21 +1600,21 @@ export const ArenaScreen: React.FC = () => {
                     }}
                     className={`p-2 rounded-2xl border transition-all cursor-pointer flex flex-col items-center text-center relative ${
                       isSelected
-                        ? 'bg-[#CCFF00]/25 border-2 border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.3)] scale-102'
-                        : 'bg-slate-100 dark:bg-[#121622] border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/30'
+                        ? 'bg-[#1E2738] border-2 border-[#F59E0B] shadow-sm'
+                        : 'bg-[#151C28] border-[#2A364F] hover:border-[#F59E0B]/40'
                     }`}
                   >
-                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-black border border-slate-300 dark:border-white/15 aspect-square mb-1">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-black border border-[#2A364F] aspect-square mb-1">
                       <img
                         src={petFighter.image}
                         alt={petFighter.name}
                         className="w-full h-full object-cover object-center aspect-square"
                       />
                     </div>
-                    <span className="text-xs font-bold text-slate-900 dark:text-white truncate w-full">
+                    <span className="text-xs font-bold text-[#F8FAFC] truncate w-full">
                       {petFighter.name}
                     </span>
-                    <span className="text-xs font-mono text-emerald-700 dark:text-[#CCFF00] font-black">
+                    <span className="text-xs font-mono text-[#F59E0B] font-bold tabular-nums">
                       LV.{petFighter.level || 10}
                     </span>
                   </div>
@@ -1614,40 +1624,40 @@ export const ArenaScreen: React.FC = () => {
 
             {/* Big Action Battle Launch Button & Cancel Matchmaking Controls */}
             {isMatchmaking ? (
-              <div className="flex flex-col sm:flex-row items-center gap-2 w-full mt-1">
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full mt-2">
                 <button
                   disabled
-                  className="flex-1 w-full py-3.5 rounded-2xl bg-[#CCFF00] text-black font-display font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(204,255,0,0.4)] flex items-center justify-center gap-2 cursor-wait"
+                  className="flex-1 w-full py-3.5 rounded-xl bg-[#F59E0B] text-[#0B0F17] font-display font-bold text-base uppercase tracking-wider flex items-center justify-center gap-2 cursor-wait"
                 >
-                  <div className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
-                  <span>Matching Opponent... ({matchCountdown}s)</span>
+                  <div className="w-4 h-4 rounded-full border-2 border-[#0B0F17] border-t-transparent animate-spin" />
+                  <span className="tabular-nums">Matching Opponent... ({matchCountdown}s)</span>
                 </button>
                 <button
                   onClick={handleCancelMatchmaking}
-                  className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-display font-black text-xs uppercase tracking-wider shadow-lg border border-rose-400 cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-1.5 shrink-0"
+                  className="w-full sm:w-auto px-5 py-3.5 rounded-xl bg-[#F43F5E] hover:bg-[#E11D48] text-white font-display font-bold text-sm uppercase tracking-wider cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-1.5 shrink-0"
                   title="Cancel Matchmaking Search"
                 >
                   <span>Cancel [✕]</span>
                 </button>
               </div>
             ) : (
-              <div className="space-y-2 mt-1 w-full">
+              <div className="space-y-2 mt-2 w-full">
                 <button
                   onClick={handleStartMatchmaking}
-                  className="w-full py-3.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-black font-display font-black text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(0,240,255,0.4)] flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
+                  className="w-full py-3.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-bold text-base uppercase tracking-wider shadow-md flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer active:scale-98"
                 >
-                  <Swords className="w-5 h-5 text-black" />
-                  <span>🌐 Find Live Match ({battleMode === '2v2' ? '2v2 Ranked Queue' : '1v1 Ranked Queue'})</span>
+                  <Swords className="w-5 h-5 text-[#0B0F17]" />
+                  <span>Find Live Match ({battleMode === '2v2' ? '2v2 Ranked' : '1v1 Ranked'})</span>
                 </button>
 
                 <button
                   onClick={handleStartMatchmaking}
-                  className="w-full py-2.5 rounded-2xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/15 text-slate-900 dark:text-neutral-200 font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
+                  className="w-full py-3 rounded-xl bg-[#1E2738] hover:bg-[#2A364F] text-[#F8FAFC] border border-[#2A364F] font-display font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer active:scale-98"
                 >
                   <span>
                     {battleMode === '2v2'
-                      ? '👥 Solo 2v2 Tag Team Sparring (vs CPU)'
-                      : '⚔️ Solo 1v1 Sparring Bout (vs CPU)'}
+                      ? 'Solo 2v2 Tag Team Sparring (vs CPU)'
+                      : 'Solo 1v1 Sparring Bout (vs CPU)'}
                   </span>
                 </button>
               </div>
@@ -1686,31 +1696,31 @@ export const ArenaScreen: React.FC = () => {
 
           {/* 0. DOJO PRACTICE DRILL PROGRESS BAR */}
           {isPracticeDrill && (
-            <div className="bg-gradient-to-r from-[#121A2E] via-[#1A2642] to-[#121A2E] border-2 border-[#CCFF00]/50 rounded-xl px-3 py-1.5 flex items-center justify-between text-xs font-mono shadow-md">
+            <div className="bg-[#151C28] border border-[#2A364F] rounded-xl px-3 py-1.5 flex items-center justify-between text-xs font-mono shadow-sm">
               <div className="flex items-center gap-1.5 sm:gap-2.5">
-                <span className="text-[#CCFF00] font-black flex items-center gap-1">
-                  <span>🥋</span>
+                <span className="text-[#F59E0B] font-bold flex items-center gap-1">
+                  <Target className="w-3.5 h-3.5" />
                   <span>DOJO DRILL:</span>
                 </span>
-                <span className={practiceStep === 1 ? 'text-[#CCFF00] font-black underline' : (practiceStep && practiceStep > 1) ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>
+                <span className={practiceStep === 1 ? 'text-[#F59E0B] font-bold underline' : (practiceStep && practiceStep > 1) ? 'text-[#10B981] font-bold' : 'text-[#94A3B8]'}>
                   {(practiceStep && practiceStep > 1) ? '✓ 1.Pounce' : '1.Pounce'}
                 </span>
-                <span className="text-neutral-600">›</span>
-                <span className={practiceStep === 2 ? 'text-[#CCFF00] font-black underline' : (practiceStep && practiceStep > 2) ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>
+                <span className="text-[#94A3B8]">›</span>
+                <span className={practiceStep === 2 ? 'text-[#F59E0B] font-bold underline' : (practiceStep && practiceStep > 2) ? 'text-[#10B981] font-bold' : 'text-[#94A3B8]'}>
                   {(practiceStep && practiceStep > 2) ? '✓ 2.Guard' : '2.Guard'}
                 </span>
-                <span className="text-neutral-600">›</span>
-                <span className={practiceStep === 3 ? 'text-[#CCFF00] font-black underline' : (practiceStep && practiceStep > 3) ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>
+                <span className="text-[#94A3B8]">›</span>
+                <span className={practiceStep === 3 ? 'text-[#F59E0B] font-bold underline' : (practiceStep && practiceStep > 3) ? 'text-[#10B981] font-bold' : 'text-[#94A3B8]'}>
                   {(practiceStep && practiceStep > 3) ? '✓ 3.SLAM' : '3.SLAM'}
                 </span>
-                <span className="text-neutral-600">›</span>
-                <span className={practiceStep === 4 ? 'text-[#CCFF00] font-black underline' : 'text-neutral-500'}>
+                <span className="text-[#94A3B8]">›</span>
+                <span className={practiceStep === 4 ? 'text-[#F59E0B] font-bold underline' : 'text-[#94A3B8]'}>
                   4.Tag-In
                 </span>
               </div>
               <button
                 onClick={handleSkipTutorial}
-                className="text-neutral-400 hover:text-white text-[10px] underline cursor-pointer shrink-0"
+                className="text-[#94A3B8] hover:text-[#F8FAFC] text-xs underline cursor-pointer shrink-0"
               >
                 Skip Drill ✕
               </button>
@@ -1718,21 +1728,21 @@ export const ArenaScreen: React.FC = () => {
           )}
 
           {/* 1. MATCH STATUS & ARENA THEME SELECTOR BAR */}
-          <div className="flex items-center justify-between bg-[#101524] border border-white/10 rounded-xl px-2.5 py-1 shrink-0 shadow-sm gap-1">
+          <div className="flex items-center justify-between bg-[#151C28] border border-[#2A364F] rounded-xl px-3 py-1.5 shrink-0 shadow-sm gap-2">
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-[10px] font-mono font-black bg-red-500/20 text-red-300 border border-red-500/30 px-1.5 py-0.5 rounded flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
+              <span className="text-xs font-mono font-bold bg-[#F43F5E]/20 text-[#F43F5E] border border-[#F43F5E]/40 px-2 py-0.5 rounded flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#F43F5E] animate-ping" />
                 <span>{battleMode === '2v2' ? '2v2 TAG TEAM' : 'SLAM 1v1'}</span>
               </span>
             </div>
 
             {/* Switchable Arena Aesthetic Themes */}
-            <div className="flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded-lg border border-white/10 shrink-0">
+            <div className="flex items-center gap-1 bg-[#0B0F17] px-2 py-0.5 rounded-lg border border-[#2A364F] shrink-0">
               {(
                 [
-                  { id: 'stadium', label: 'Stadium', icon: '🏟️' },
-                  { id: 'cyber', label: 'Cyber', icon: '⚡' },
-                  { id: 'dojo', label: 'Dojo', icon: '🏮' },
+                  { id: 'stadium', label: 'Stadium' },
+                  { id: 'cyber', label: 'Cyber' },
+                  { id: 'dojo', label: 'Dojo' },
                 ] as const
               ).map((t) => (
                 <button
@@ -1742,54 +1752,40 @@ export const ArenaScreen: React.FC = () => {
                     setArenaTheme(t.id);
                   }}
                   title={`Switch to ${t.label} Arena`}
-                  className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold flex items-center gap-1 transition-all cursor-pointer ${
+                  className={`px-2 py-0.5 rounded text-xs font-mono font-bold transition-all cursor-pointer ${
                     arenaTheme === t.id
-                      ? 'bg-[#CCFF00] text-black shadow-xs font-black'
-                      : 'text-neutral-400 hover:text-white hover:bg-white/10'
+                      ? 'bg-[#F59E0B] text-[#0B0F17]'
+                      : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#1E2738]'
                   }`}
                 >
-                  <span>{t.icon}</span>
-                  <span className="hidden sm:inline">{t.label}</span>
+                  <span>{t.label}</span>
                 </button>
               ))}
             </div>
 
-            <div className="flex items-center gap-1.5 font-mono text-xs font-black shrink-0">
-              <Timer className={`w-3.5 h-3.5 ${battleTimerSec <= 60 ? 'text-red-400 animate-pulse' : 'text-amber-400'}`} />
-              <span className={battleTimerSec <= 60 ? 'text-red-400 animate-pulse' : 'text-amber-300'}>
+            <div className="flex items-center gap-1.5 font-mono text-sm font-bold shrink-0">
+              <Timer className={`w-4 h-4 ${battleTimerSec <= 60 ? 'text-[#F43F5E] animate-pulse' : 'text-[#F59E0B]'}`} />
+              <span className={`tabular-nums ${battleTimerSec <= 60 ? 'text-[#F43F5E] animate-pulse' : 'text-[#F59E0B]'}`}>
                 {formatTimer(battleTimerSec)}
               </span>
-              {battleTimerSec <= 60 && (
-                <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1 rounded uppercase font-bold animate-bounce hidden sm:inline">
-                  2X
-                </span>
-              )}
             </div>
-
-            {isMultiplayerBattle && (
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-[10px] font-mono text-cyan-300 shrink-0 shadow">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-                <span className="font-black text-[#CCFF00]">LIVE CO-OP</span>
-                <span className="text-neutral-400 hidden sm:inline">[{partyRoomCode}]</span>
-              </div>
-            )}
 
             <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={handleForfeit}
-                className="flex items-center gap-1 text-[10px] font-mono font-bold text-neutral-400 hover:text-red-400 hover:bg-red-500/10 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                className="flex items-center gap-1 text-xs font-mono font-bold text-[#94A3B8] hover:text-[#F43F5E] hover:bg-[#F43F5E]/10 px-2 py-1 rounded transition-colors cursor-pointer"
                 title="Surrender Match"
               >
-                <Flag className="w-3 h-3" />
+                <Flag className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Forfeit</span>
               </button>
             </div>
           </div>
 
-          {/* 2. OPPONENT HUD BAR (Dual-layer HP Bar with 2v2 Tag Partner support) */}
-          <div className="bg-[#121828]/95 border border-red-500/30 rounded-xl px-2.5 py-1.5 shadow shrink-0 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-lg overflow-hidden border border-red-500 bg-black shrink-0 shadow-xs">
+          {/* 2. OPPONENT HUD BAR */}
+          <div className="bg-[#151C28] border border-[#2A364F] rounded-xl px-3 py-2 shadow-sm shrink-0 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-lg overflow-hidden border border-[#2A364F] bg-black shrink-0">
                 <img
                   src={getPetPhoto(selectedOpponent)}
                   alt={selectedOpponent.name}
@@ -1797,66 +1793,40 @@ export const ArenaScreen: React.FC = () => {
                 />
               </div>
               <div className="leading-tight min-w-0">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="font-display font-black text-xs text-white uppercase truncate">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="font-display font-bold text-sm text-[#F8FAFC] uppercase truncate">
                     {selectedOpponent.name}
                   </span>
-                  <span className="text-[8px] bg-red-500/20 text-red-300 font-mono px-1 rounded uppercase">
+                  <span className="text-xs bg-[#1E2738] text-[#CBD5E1] border border-[#2A364F] font-mono px-1.5 py-0.5 rounded uppercase">
                     {selectedOpponent.breed}
                   </span>
                 </div>
-                {/* Esports Parallelogram Skewed HP Bar with Delayed Damage Drain Trail */}
-                <div className="relative -skew-x-12 overflow-hidden bg-neutral-950 border border-red-500/40 h-2.5 sm:h-3.5 w-28 sm:w-44 rounded-xs mt-1 shadow-inner">
-                  {/* Delayed gold/white damage drain trail */}
+                {/* Parallelogram Skewed HP Bar */}
+                <div className="relative -skew-x-12 overflow-hidden bg-[#0B0F17] border border-[#2A364F] h-3 w-32 sm:w-48 rounded-xs mt-1 shadow-inner">
                   <div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-300 to-yellow-100 transition-all duration-700 ease-out opacity-85"
+                    className="absolute inset-y-0 left-0 bg-[#F59E0B]/50 transition-all duration-700 ease-out"
                     style={{ width: `${(ghostOpponentHp / maxOpponentHp) * 100}%` }}
                   />
-                  {/* Real-time active HP */}
                   <div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 transition-all duration-150 shadow-[0_0_10px_rgba(239,68,68,0.8)]"
+                    className="absolute inset-y-0 left-0 bg-[#F43F5E] transition-all duration-150"
                     style={{ width: `${(opponentHp / maxOpponentHp) * 100}%` }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* 2v2 Opponent Partner Mini HUD */}
-            {battleMode === '2v2' && (
-              <div className="flex items-center gap-1.5 border-l border-white/10 pl-2 shrink-0">
-                <div className="w-7 h-7 rounded-lg overflow-hidden border border-amber-400 bg-black shrink-0 shadow-xs">
-                  <img
-                    src={getPetPhoto(opponentAlly)}
-                    alt={opponentAlly.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="leading-tight">
-                  <div className="text-[9px] font-bold text-amber-300 truncate max-w-[65px]">
-                    {opponentAlly.name}
-                  </div>
-                  <div className="w-14 sm:w-20 h-1.5 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-0.5">
-                    <div
-                      className="h-full bg-amber-500 rounded-full transition-all"
-                      style={{ width: `${(opponentAllyHp / maxOpponentAllyHp) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="text-right shrink-0">
-              <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 block truncate max-w-[110px]">
+              <span className="text-xs font-mono font-bold text-[#F59E0B] bg-[#1E2738] px-2 py-0.5 rounded border border-[#2A364F] block truncate max-w-[120px]">
                 {opponentIntent}
               </span>
-              <span className="text-[8px] font-mono text-neutral-400 tabular-nums">
+              <span className="text-xs font-mono text-[#CBD5E1] tabular-nums mt-0.5 block">
                 {opponentHp} / {maxOpponentHp} HP
               </span>
             </div>
           </div>
 
           {/* 3. 60 FPS HTML5 CANVAS BATTLE ARENA STAGE (Supports 1v1 and 2v2) */}
-          <div className="flex-1 relative rounded-2xl overflow-hidden border-2 border-white/15 shadow-[0_0_35px_rgba(0,0,0,0.9)] my-1 min-h-[160px] sm:min-h-[240px] max-h-[280px] sm:max-h-[350px] flex items-center justify-center bg-black">
+          <div className="flex-1 relative rounded-2xl overflow-hidden border border-[#2A364F] shadow-lg my-1 min-h-[160px] sm:min-h-[240px] max-h-[280px] sm:max-h-[350px] flex items-center justify-center bg-[#0B0F17]">
             {/* The 60 FPS Pet Canvas Game Engine */}
             <PetBattleSceneCanvas
               playerPet={currentActiveFighter}
@@ -1883,9 +1853,9 @@ export const ArenaScreen: React.FC = () => {
             {/* Esports Broadcast Announcer Callout Banner */}
             {announcerText && (
               <div className="absolute top-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-in zoom-in-95 duration-200">
-                <div className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-black/90 via-[#10172A]/95 to-black/90 border-2 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.5)] flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#CCFF00] animate-spin" />
-                  <span className="font-display font-black text-xs sm:text-sm text-[#CCFF00] tracking-widest uppercase italic">
+                <div className="px-4 py-1.5 rounded-xl bg-[#0B0F17]/95 border border-[#F59E0B] shadow-lg flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#F59E0B] animate-spin" />
+                  <span className="font-display font-black text-sm text-[#F59E0B] tracking-wider uppercase">
                     {announcerText}
                   </span>
                 </div>
@@ -1895,8 +1865,8 @@ export const ArenaScreen: React.FC = () => {
             {/* Real-time Combo Counter Badge */}
             {comboCount >= 2 && (
               <div className="absolute bottom-3 right-3 z-20 pointer-events-none animate-bounce">
-                <div className="px-2.5 py-1 rounded-lg bg-black/85 border border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.5)] flex items-center gap-1.5">
-                  <span className="font-display font-black text-xs text-amber-300 italic tracking-wider">
+                <div className="px-2.5 py-1 rounded-lg bg-[#0B0F17]/90 border border-[#F59E0B] shadow-md flex items-center gap-1.5">
+                  <span className="font-display font-black text-xs text-[#F59E0B] italic tracking-wider">
                     {comboLabel}
                   </span>
                 </div>
@@ -1904,23 +1874,23 @@ export const ArenaScreen: React.FC = () => {
             )}
 
             {/* Live Combat Announcement Ticker Banner */}
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/85 backdrop-blur-md border border-[#CCFF00]/40 shadow-[0_0_15px_rgba(204,255,0,0.25)] flex items-center gap-1.5 z-20 pointer-events-none max-w-[85%]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#CCFF00] animate-ping shrink-0" />
-              <span className="font-display font-black text-[10px] sm:text-[11px] text-[#CCFF00] tracking-wider uppercase truncate">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#0B0F17]/90 backdrop-blur-md border border-[#2A364F] flex items-center gap-1.5 z-20 pointer-events-none max-w-[85%]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-ping shrink-0" />
+              <span className="font-display font-bold text-xs text-[#F8FAFC] tracking-wider uppercase truncate">
                 {lastCombatLog || 'PET SLAM LIVE ARENA'}
               </span>
             </div>
 
             {/* Theme Overlay Watermark Pill */}
-            <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-[9px] font-mono text-neutral-400 pointer-events-none uppercase">
+            <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-[#0B0F17]/80 border border-[#2A364F] text-xs font-mono text-[#94A3B8] pointer-events-none uppercase">
               {arenaTheme} ARENA · {battleMode === '2v2' ? '2v2 TAG TEAM' : '60 FPS'}
             </div>
           </div>
 
           {/* 4. PLAYER HUD & SQUAD SWITCHER BAR (with 2v2 Co-op Ally support) */}
-          <div className="bg-[#121828]/95 border border-cyan-500/30 rounded-xl px-2.5 py-1.5 shadow shrink-0 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-lg overflow-hidden border border-cyan-400 bg-black shrink-0 shadow-xs">
+          <div className="bg-[#151C28] border border-[#2A364F] rounded-xl px-3 py-2 shadow-sm shrink-0 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-lg overflow-hidden border border-[#2A364F] bg-black shrink-0">
                 <img
                   src={getPetPhoto(currentActiveFighter)}
                   alt={currentActiveFighter.name}
@@ -1928,24 +1898,22 @@ export const ArenaScreen: React.FC = () => {
                 />
               </div>
               <div className="leading-tight min-w-0">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="font-display font-black text-xs text-white uppercase truncate">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="font-display font-bold text-sm text-[#F8FAFC] uppercase truncate">
                     {currentActiveFighter.name}
                   </span>
-                  <span className="text-[8px] bg-cyan-500/20 text-cyan-300 font-mono px-1 rounded uppercase">
+                  <span className="text-xs bg-[#1E2738] text-[#CBD5E1] border border-[#2A364F] font-mono px-1.5 py-0.5 rounded uppercase">
                     {currentActiveFighter.breed}
                   </span>
                 </div>
-                {/* Esports Parallelogram Skewed HP Bar with Delayed Damage Drain Trail */}
-                <div className="relative -skew-x-12 overflow-hidden bg-neutral-950 border border-cyan-400/40 h-2.5 sm:h-3.5 w-28 sm:w-44 rounded-xs mt-1 shadow-inner">
-                  {/* Delayed gold/white damage drain trail */}
+                {/* Parallelogram Skewed HP Bar */}
+                <div className="relative -skew-x-12 overflow-hidden bg-[#0B0F17] border border-[#2A364F] h-3 w-32 sm:w-48 rounded-xs mt-1 shadow-inner">
                   <div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-300 to-yellow-100 transition-all duration-700 ease-out opacity-85"
+                    className="absolute inset-y-0 left-0 bg-[#F59E0B]/50 transition-all duration-700 ease-out"
                     style={{ width: `${(ghostPlayerHp / maxPlayerHp) * 100}%` }}
                   />
-                  {/* Real-time active HP */}
                   <div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 via-cyan-400 to-[#CCFF00] transition-all duration-150 shadow-[0_0_10px_rgba(0,229,255,0.8)]"
+                    className="absolute inset-y-0 left-0 bg-[#10B981] transition-all duration-150"
                     style={{ width: `${(playerHp / maxPlayerHp) * 100}%` }}
                   />
                 </div>
@@ -1954,8 +1922,8 @@ export const ArenaScreen: React.FC = () => {
 
             {/* 2v2 Player Ally Mini HUD */}
             {battleMode === '2v2' && (
-              <div className="flex items-center gap-1.5 border-l border-white/10 pl-2 shrink-0">
-                <div className="w-7 h-7 rounded-lg overflow-hidden border border-cyan-400 bg-black shrink-0 shadow-xs">
+              <div className="flex items-center gap-1.5 border-l border-[#2A364F] pl-2 shrink-0">
+                <div className="w-8 h-8 rounded-lg overflow-hidden border border-[#2A364F] bg-black shrink-0">
                   <img
                     src={getPetPhoto(playerAlly)}
                     alt={playerAlly.name}
@@ -1963,15 +1931,16 @@ export const ArenaScreen: React.FC = () => {
                   />
                 </div>
                 <div className="leading-tight">
-                  <div className="text-[9px] font-bold text-cyan-300 truncate max-w-[85px]">
+                  <div className="text-xs font-bold text-[#CBD5E1] truncate max-w-[85px]">
                     {playerAlly.name}
                   </div>
-                  <div className="text-[7px] text-cyan-300/80 font-mono truncate max-w-[85px]">
-                    🐾 {playerAlly.breed || 'Companion'}
+                  <div className="text-[10px] text-[#94A3B8] font-mono truncate max-w-[85px] flex items-center gap-0.5">
+                    <PawPrint className="w-2.5 h-2.5 text-[#F59E0B]" />
+                    <span>{playerAlly.breed || 'Companion'}</span>
                   </div>
-                  <div className="w-14 sm:w-20 h-1.5 bg-neutral-900 rounded-full overflow-hidden border border-white/10 mt-0.5">
+                  <div className="w-16 sm:w-20 h-2 bg-[#0B0F17] rounded-full overflow-hidden border border-[#2A364F] mt-0.5">
                     <div
-                      className="h-full bg-cyan-400 rounded-full transition-all"
+                      className="h-full bg-[#10B981] rounded-full transition-all"
                       style={{ width: `${(playerAllyHp / maxPlayerAllyHp) * 100}%` }}
                     />
                   </div>
@@ -1980,7 +1949,7 @@ export const ArenaScreen: React.FC = () => {
             )}
 
             {/* Squad Tag-In Drawer with Desktop Hotkey Hints [Q/W/E/R] */}
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               {safeDeck.map((b, idx) => {
                 const hotkeyLetters = ['Q', 'W', 'E', 'R'];
                 const letter = hotkeyLetters[idx];
@@ -1989,15 +1958,15 @@ export const ArenaScreen: React.FC = () => {
                   <button
                     key={b.id}
                     onClick={() => handleTagIn(b)}
-                    title={`[${letter}] Tag in ${b.name} (Instant 75 DMG slam)`}
-                    className={`w-7 h-7 rounded-lg overflow-hidden border cursor-pointer transition-all relative active:scale-95 ${
+                    title={`[${letter}] Tag in ${b.name}`}
+                    className={`w-8 h-8 rounded-lg overflow-hidden border cursor-pointer transition-all relative active:scale-95 ${
                       b.id === currentActiveFighter.id
-                        ? 'border-[#CCFF00] ring-1 ring-[#CCFF00]'
+                        ? 'border-[#F59E0B] ring-2 ring-[#F59E0B]'
                         : isPracticeDrill && practiceStep === 4
-                        ? 'border-cyan-400 ring-2 ring-cyan-400 shadow-[0_0_12px_#00E5FF] animate-pulse scale-105'
+                        ? 'border-[#F59E0B] ring-2 ring-[#F59E0B] animate-pulse scale-105'
                         : isKeyActive
-                        ? 'border-cyan-400 ring-2 ring-cyan-400 scale-95'
-                        : 'border-white/20 hover:border-white/50 opacity-60'
+                        ? 'border-[#F59E0B] scale-95'
+                        : 'border-[#2A364F] hover:border-[#F8FAFC] opacity-70'
                     }`}
                   >
                     <img
@@ -2006,7 +1975,7 @@ export const ArenaScreen: React.FC = () => {
                       className="w-full h-full object-cover aspect-square"
                     />
                     {letter && (
-                      <span className="absolute bottom-0 right-0 px-0.5 bg-black/80 text-[7px] font-mono font-bold text-[#CCFF00] rounded-tl leading-none">
+                      <span className="absolute bottom-0 right-0 px-0.5 bg-black/80 text-[8px] font-mono font-bold text-[#F59E0B] rounded-tl leading-none">
                         {letter}
                       </span>
                     )}
@@ -2017,169 +1986,153 @@ export const ArenaScreen: React.FC = () => {
           </div>
 
           {/* 5. SLAM ENERGY GAUGE BAR (1 TO 10 ENERGY) */}
-          <div className="space-y-1 shrink-0 bg-black/60 p-2 rounded-xl border border-white/10">
+          <div className="space-y-1 shrink-0 bg-[#151C28] p-2.5 rounded-xl border border-[#2A364F]">
             <div className="flex items-center justify-between text-xs font-mono leading-none">
-              <span className="text-cyan-300 font-extrabold flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span className="text-[#CBD5E1] font-bold flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-[#F59E0B]" />
                 <span>SLAM ENERGY</span>
               </span>
-              <span className="font-black text-[#CCFF00] text-sm">{Math.floor(elixir)} / 10 ⚡</span>
+              <span className="font-bold text-[#F59E0B] text-sm tabular-nums">{Math.floor(elixir)} / 10 ⚡</span>
             </div>
 
-            <div className="h-3 bg-neutral-950 rounded-full overflow-hidden border border-white/20 p-0.5 flex gap-1">
+            <div className="h-3 bg-[#0B0F17] rounded-full overflow-hidden border border-[#2A364F] p-0.5 flex gap-1">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`flex-1 h-full rounded-xs transition-all duration-200 ${
+                  className={`flex-1 h-full rounded-xs transition-all duration-150 ${
                     i < Math.floor(elixir)
-                      ? 'bg-gradient-to-r from-cyan-400 to-[#CCFF00] shadow-[0_0_8px_#ccff00]'
-                      : 'bg-neutral-800/80'
+                      ? 'bg-[#F59E0B]'
+                      : 'bg-[#1E2738]'
                   }`}
                 />
               ))}
             </div>
           </div>
 
-          {/* 6. SLAM ACTION MOVES DOCK (With Desktop Hotkeys [1-4, SPACE] & Mobile Thumb Arc) */}
-          <div className="grid grid-cols-5 gap-1 sm:gap-1.5 shrink-0">
+          {/* 6. SLAM ACTION MOVES DOCK */}
+          <div className="grid grid-cols-5 gap-1.5 shrink-0">
             {/* Card 1: Quick Pounce (2 Energy / Hotkey [1]) */}
             <button
               onClick={() => handlePlayCard('pounce')}
               disabled={elixir < 2}
-              className={`p-1 sm:p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-20 relative shadow-md ${
-                isPracticeDrill && practiceStep === 1
-                  ? 'bg-cyan-500/40 border-[#CCFF00] ring-4 ring-[#CCFF00] shadow-[0_0_25px_#CCFF00] scale-105 animate-pulse text-white'
-                  : elixir >= 2
-                  ? pressedHotkey === '1'
-                    ? 'bg-cyan-500/40 border-cyan-300 ring-2 ring-cyan-400 scale-95 text-white'
-                    : 'bg-[#121A2C] hover:bg-[#1A253E] border-cyan-400 text-white shadow active:scale-95'
-                  : 'bg-neutral-950 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative ${
+                elixir >= 2
+                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC] active:scale-95'
+                  : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-0.5 sm:px-1">
-                <span className="text-[10px] sm:text-sm font-mono font-black text-cyan-300">2 ⚡</span>
-                <span className="text-xs font-mono px-1 rounded bg-black/80 border border-cyan-400/60 text-cyan-300 font-black hidden sm:inline">
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">2 ⚡</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
                   [1]
                 </span>
               </div>
-              <span className="text-base sm:text-lg">🐾</span>
-              <span className="text-[10px] sm:text-sm font-black uppercase tracking-wider truncate text-white">Pounce</span>
+              <PawPrint className="w-5 h-5 text-[#CBD5E1] my-0.5" />
+              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC]">Pounce</span>
             </button>
 
-            {/* Card 2: Sonic Bark / Hiss (3 Energy / Hotkey [2]) */}
+            {/* Card 2: Sonic Bark (3 Energy / Hotkey [2]) */}
             <button
               onClick={() => handlePlayCard('bark')}
               disabled={elixir < 3}
-              className={`p-1 sm:p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-20 relative shadow-md ${
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative ${
                 elixir >= 3
-                  ? pressedHotkey === '2'
-                    ? 'bg-amber-500/40 border-amber-300 ring-2 ring-amber-400 scale-95 text-white'
-                    : 'bg-[#121A2C] hover:bg-[#1A253E] border-amber-400 text-white shadow active:scale-95'
-                  : 'bg-neutral-950 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
+                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC] active:scale-95'
+                  : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-0.5 sm:px-1">
-                <span className="text-[10px] sm:text-sm font-mono font-black text-amber-300">3 ⚡</span>
-                <span className="text-xs font-mono px-1 rounded bg-black/80 border border-amber-400/60 text-amber-300 font-black hidden sm:inline">
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">3 ⚡</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
                   [2]
                 </span>
               </div>
-              <span className="text-base sm:text-lg">📢</span>
-              <span className="text-[10px] sm:text-sm font-black uppercase tracking-wider truncate text-white">Bark</span>
+              <Volume2 className="w-5 h-5 text-[#CBD5E1] my-0.5" />
+              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC]">Bark</span>
             </button>
 
             {/* Card 3: Iron Guard (2 Energy / Hotkey [3]) */}
             <button
               onClick={() => handlePlayCard('shield')}
               disabled={elixir < 2}
-              className={`p-1 sm:p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-20 relative shadow-md ${
-                isPracticeDrill && practiceStep === 2
-                  ? 'bg-blue-600/50 border-blue-300 ring-4 ring-blue-400 shadow-[0_0_25px_#38BDF8] scale-105 animate-pulse text-white'
-                  : elixir >= 2
-                  ? pressedHotkey === '3'
-                    ? 'bg-blue-500/40 border-blue-300 ring-2 ring-blue-400 scale-95 text-white'
-                    : 'bg-[#121A2C] hover:bg-[#1A253E] border-blue-400 text-white shadow active:scale-95'
-                  : 'bg-neutral-950 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative ${
+                elixir >= 2
+                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC] active:scale-95'
+                  : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-0.5 sm:px-1">
-                <span className="text-[10px] sm:text-sm font-mono font-black text-blue-300">2 ⚡</span>
-                <span className="text-xs font-mono px-1 rounded bg-black/80 border border-blue-400/60 text-blue-300 font-black hidden sm:inline">
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">2 ⚡</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
                   [3]
                 </span>
               </div>
-              <span className="text-base sm:text-lg">🛡️</span>
-              <span className="text-[10px] sm:text-sm font-black uppercase tracking-wider truncate text-white">Guard</span>
+              <Shield className="w-5 h-5 text-[#CBD5E1] my-0.5" />
+              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC]">Guard</span>
             </button>
 
             {/* Card 4: Fierce Bite (4 Energy / Hotkey [4]) */}
             <button
               onClick={() => handlePlayCard('bite')}
               disabled={elixir < 4}
-              className={`p-1 sm:p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-20 relative shadow-md ${
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative ${
                 elixir >= 4
-                  ? pressedHotkey === '4'
-                    ? 'bg-red-500/40 border-red-300 ring-2 ring-red-400 scale-95 text-white'
-                    : 'bg-[#121A2C] hover:bg-[#1A253E] border-red-400 text-white shadow active:scale-95'
-                  : 'bg-neutral-950 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
+                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC] active:scale-95'
+                  : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-0.5 sm:px-1">
-                <span className="text-[10px] sm:text-sm font-mono font-black text-rose-300">4 ⚡</span>
-                <span className="text-xs font-mono px-1 rounded bg-black/80 border border-red-400/60 text-rose-300 font-black hidden sm:inline">
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">4 ⚡</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
                   [4]
                 </span>
               </div>
-              <span className="text-base sm:text-lg">💥</span>
-              <span className="text-[10px] sm:text-sm font-black uppercase tracking-wider truncate text-white">Bite</span>
+              <Flame className="w-5 h-5 text-[#F43F5E] my-0.5" />
+              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC]">Bite</span>
             </button>
 
-            {/* Card 5: PET SLAM / DUO SLAM OVERDRIVE (6 Energy / Hotkey [SPACE]) */}
+            {/* Card 5: PET SLAM OVERDRIVE (6 Energy / Hotkey [SPACE]) */}
             <button
               onClick={() => handlePlayCard('slam')}
               disabled={elixir < 6}
-              className={`p-1 sm:p-1.5 rounded-xl border-2 flex flex-col items-center justify-center transition-all cursor-pointer h-14 sm:h-20 relative shadow-xl ${
-                isPracticeDrill && practiceStep === 3
-                  ? 'bg-[#CCFF00] border-white ring-4 ring-[#CCFF00] shadow-[0_0_30px_#CCFF00] scale-105 animate-bounce text-black'
-                  : elixir >= 6
-                  ? pressedHotkey === 'space'
-                    ? 'bg-[#CCFF00] border-white ring-4 ring-[#CCFF00] scale-95 text-black'
-                    : 'bg-gradient-to-b from-[#CCFF00] via-yellow-300 to-amber-500 border-white text-black shadow-[0_0_20px_rgba(204,255,0,0.85)] active:scale-95 animate-pulse'
-                  : 'bg-neutral-950 border-white/10 text-neutral-500 opacity-45 cursor-not-allowed'
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative shadow-md ${
+                elixir >= 6
+                  ? 'bg-[#F59E0B] hover:bg-[#D97706] border-[#F59E0B] text-[#0B0F17] active:scale-95 font-bold'
+                  : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-0.5 sm:px-1">
-                <span className="text-[10px] sm:text-sm font-mono font-black text-black">6 ⚡</span>
-                <span className="text-xs font-mono px-1 rounded bg-black text-[#CCFF00] font-black hidden sm:inline">
+              <div className="flex items-center justify-between w-full px-1">
+                <span className={`text-xs font-mono font-bold tabular-nums ${elixir >= 6 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'}`}>6 ⚡</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#CBD5E1] font-bold hidden sm:inline">
                   [SPC]
                 </span>
               </div>
-              <span className="text-base sm:text-lg">⚡</span>
-              <span className="text-[10px] sm:text-sm font-black uppercase tracking-wider truncate text-black drop-shadow-xs">
+              <Zap className={`w-5 h-5 my-0.5 ${elixir >= 6 ? 'text-[#0B0F17] fill-[#0B0F17]' : 'text-[#94A3B8]'}`} />
+              <span className={`text-xs font-black uppercase tracking-wider truncate ${elixir >= 6 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'}`}>
                 {battleMode === '2v2' ? 'DUO SLAM' : 'SLAM'}
               </span>
             </button>
           </div>
 
           {/* =========================================================================
-              DOJO PRACTICE DRILL COMPLETION MODAL (+250 SLAM CREDITS)
+              DOJO PRACTICE DRILL COMPLETION MODAL
              ========================================================================= */}
           {practiceCompleted && (
-            <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-              <div className="bg-[#101626] border-2 border-[#CCFF00] rounded-3xl p-6 text-center max-w-xs w-full shadow-2xl space-y-4">
-                <div className="w-16 h-16 rounded-full bg-[#CCFF00] text-black text-2xl flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(204,255,0,0.6)]">
-                  🥋
+            <div className="absolute inset-0 z-50 bg-[#0B0F17]/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+              <div className="bg-[#151C28] border border-[#2A364F] rounded-3xl p-6 text-center max-w-xs w-full shadow-xl space-y-4">
+                <div className="w-14 h-14 rounded-full bg-[#F59E0B] text-[#0B0F17] flex items-center justify-center mx-auto shadow-md">
+                  <Target className="w-7 h-7" />
                 </div>
                 <div>
-                  <h2 className="font-display font-black text-xl text-[#CCFF00] uppercase tracking-wider">
-                    Dojo Drill Mastered!
+                  <h2 className="font-display font-black text-xl text-[#F8FAFC] uppercase tracking-wider">
+                    Drill Mastered!
                   </h2>
-                  <p className="text-[11px] text-neutral-300 font-mono mt-1">
+                  <p className="text-xs text-[#CBD5E1] mt-1 leading-relaxed">
                     You've mastered Pounce strikes, Shield deflection, SLAM Overdrive, and Squad tag-ins!
                   </p>
                 </div>
-                <div className="p-3 bg-black/50 rounded-2xl border border-[#CCFF00]/40 font-mono text-sm font-bold text-[#CCFF00]">
-                  🎉 +250 Slam Credits Awarded!
+                <div className="p-3 bg-[#0B0F17] rounded-xl border border-[#2A364F] font-mono text-sm font-bold text-[#F59E0B] tabular-nums">
+                  +250 Slam Credits Awarded!
                 </div>
                 <button
                   onClick={() => {
@@ -2188,7 +2141,7 @@ export const ArenaScreen: React.FC = () => {
                     setPracticeCompleted(false);
                     setInBattle(false);
                   }}
-                  className="w-full py-3 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer shadow-lg active:scale-95"
+                  className="w-full py-3 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-bold text-sm uppercase tracking-wider cursor-pointer shadow-md active:scale-95"
                 >
                   Enter Colosseum Arena
                 </button>
@@ -2200,41 +2153,47 @@ export const ArenaScreen: React.FC = () => {
               MATCH RESULT MODAL OVERLAY (Victory / Defeat)
              ========================================================================= */}
           {battleOver && (
-            <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-              <div className="bg-[#121728] border-2 border-white/20 rounded-3xl p-5 sm:p-6 text-center max-w-xs w-full shadow-2xl space-y-4">
+            <div className="absolute inset-0 z-50 bg-[#0B0F17]/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+              <div className="bg-[#151C28] border border-[#2A364F] rounded-3xl p-6 text-center max-w-xs w-full shadow-xl space-y-4">
                 <div
-                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto shadow-xl ${
+                  className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto shadow-md ${
                     battleResult === 'victory'
-                      ? 'bg-[#CCFF00] text-black shadow-[0_0_30px_rgba(204,255,0,0.6)]'
-                      : 'bg-red-500 text-white shadow-[0_0_30px_rgba(239,68,68,0.6)]'
+                      ? 'bg-[#F59E0B] text-[#0B0F17]'
+                      : 'bg-[#F43F5E] text-white'
                   }`}
                 >
                   {battleResult === 'victory' ? (
-                    <Trophy className="w-7 h-7 sm:w-8 sm:h-8" />
+                    <Trophy className="w-7 h-7" />
                   ) : (
-                    <Swords className="w-7 h-7 sm:w-8 sm:h-8" />
+                    <Swords className="w-7 h-7" />
                   )}
                 </div>
 
                 <div>
                   <h2
-                    className={`font-display font-black text-xl sm:text-2xl uppercase tracking-wider ${
-                      battleResult === 'victory' ? 'text-[#CCFF00]' : 'text-red-400'
+                    className={`font-display font-black text-xl uppercase tracking-wider ${
+                      battleResult === 'victory' ? 'text-[#F59E0B]' : 'text-[#F43F5E]'
                     }`}
                   >
                     {battleResult === 'victory' ? 'VICTORY SLAM!' : 'DEFEATED'}
                   </h2>
-                  <p className="text-[11px] text-neutral-300 font-mono mt-1">
+                  <p className="text-xs text-[#CBD5E1] mt-1">
                     {battleResult === 'victory'
                       ? 'Flawless arena victory! Ranking trophies awarded.'
-                      : 'Close battle! Train your dog or cat and strike back.'}
+                      : 'Close battle! Train your companion and strike back.'}
                   </p>
                 </div>
 
                 {battleResult === 'victory' && (
-                  <div className="p-2.5 bg-black/40 rounded-2xl border border-white/10 flex items-center justify-around font-mono text-xs font-bold">
-                    <span className="text-[#CCFF00]">+30 🏆 Trophies</span>
-                    <span className="text-amber-300">+450 🪙 Coins</span>
+                  <div className="p-3 bg-[#0B0F17] rounded-xl border border-[#2A364F] flex items-center justify-around font-mono text-sm font-bold tabular-nums">
+                    <span className="text-[#F59E0B] flex items-center gap-1.5">
+                      <Trophy className="w-4 h-4" />
+                      <span>+30 Trophies</span>
+                    </span>
+                    <span className="text-[#CBD5E1] flex items-center gap-1.5">
+                      <Coins className="w-4 h-4 text-[#F59E0B]" />
+                      <span>+450 Coins</span>
+                    </span>
                   </div>
                 )}
 
@@ -2244,7 +2203,7 @@ export const ArenaScreen: React.FC = () => {
                       sound.playClick();
                       startSlamMatch(selectedOpponent);
                     }}
-                    className="w-full py-3 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase tracking-wider cursor-pointer shadow-lg active:scale-98 transition-transform"
+                    className="w-full py-3 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-bold text-sm uppercase tracking-wider cursor-pointer shadow-md active:scale-98 transition-transform"
                   >
                     Rematch Duel
                   </button>
@@ -2253,7 +2212,7 @@ export const ArenaScreen: React.FC = () => {
                       sound.playClick();
                       setInBattle(false);
                     }}
-                    className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-xs font-bold cursor-pointer"
+                    className="w-full py-2.5 rounded-xl bg-[#1E2738] hover:bg-[#2A364F] border border-[#2A364F] text-[#F8FAFC] font-mono text-xs font-bold cursor-pointer"
                   >
                     Return to Arena Lobby
                   </button>

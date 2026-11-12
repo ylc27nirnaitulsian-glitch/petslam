@@ -21,6 +21,7 @@ import {
   Sliders,
   Check,
   AlertCircle,
+  PawPrint,
 } from 'lucide-react';
 import { ProceduralPetCanvas } from './ProceduralPetCanvas';
 import { usePetCompanion } from '../../../context/PetCompanionContext';
@@ -446,41 +447,42 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/85 backdrop-blur-md select-none">
-      <div className="relative w-full max-w-2xl bg-[#0B0F19] border border-white/10 rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-white font-sans">
+      <div className="relative w-full max-w-2xl bg-[#0B0F17] border border-[#2A364F] rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-[#F8FAFC] font-sans">
         {/* Header */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-[#12192A] via-[#101726] to-[#0A0D16]">
+        <div className="p-4 border-b border-[#2A364F] flex items-center justify-between bg-[#151C28]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#CCFF00]/15 border border-[#CCFF00]/40 flex items-center justify-center text-[#CCFF00] shadow-[0_0_12px_rgba(204,255,0,0.3)] shrink-0">
-              <Camera className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-[#F59E0B]/20 border border-[#F59E0B]/40 flex items-center justify-center text-[#F59E0B] shrink-0">
+              <Camera className="w-5 h-5 text-[#F59E0B]" />
             </div>
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+              <h2 className="text-base font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-2">
                 <span>Personal Pet Avatar & Fighter Studio</span>
-                <span className="text-[10px] bg-[#CCFF00] text-black px-2 py-0.5 rounded-full font-black font-mono">
+                <span className="text-xs bg-[#F59E0B] text-[#0B0F17] px-2.5 py-0.5 rounded-full font-bold font-mono">
                   $1.00 PASS
                 </span>
               </h2>
-              <p className="text-[11px] text-neutral-400">
+              <p className="text-sm text-[#CBD5E1]">
                 Turn your real dog or cat's photo into an animated companion & fight with them in the Arena!
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-xl hover:bg-white/5 cursor-pointer"
+            className="p-1.5 text-[#CBD5E1] hover:text-[#F8FAFC] rounded-xl hover:bg-[#1E2738] cursor-pointer transition-colors"
+            aria-label="Close studio"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Switcher: Photo Scanner vs Custom DNA Builder */}
-        <div className="px-4 pt-3 pb-1 border-b border-white/10 bg-[#0E1322] flex items-center gap-2">
+        <div className="px-4 pt-3 pb-1 border-b border-[#2A364F] bg-[#151C28] flex items-center gap-2">
           <button
             onClick={() => setActiveTab('photo')}
-            className={`py-2 px-3.5 rounded-xl font-mono text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`py-2 px-3.5 rounded-xl font-display text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
               activeTab === 'photo'
-                ? 'bg-[#CCFF00] text-black shadow-md'
-                : 'text-neutral-400 hover:text-white'
+                ? 'bg-[#F59E0B] text-[#0B0F17] shadow-md'
+                : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#1E2738]'
             }`}
           >
             <Camera className="w-4 h-4" />
@@ -489,27 +491,27 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
           <button
             onClick={() => setActiveTab('builder')}
-            className={`py-2 px-3.5 rounded-xl font-mono text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`py-2 px-3.5 rounded-xl font-display text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
               activeTab === 'builder'
-                ? 'bg-[#CCFF00] text-black shadow-md'
-                : 'text-neutral-400 hover:text-white'
+                ? 'bg-[#F59E0B] text-[#0B0F17] shadow-md'
+                : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#1E2738]'
             }`}
           >
             <Sliders className="w-4 h-4" />
             <span>Custom DNA Builder (Manual)</span>
           </button>
 
-          <div className="ml-auto flex items-center gap-1 text-[11px] font-mono">
+          <div className="ml-auto flex items-center gap-1 text-xs font-mono">
             {hasAvatarStudioPass ? (
-              <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                ✓ Pass Active
+              <span className="bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 px-2.5 py-0.5 rounded-full font-bold">
+                Pass Active
               </span>
             ) : !hasUsedFreeCustomPet ? (
-              <span className="bg-[#CCFF00]/20 text-[#CCFF00] border border-[#CCFF00]/60 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider animate-pulse">
-                ✨ Free Pass Available
+              <span className="bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/60 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-[#F59E0B]" /> Free Pass Available
               </span>
             ) : (
-              <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full text-[10px] font-bold">
+              <span className="bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/40 px-2.5 py-0.5 rounded-full font-bold">
                 $1.00 Pass
               </span>
             )}
@@ -525,8 +527,8 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
             !analyzedAvatar ? (
               <div className="space-y-4">
                 {/* Pet Name Input */}
-                <div className="bg-[#121724] border border-white/10 p-3 rounded-2xl">
-                  <label className="block text-xs font-mono font-bold text-neutral-300 mb-1">
+                <div className="bg-[#151C28] border border-[#2A364F] p-4 rounded-2xl">
+                  <label className="block text-sm font-sans font-bold text-[#CBD5E1] mb-1.5">
                     Your Pet's Real Name:
                   </label>
                   <input
@@ -534,7 +536,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                     value={petNameInput}
                     onChange={(e) => setPetNameInput(e.target.value)}
                     placeholder="e.g. Charlie, Milo, Bella, Bruno, Max..."
-                    className="w-full bg-[#070A10] border border-white/15 focus:border-[#CCFF00] rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-500 font-bold outline-none"
+                    className="w-full bg-[#0B0F17] border border-[#2A364F] focus:border-[#F59E0B] rounded-xl px-4 py-2.5 text-base text-[#F8FAFC] placeholder-[#94A3B8] font-bold outline-none"
                   />
                 </div>
 
@@ -551,13 +553,13 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                   onClick={() => fileInputRef.current?.click()}
                   className={`relative border-2 border-dashed rounded-3xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all ${
                     imagePreview
-                      ? 'border-[#CCFF00]/60 bg-black/40'
-                      : 'border-white/20 hover:border-[#CCFF00]/50 bg-[#0E1320] hover:bg-[#121828]'
+                      ? 'border-[#F59E0B] bg-[#0B0F17]/60'
+                      : 'border-[#2A364F] hover:border-[#F59E0B]/60 bg-[#151C28] hover:bg-[#1E2738]'
                   }`}
                 >
                   {imagePreview ? (
                     <div className="flex flex-col items-center gap-3">
-                      <div className="relative w-52 h-52 aspect-square rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.3)] group">
+                      <div className="relative w-52 h-52 aspect-square rounded-2xl overflow-hidden border-2 border-[#F59E0B] shadow-lg group">
                         <img
                           src={imagePreview}
                           alt="Your Pet"
@@ -567,14 +569,14 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                         {/* CYBER SCANNER HUD OVERLAY */}
                         <div className="absolute inset-0 pointer-events-none">
                           {/* 4 Corner Targeting Brackets */}
-                          <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400" />
-                          <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400" />
-                          <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400" />
-                          <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400" />
+                          <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#F59E0B]" />
+                          <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#F59E0B]" />
+                          <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#F59E0B]" />
+                          <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#F59E0B]" />
 
                           {/* Sweeping Laser Scanline */}
                           <div
-                            className={`absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#22d3ee] transition-all duration-700 ${
+                            className={`absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#F59E0B] to-transparent shadow-[0_0_12px_#F59E0B] transition-all duration-700 ${
                               isAnalyzing
                                 ? 'animate-bounce opacity-100 top-1/2'
                                 : 'opacity-40 top-1/4'
@@ -582,30 +584,30 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                           />
 
                           {/* Center Biometric Reticle */}
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-cyan-400/40 flex items-center justify-center">
-                            <div className="w-2 h-2 rounded-full bg-cyan-400/80 animate-ping" />
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-[#F59E0B]/40 flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-[#F59E0B]/80 animate-ping" />
                           </div>
 
                           {/* Status Badge */}
-                          <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md text-[8px] font-mono font-bold text-cyan-300 px-2 py-0.5 rounded border border-cyan-400/40">
-                            {isAnalyzing ? '⚡ AI SCANNING...' : 'SCANNER LOCKED ✓'}
+                          <div className="absolute top-2 right-2 bg-[#0B0F17]/90 backdrop-blur-md text-xs font-mono font-bold text-[#F59E0B] px-2 py-0.5 rounded border border-[#2A364F]">
+                            {isAnalyzing ? 'AI SCANNING...' : 'SCANNER LOCKED'}
                           </div>
-                          <div className="absolute bottom-2 left-2 bg-black/80 backdrop-blur-md text-[8px] font-mono text-neutral-300 px-2 py-0.5 rounded border border-white/10">
+                          <div className="absolute bottom-2 left-2 bg-[#0B0F17]/90 backdrop-blur-md text-xs font-mono text-[#CBD5E1] px-2 py-0.5 rounded border border-[#2A364F]">
                             TARGET: {petNameInput ? petNameInput.toUpperCase() : 'PET SPECIES'}
                           </div>
                         </div>
                       </div>
-                      <span className="text-xs text-neutral-400 hover:text-white flex items-center gap-1 font-mono">
-                        <RefreshCw className="w-3.5 h-3.5" /> Tap to choose a different photo
+                      <span className="text-sm text-[#CBD5E1] hover:text-[#F8FAFC] flex items-center gap-1.5 font-sans">
+                        <RefreshCw className="w-4 h-4 text-[#F59E0B]" /> Tap to choose a different photo
                       </span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2 text-center">
-                      <div className="w-14 h-14 rounded-full bg-[#CCFF00]/10 border border-[#CCFF00]/30 flex items-center justify-center text-[#CCFF00] mb-1">
-                        <Upload className="w-7 h-7" />
+                      <div className="w-14 h-14 rounded-full bg-[#1E2738] border border-[#2A364F] flex items-center justify-center text-[#F59E0B] mb-1">
+                        <Upload className="w-7 h-7 text-[#F59E0B]" />
                       </div>
-                      <div className="text-sm font-bold text-white">Click or Drag to Upload Pet Photo</div>
-                      <div className="text-xs text-neutral-400 max-w-sm">
+                      <div className="text-base font-bold text-[#F8FAFC]">Click or Drag to Upload Pet Photo</div>
+                      <div className="text-sm text-[#CBD5E1] max-w-sm">
                         Upload your real dog or cat photo. Our procedural engine extracts coat palettes, eyes, and markings!
                       </div>
                     </div>
@@ -614,8 +616,8 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
                 {/* 1-Click Samples */}
                 <div>
-                  <div className="text-[11px] font-mono font-bold text-neutral-400 mb-2 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#CCFF00]" />
+                  <div className="text-sm font-sans font-bold text-[#CBD5E1] mb-2 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#F59E0B]" />
                     <span>Or test with a sample pet photo:</span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -623,16 +625,16 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       <div
                         key={sample.id}
                         onClick={() => handleSelectSample(sample)}
-                        className="group bg-[#121724] hover:bg-[#182133] border border-white/10 hover:border-[#CCFF00]/50 p-2 rounded-xl cursor-pointer transition-all flex items-center gap-2.5"
+                        className="group bg-[#151C28] hover:bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B]/50 p-2.5 rounded-xl cursor-pointer transition-all flex items-center gap-2.5"
                       >
                         <img
                           src={sample.image}
                           alt={sample.label}
-                          className="w-10 h-10 rounded-lg object-cover border border-white/15 group-hover:scale-105 transition-transform"
+                          className="w-10 h-10 rounded-lg object-cover border border-[#2A364F] group-hover:scale-105 transition-transform"
                         />
                         <div className="overflow-hidden">
-                          <div className="text-xs font-bold text-white truncate">{sample.name}</div>
-                          <div className="text-[10px] text-neutral-400 truncate">{sample.label}</div>
+                          <div className="text-sm font-bold text-[#F8FAFC] truncate">{sample.name}</div>
+                          <div className="text-xs text-[#CBD5E1] truncate">{sample.label}</div>
                         </div>
                       </div>
                     ))}
@@ -641,18 +643,18 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
                 {/* Error Notice */}
                 {analysisError && (
-                  <div className="bg-red-950/70 border border-red-500/50 p-3.5 rounded-2xl flex items-start gap-3 text-red-200 text-xs animate-in fade-in">
-                    <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                  <div className="bg-[#F43F5E]/15 border border-[#F43F5E]/50 p-3.5 rounded-2xl flex items-start gap-3 text-red-200 text-sm animate-in fade-in">
+                    <AlertCircle className="w-5 h-5 text-[#F43F5E] shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="font-bold text-red-300">{analysisError}</p>
-                      <p className="text-[11px] text-red-200/80 mt-1">
+                      <p className="font-bold text-[#F43F5E]">{analysisError}</p>
+                      <p className="text-xs text-[#CBD5E1] mt-1">
                         Your photo is preserved. Click the button below to retry, or upload another image.
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setAnalysisError(null)}
-                      className="text-red-400 hover:text-white text-xs font-mono px-1 py-0.5"
+                      className="text-[#F43F5E] hover:text-white text-xs font-mono px-1 py-0.5 cursor-pointer"
                     >
                       Dismiss
                     </button>
@@ -663,16 +665,16 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                 <button
                   onClick={handleAnalyzePhoto}
                   disabled={!imagePreview || isAnalyzing}
-                  className="w-full bg-[#CCFF00] hover:bg-[#b8e600] disabled:opacity-40 disabled:cursor-not-allowed text-black font-black text-xs py-3.5 px-4 rounded-xl shadow-[0_0_20px_rgba(204,255,0,0.35)] flex items-center justify-center gap-2 font-mono uppercase tracking-wider cursor-pointer active:scale-98 transition-all"
+                  className="w-full bg-[#F59E0B] hover:bg-[#D97706] disabled:opacity-40 disabled:cursor-not-allowed text-[#0B0F17] font-display font-black text-sm py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 uppercase tracking-wider cursor-pointer active:scale-98 transition-all"
                 >
                   {isAnalyzing ? (
                     <>
-                      <RefreshCw className="w-4 h-4 animate-spin text-black" />
+                      <RefreshCw className="w-5 h-5 animate-spin text-[#0B0F17]" />
                       <span>{analysisStep || 'Synthesizing Avatar...'}</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-4 h-4 text-black" />
+                      <Sparkles className="w-5 h-5 text-[#0B0F17]" />
                       <span>Synthesize Personal Pet Avatar & Combat Moveset</span>
                     </>
                   )}
@@ -689,13 +691,13 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       transform: `perspective(1000px) rotateX(${cardTilt.rotateX}deg) rotateY(${cardTilt.rotateY}deg)`,
                       transition: 'transform 0.15s ease-out',
                     }}
-                    className="relative w-full max-w-sm rounded-3xl overflow-hidden p-1 shadow-[0_0_40px_rgba(204,255,0,0.25)] border-2 border-[#CCFF00] bg-gradient-to-b from-[#1E293B] via-[#0F172A] to-[#050811] cursor-pointer group select-none"
+                    className="relative w-full max-w-sm rounded-3xl overflow-hidden p-1 shadow-2xl border-2 border-[#F59E0B] bg-gradient-to-b from-[#1E2738] via-[#151C28] to-[#0B0F17] cursor-pointer group select-none"
                   >
                     {/* Dynamic Iridescent Holo-Foil Overlay */}
                     <div
                       className="absolute inset-0 pointer-events-none z-30 transition-opacity duration-300 mix-blend-color-dodge opacity-60"
                       style={{
-                        background: `radial-gradient(circle at ${cardTilt.glareX}% ${cardTilt.glareY}%, rgba(255,255,255,0.85) 0%, rgba(204,255,0,0.5) 25%, rgba(6,182,212,0.6) 50%, rgba(217,70,239,0.5) 75%, transparent 100%)`,
+                        background: `radial-gradient(circle at ${cardTilt.glareX}% ${cardTilt.glareY}%, rgba(255,255,255,0.85) 0%, rgba(245,158,11,0.5) 25%, rgba(16,185,129,0.5) 50%, rgba(244,63,94,0.5) 75%, transparent 100%)`,
                       }}
                     />
 
@@ -703,28 +705,28 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                     <div
                       className="absolute inset-0 pointer-events-none z-30 opacity-40 mix-blend-screen"
                       style={{
-                        background: `linear-gradient(${115 + cardTilt.rotateY * 2}deg, transparent 20%, rgba(255,255,255,0.4) 45%, rgba(204,255,0,0.6) 50%, rgba(6,182,212,0.4) 55%, transparent 80%)`,
+                        background: `linear-gradient(${115 + cardTilt.rotateY * 2}deg, transparent 20%, rgba(255,255,255,0.4) 45%, rgba(245,158,11,0.6) 50%, rgba(16,185,129,0.4) 55%, transparent 80%)`,
                       }}
                     />
 
                     {/* Card Content Container */}
-                    <div className="relative z-20 rounded-[22px] bg-[#090D18]/90 backdrop-blur-md p-4 flex flex-col items-center text-white border border-white/10">
+                    <div className="relative z-20 rounded-[22px] bg-[#0B0F17]/95 backdrop-blur-md p-4 flex flex-col items-center text-[#F8FAFC] border border-[#2A364F]">
                       {/* Card Top Stamp Header */}
-                      <div className="w-full flex items-center justify-between pb-2 mb-2 border-b border-white/10">
-                        <span className="text-[10px] font-mono font-black text-[#CCFF00] tracking-widest flex items-center gap-1">
+                      <div className="w-full flex items-center justify-between pb-2 mb-2 border-b border-[#2A364F]">
+                        <span className="text-xs font-mono font-bold text-[#F59E0B] tracking-widest flex items-center gap-1">
                           <span>✦</span>
-                          <span>CYBER HOLO-FOIL EDITION</span>
+                          <span>ARCADE HOLO-CHAMPION</span>
                           <span>✦</span>
                         </span>
-                        <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
-                          HOLO MINT ✓
+                        <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40">
+                          MINT READY
                         </span>
                       </div>
 
                       {/* Card Visual Hero: Dual View Uploaded Photo + Procedural Game Avatar */}
                       <div className="w-full grid grid-cols-2 gap-2 mb-3">
                         {/* Uploaded Photo */}
-                        <div className="relative aspect-square rounded-xl overflow-hidden border border-white/20 bg-black">
+                        <div className="relative aspect-square rounded-xl overflow-hidden border border-[#2A364F] bg-[#0B0F17]">
                           {imagePreview && (
                             <img
                               src={imagePreview}
@@ -732,13 +734,13 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                               className="w-full h-full object-cover"
                             />
                           )}
-                          <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/80 text-[8px] font-mono text-neutral-300">
-                            Real Pet Photo
+                          <div className="absolute bottom-1 left-1 px-2 py-0.5 rounded bg-[#0B0F17]/90 text-xs font-mono text-[#CBD5E1]">
+                            Photo
                           </div>
                         </div>
 
                         {/* Live Procedural Game Avatar */}
-                        <div className="relative aspect-square rounded-xl overflow-hidden border border-[#CCFF00]/40 bg-gradient-to-b from-[#141C2E] to-black flex items-center justify-center">
+                        <div className="relative aspect-square rounded-xl overflow-hidden border border-[#F59E0B]/50 bg-[#151C28] flex items-center justify-center">
                           <ProceduralPetCanvas
                             species={analyzedAvatar.species}
                             stage={1}
@@ -748,23 +750,23 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                             customPalette={activePalette || analyzedAvatar.palette}
                             customFeatures={analyzedAvatar.features}
                           />
-                          <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-[#CCFF00]/20 border border-[#CCFF00]/40 text-[8px] font-mono font-bold text-[#CCFF00]">
-                            Live Avatar
+                          <div className="absolute bottom-1 right-1 px-2 py-0.5 rounded bg-[#F59E0B] text-[#0B0F17] text-xs font-mono font-bold uppercase">
+                            Avatar
                           </div>
                         </div>
                       </div>
 
                       {/* Pet Identity & Title */}
                       <div className="text-center mb-3">
-                        <h3 className="font-display font-black text-lg text-white uppercase tracking-wider">
+                        <h3 className="font-display font-black text-xl text-[#F8FAFC] uppercase tracking-wider">
                           {analyzedAvatar.name}
                         </h3>
                         <div className="flex items-center justify-center gap-2 mt-0.5">
-                          <span className="text-xs font-mono font-bold text-[#CCFF00]">
+                          <span className="text-sm font-sans font-bold text-[#F59E0B]">
                             {analyzedAvatar.breedName}
                           </span>
-                          <span className="text-neutral-500">·</span>
-                          <span className="text-xs font-mono text-cyan-300">
+                          <span className="text-[#94A3B8]">·</span>
+                          <span className="text-sm font-sans text-[#CBD5E1]">
                             {analyzedAvatar.title}
                           </span>
                         </div>
@@ -772,48 +774,48 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
                       {/* Stat Radar Hex Badges */}
                       <div className="w-full grid grid-cols-4 gap-1.5 mb-3 text-center font-mono">
-                        <div className="bg-white/5 border border-white/10 rounded-xl p-1.5">
-                          <div className="text-[9px] text-neutral-400">ATK</div>
-                          <div className="text-xs font-black text-rose-400">
+                        <div className="bg-[#151C28] border border-[#2A364F] rounded-xl p-2">
+                          <div className="text-xs text-[#CBD5E1]">ATK</div>
+                          <div className="text-sm font-bold text-[#F43F5E] tabular-nums">
                             {analyzedAvatar.stats.attack}
                           </div>
                         </div>
-                        <div className="bg-white/5 border border-white/10 rounded-xl p-1.5">
-                          <div className="text-[9px] text-neutral-400">DEF</div>
-                          <div className="text-xs font-black text-blue-400">
+                        <div className="bg-[#151C28] border border-[#2A364F] rounded-xl p-2">
+                          <div className="text-xs text-[#CBD5E1]">DEF</div>
+                          <div className="text-sm font-bold text-sky-400 tabular-nums">
                             {analyzedAvatar.stats.defense}
                           </div>
                         </div>
-                        <div className="bg-white/5 border border-white/10 rounded-xl p-1.5">
-                          <div className="text-[9px] text-neutral-400">AGI</div>
-                          <div className="text-xs font-black text-emerald-400">
+                        <div className="bg-[#151C28] border border-[#2A364F] rounded-xl p-2">
+                          <div className="text-xs text-[#CBD5E1]">AGI</div>
+                          <div className="text-sm font-bold text-[#10B981] tabular-nums">
                             {analyzedAvatar.stats.agility}
                           </div>
                         </div>
-                        <div className="bg-white/5 border border-white/10 rounded-xl p-1.5">
-                          <div className="text-[9px] text-neutral-400">STA</div>
-                          <div className="text-xs font-black text-amber-400">
+                        <div className="bg-[#151C28] border border-[#2A364F] rounded-xl p-2">
+                          <div className="text-xs text-[#CBD5E1]">STA</div>
+                          <div className="text-sm font-bold text-[#F59E0B] tabular-nums">
                             {analyzedAvatar.stats.stamina}
                           </div>
                         </div>
                       </div>
 
                       {/* Signature Move & CP Banner */}
-                      <div className="w-full bg-[#CCFF00]/10 border border-[#CCFF00]/40 rounded-xl p-2 mb-1 flex items-center justify-between text-xs font-mono">
-                        <div className="flex items-center gap-1.5">
-                          <Zap className="w-4 h-4 text-[#CCFF00]" />
+                      <div className="w-full bg-[#151C28] border border-[#2A364F] rounded-xl p-2.5 mb-1 flex items-center justify-between text-sm font-sans">
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-[#F59E0B]" />
                           <div>
-                            <div className="font-bold text-white uppercase text-[11px]">
+                            <div className="font-bold text-[#F8FAFC] uppercase text-sm">
                               {analyzedAvatar.signatureMove.name}
                             </div>
-                            <div className="text-[9px] text-neutral-400 line-clamp-1">
+                            <div className="text-xs text-[#CBD5E1] line-clamp-1">
                               {analyzedAvatar.signatureMove.description}
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-[9px] text-neutral-400 uppercase">Power</div>
-                          <div className="text-sm font-black text-[#CCFF00]">
+                        <div className="text-right shrink-0">
+                          <div className="text-xs text-[#CBD5E1] uppercase font-mono">Power</div>
+                          <div className="text-base font-black text-[#F59E0B] tabular-nums font-mono">
                             CP {analyzedAvatar.stats.cp}
                           </div>
                         </div>
@@ -824,15 +826,15 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
                 {/* Extracted Colors */}
                 {activePalette && (
-                  <div className="bg-[#121724] border border-white/10 p-3 rounded-2xl space-y-2">
-                    <div className="text-xs font-mono font-bold text-white flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Palette className="w-3.5 h-3.5 text-[#CCFF00]" />
+                  <div className="bg-[#151C28] border border-[#2A364F] p-4 rounded-2xl space-y-2">
+                    <div className="text-sm font-sans font-bold text-[#F8FAFC] flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Palette className="w-4 h-4 text-[#F59E0B]" />
                         <span>Extracted Fur & Features Palette (Tap to fine-tune):</span>
                       </div>
-                      <span className="text-[10px] text-[#CCFF00] font-mono">6 Swatches</span>
+                      <span className="text-xs text-[#F59E0B] font-mono">6 Swatches</span>
                     </div>
-                    <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-[10px] font-mono">
+                    <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs font-sans">
                       {[
                         { key: 'primary', label: 'Main Fur', color: activePalette.primary },
                         { key: 'secondary', label: 'Accent', color: activePalette.secondary },
@@ -843,10 +845,10 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       ].map((item) => (
                         <label
                           key={item.key}
-                          className="bg-[#090C14] border border-white/10 p-1.5 rounded-lg flex flex-col items-center gap-1 cursor-pointer hover:border-white/30"
+                          className="bg-[#0B0F17] border border-[#2A364F] p-2 rounded-xl flex flex-col items-center gap-1.5 cursor-pointer hover:border-[#F59E0B]/50 transition-colors"
                         >
                           <div
-                            className="w-7 h-7 rounded-full border border-white/30 shadow-inner relative overflow-hidden"
+                            className="w-8 h-8 rounded-full border border-white/30 shadow-inner relative overflow-hidden"
                             style={{ backgroundColor: item.color }}
                           >
                             <input
@@ -855,13 +857,13 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                               onChange={(e) => {
                                 const newColor = e.target.value;
                                 setActivePalette((prev) =>
-                                  prev ? { ...prev, [item.key]: newColor } : null
+                                   prev ? { ...prev, [item.key]: newColor } : null
                                 );
                               }}
                               className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
                             />
                           </div>
-                          <span className="text-neutral-400 text-[9px]">{item.label}</span>
+                          <span className="text-[#CBD5E1] text-xs font-semibold">{item.label}</span>
                         </label>
                       ))}
                     </div>
@@ -872,16 +874,16 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                 <button
                   onClick={handleSaveToKennelAndArena}
                   disabled={isSaved}
-                  className="w-full bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black text-xs py-3.5 px-4 rounded-xl shadow-[0_0_25px_rgba(204,255,0,0.4)] flex items-center justify-center gap-2 font-mono uppercase tracking-wider cursor-pointer active:scale-98 transition-all"
+                  className="w-full bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-black text-sm py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 uppercase tracking-wider cursor-pointer active:scale-98 transition-all"
                 >
                   {isSaved ? (
                     <>
-                      <CheckCircle className="w-4 h-4 text-black" />
+                      <CheckCircle className="w-5 h-5 text-[#0B0F17]" />
                       <span>Activated! {analyzedAvatar.name} is in your Sanctuary & Arena Roster!</span>
                     </>
                   ) : (
                     <>
-                      <Award className="w-4 h-4 text-black" />
+                      <Award className="w-5 h-5 text-[#0B0F17]" />
                       <span>Mint Holo Card & Deploy {analyzedAvatar.name} to Battle Arena!</span>
                     </>
                   )}
@@ -897,19 +899,19 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                 {/* Left: Customizer Controls */}
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-mono font-bold text-neutral-300 mb-1">
+                    <label className="block text-sm font-sans font-bold text-[#CBD5E1] mb-1">
                       Pet Name:
                     </label>
                     <input
                       type="text"
                       value={builderName}
                       onChange={(e) => setBuilderName(e.target.value)}
-                      className="w-full bg-[#070A10] border border-white/15 focus:border-[#CCFF00] rounded-xl px-3 py-2 text-xs text-white font-bold outline-none"
+                      className="w-full bg-[#0B0F17] border border-[#2A364F] focus:border-[#F59E0B] rounded-xl px-3 py-2 text-base text-[#F8FAFC] font-bold outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono font-bold text-neutral-300 mb-1">
+                    <label className="block text-sm font-sans font-bold text-[#CBD5E1] mb-1">
                       Species & Category:
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -931,13 +933,13 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                             nose: '#0F172A',
                           });
                         }}
-                        className={`p-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        className={`p-2.5 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           builderCategory === 'dog'
-                            ? 'bg-[#CCFF00] text-black border-[#CCFF00] font-black shadow-md'
-                            : 'bg-[#121824] text-neutral-400 border-white/10 hover:text-white'
+                            ? 'bg-[#F59E0B] text-[#0B0F17] border-[#F59E0B] font-black shadow-md'
+                            : 'bg-[#151C28] text-[#CBD5E1] border-[#2A364F] hover:text-[#F8FAFC] hover:bg-[#1E2738]'
                         }`}
                       >
-                        <span className="text-base">🐶</span>
+                        <PawPrint className="w-4 h-4" />
                         <span>Canine Dog</span>
                       </button>
                       <button
@@ -958,13 +960,13 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                             nose: '#F472B6',
                           });
                         }}
-                        className={`p-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        className={`p-2.5 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           builderCategory === 'cat'
-                            ? 'bg-[#CCFF00] text-black border-[#CCFF00] font-black shadow-md'
-                            : 'bg-[#121824] text-neutral-400 border-white/10 hover:text-white'
+                            ? 'bg-[#F59E0B] text-[#0B0F17] border-[#F59E0B] font-black shadow-md'
+                            : 'bg-[#151C28] text-[#CBD5E1] border-[#2A364F] hover:text-[#F8FAFC] hover:bg-[#1E2738]'
                         }`}
                       >
-                        <span className="text-base">🐱</span>
+                        <PawPrint className="w-4 h-4" />
                         <span>Feline Cat</span>
                       </button>
                     </div>
@@ -972,7 +974,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
                   {/* Breed Selector */}
                   <div>
-                    <label className="block text-xs font-mono font-bold text-neutral-300 mb-1">
+                    <label className="block text-sm font-sans font-bold text-[#CBD5E1] mb-1">
                       Breed / Morph:
                     </label>
                     <select
@@ -992,7 +994,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                         };
                         setBuilderBreed(names[sp] || 'Pedigree');
                       }}
-                      className="w-full bg-[#070A10] border border-white/15 focus:border-[#CCFF00] rounded-xl px-3 py-2 text-xs text-white font-bold outline-none cursor-pointer"
+                      className="w-full bg-[#0B0F17] border border-[#2A364F] focus:border-[#F59E0B] rounded-xl px-3 py-2 text-base text-[#F8FAFC] font-bold outline-none cursor-pointer"
                     >
                       {builderCategory === 'dog' ? (
                         <>
@@ -1013,12 +1015,12 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                   </div>
 
                   {/* Ear & Accessory Toggles */}
-                  <div className="grid grid-cols-4 gap-1.5 text-[10px] font-mono">
+                  <div className="grid grid-cols-4 gap-1.5 text-xs font-mono">
                     <button
                       type="button"
                       onClick={() => setBuilderEarType('pointed')}
                       className={`p-2 rounded-lg border text-center cursor-pointer transition-all ${
-                        builderEarType === 'pointed' ? 'border-[#CCFF00] bg-[#CCFF00]/15 text-[#CCFF00] font-bold' : 'border-white/10 text-neutral-400'
+                        builderEarType === 'pointed' ? 'border-[#F59E0B] bg-[#F59E0B]/20 text-[#F59E0B] font-bold' : 'border-[#2A364F] text-[#CBD5E1] bg-[#151C28]'
                       }`}
                     >
                       Pointed
@@ -1027,7 +1029,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       type="button"
                       onClick={() => setBuilderEarType('floppy')}
                       className={`p-2 rounded-lg border text-center cursor-pointer transition-all ${
-                        builderEarType === 'floppy' ? 'border-[#CCFF00] bg-[#CCFF00]/15 text-[#CCFF00] font-bold' : 'border-white/10 text-neutral-400'
+                        builderEarType === 'floppy' ? 'border-[#F59E0B] bg-[#F59E0B]/20 text-[#F59E0B] font-bold' : 'border-[#2A364F] text-[#CBD5E1] bg-[#151C28]'
                       }`}
                     >
                       Floppy
@@ -1036,7 +1038,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       type="button"
                       onClick={() => setBuilderEarType('round')}
                       className={`p-2 rounded-lg border text-center cursor-pointer transition-all ${
-                        builderEarType === 'round' ? 'border-[#CCFF00] bg-[#CCFF00]/15 text-[#CCFF00] font-bold' : 'border-white/10 text-neutral-400'
+                        builderEarType === 'round' ? 'border-[#F59E0B] bg-[#F59E0B]/20 text-[#F59E0B] font-bold' : 'border-[#2A364F] text-[#CBD5E1] bg-[#151C28]'
                       }`}
                     >
                       Round
@@ -1045,7 +1047,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       type="button"
                       onClick={() => setBuilderEyePatch((p) => !p)}
                       className={`p-2 rounded-lg border text-center cursor-pointer transition-all ${
-                        builderEyePatch ? 'border-[#CCFF00] bg-[#CCFF00]/15 text-[#CCFF00] font-bold' : 'border-white/10 text-neutral-400'
+                        builderEyePatch ? 'border-[#F59E0B] bg-[#F59E0B]/20 text-[#F59E0B] font-bold' : 'border-[#2A364F] text-[#CBD5E1] bg-[#151C28]'
                       }`}
                     >
                       Patch: {builderEyePatch ? 'ON' : 'OFF'}
@@ -1054,7 +1056,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
                   {/* Signature Move */}
                   <div>
-                    <label className="block text-xs font-mono font-bold text-amber-400 mb-1">
+                    <label className="block text-sm font-sans font-bold text-[#F59E0B] mb-1">
                       Signature Combat Move:
                     </label>
                     <input
@@ -1062,19 +1064,19 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       value={builderMoveName}
                       onChange={(e) => setBuilderMoveName(e.target.value)}
                       placeholder="e.g. Thunder Bite, Shadow Slash..."
-                      className="w-full bg-[#070A10] border border-amber-500/30 focus:border-amber-400 rounded-xl px-3 py-2 text-xs text-white font-bold outline-none"
+                      className="w-full bg-[#0B0F17] border border-[#2A364F] focus:border-[#F59E0B] rounded-xl px-3 py-2 text-base text-[#F8FAFC] font-bold outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Right: Live Interactive Avatar Preview */}
-                <div className="bg-[#0E1320] border border-[#CCFF00]/40 rounded-3xl p-4 flex flex-col items-center justify-between shadow-[0_0_30px_rgba(204,255,0,0.15)]">
-                  <span className="text-[10px] font-mono font-bold text-[#CCFF00] uppercase tracking-wider mb-1 flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5" />
+                <div className="bg-[#151C28] border border-[#2A364F] rounded-3xl p-4 flex flex-col items-center justify-between shadow-lg">
+                  <span className="text-xs font-mono font-bold text-[#F59E0B] uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#F59E0B]" />
                     <span>Real-Time Canvas Synthesis</span>
                   </span>
 
-                  <div className="w-48 h-48 bg-[radial-gradient(circle,#1e293b_0%,#07090e_80%)] rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden my-2">
+                  <div className="w-48 h-48 bg-[#0B0F17] rounded-2xl border border-[#2A364F] flex items-center justify-center overflow-hidden my-2">
                     <ProceduralPetCanvas
                       species={builderSpecies}
                       stage={1}
@@ -1094,10 +1096,10 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                   </div>
 
                   <div className="w-full text-center">
-                    <h3 className="font-display font-black text-sm uppercase text-white tracking-wide">
+                    <h3 className="font-display font-black text-base uppercase text-[#F8FAFC] tracking-wide">
                       {builderName}
                     </h3>
-                    <div className="text-[11px] font-mono text-[#CCFF00] font-bold">
+                    <div className="text-sm font-mono text-[#F59E0B] font-bold">
                       {builderBreed} · Arena Ready
                     </div>
                   </div>
@@ -1105,13 +1107,13 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
               </div>
 
               {/* Palette Choosers */}
-              <div className="bg-[#121724] border border-white/10 p-3 rounded-2xl space-y-3">
+              <div className="bg-[#151C28] border border-[#2A364F] p-4 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
-                    <Palette className="w-3.5 h-3.5 text-[#CCFF00]" />
+                  <span className="text-sm font-sans font-bold text-[#F8FAFC] flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-[#F59E0B]" />
                     <span>Coat DNA Presets & Custom Swatches:</span>
                   </span>
-                  <span className="text-[10px] font-mono text-[#CCFF00]">1-Click Presets</span>
+                  <span className="text-xs font-mono text-[#F59E0B]">1-Click Presets</span>
                 </div>
 
                 {/* Instant DNA Style Presets */}
@@ -1155,10 +1157,10 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                         sound.playClick();
                         setBuilderPalette(preset.palette);
                       }}
-                      className="group relative p-1.5 rounded-xl border border-white/10 hover:border-[#CCFF00] bg-[#0A0E18] text-center cursor-pointer transition-all hover:scale-102"
+                      className="group relative p-2 rounded-xl border border-[#2A364F] hover:border-[#F59E0B] bg-[#0B0F17] text-center cursor-pointer transition-all hover:scale-102"
                     >
                       <div className={`w-full h-3.5 rounded-md bg-gradient-to-r ${preset.bg} mb-1`} />
-                      <span className="text-[9px] font-mono font-bold text-neutral-300 group-hover:text-white truncate block">
+                      <span className="text-xs font-sans text-[#CBD5E1] group-hover:text-[#F8FAFC] truncate block">
                         {preset.name}
                       </span>
                     </button>
@@ -1166,7 +1168,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                 </div>
 
                 {/* 6 Color Feature Slots */}
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-[10px] font-mono">
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs font-mono">
                   {[
                     { key: 'primary' as const, label: 'Main Fur', color: builderPalette.primary },
                     { key: 'secondary' as const, label: 'Accent', color: builderPalette.secondary },
@@ -1186,8 +1188,8 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                         }}
                         className={`p-2 rounded-xl flex flex-col items-center gap-1.5 cursor-pointer transition-all border ${
                           isSelected
-                            ? 'bg-[#1A2234] border-[#CCFF00] shadow-[0_0_12px_rgba(204,255,0,0.35)] scale-102'
-                            : 'bg-[#090C14] border-white/10 hover:border-white/30 text-neutral-400'
+                            ? 'bg-[#1E2738] border-[#F59E0B] scale-102'
+                            : 'bg-[#0B0F17] border-[#2A364F] hover:border-[#3E4F6F] text-[#CBD5E1]'
                         }`}
                       >
                         <div
@@ -1196,10 +1198,10 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                         >
                           {isSelected && <div className="w-2 h-2 rounded-full bg-white shadow-xs" />}
                         </div>
-                        <span className={`text-[10px] font-bold ${isSelected ? 'text-[#CCFF00]' : 'text-neutral-300'}`}>
+                        <span className={`text-xs font-bold ${isSelected ? 'text-[#F59E0B]' : 'text-[#F8FAFC]'}`}>
                           {item.label}
                         </span>
-                        <span className="text-[9px] font-mono text-neutral-500 uppercase">
+                        <span className="text-xs font-mono text-[#94A3B8] uppercase">
                           {item.color}
                         </span>
                       </button>
@@ -1208,13 +1210,14 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                 </div>
 
                 {/* 1-Click Interactive Color Palette Swatches */}
-                <div className="p-3 bg-[#0A0E18] rounded-xl border border-white/10 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-neutral-300">
-                      Tap Swatch to Paint <strong className="text-[#CCFF00] uppercase font-bold">{activeColorSlot}</strong>:
+                <div className="p-3 bg-[#0B0F17] rounded-xl border border-[#2A364F] space-y-2">
+                  <div className="flex items-center justify-between text-sm font-sans">
+                    <span className="text-[#CBD5E1]">
+                      Tap Swatch to Paint <strong className="text-[#F59E0B] uppercase font-bold">{activeColorSlot}</strong>:
                     </span>
-                    <label className="flex items-center gap-1 text-[11px] text-cyan-300 hover:underline cursor-pointer">
-                      <span>Custom 🎨</span>
+                    <label className="flex items-center gap-1.5 text-xs text-[#F59E0B] hover:underline cursor-pointer">
+                      <Palette className="w-3.5 h-3.5" />
+                      <span>Custom</span>
                       <input
                         type="color"
                         value={builderPalette[activeColorSlot]}
@@ -1222,7 +1225,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                           const val = e.target.value;
                           setBuilderPalette((prev) => ({ ...prev, [activeColorSlot]: val }));
                         }}
-                        className="w-5 h-5 rounded cursor-pointer border border-white/20 bg-transparent p-0"
+                        className="w-5 h-5 rounded cursor-pointer border border-[#2A364F] bg-transparent p-0"
                       />
                     </label>
                   </div>
@@ -1239,7 +1242,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       { hex: '#FEF3C7', name: 'Siamese Cream' },
                       { hex: '#F472B6', name: 'Petal Pink' },
                       { hex: '#00F0FF', name: 'Neon Cyan' },
-                      { hex: '#CCFF00', name: 'Cyber Lime' },
+                      { hex: '#10B981', name: 'Emerald Green' },
                       { hex: '#A855F7', name: 'Lavender Purple' },
                       { hex: '#DC2626', name: 'Crimson Flame' },
                       { hex: '#38BDF8', name: 'Arctic Blue' },
@@ -1251,7 +1254,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                           sound.playClick();
                           setBuilderPalette((prev) => ({ ...prev, [activeColorSlot]: swatch.hex }));
                         }}
-                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 border-white/20 hover:border-[#CCFF00] hover:scale-110 transition-all cursor-pointer shadow-md flex items-center justify-center"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 border-[#2A364F] hover:border-[#F59E0B] hover:scale-110 transition-all cursor-pointer shadow-md flex items-center justify-center"
                         style={{ backgroundColor: swatch.hex }}
                         title={`${swatch.name} (${swatch.hex})`}
                       >
@@ -1268,16 +1271,16 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
               <button
                 onClick={handleSaveToKennelAndArena}
                 disabled={isSaved}
-                className="w-full bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black text-xs py-3.5 px-4 rounded-xl shadow-[0_0_25px_rgba(204,255,0,0.4)] flex items-center justify-center gap-2 font-mono uppercase tracking-wider cursor-pointer active:scale-98 transition-all"
+                className="w-full bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-black text-sm py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 uppercase tracking-wider cursor-pointer active:scale-98 transition-all"
               >
                 {isSaved ? (
                   <>
-                    <CheckCircle className="w-4 h-4 text-black" />
+                    <CheckCircle className="w-5 h-5 text-[#0B0F17]" />
                     <span>Created! {builderName} is now in your Sanctuary & Arena Roster!</span>
                   </>
                 ) : (
                   <>
-                    <Award className="w-4 h-4 text-black" />
+                    <Award className="w-5 h-5 text-[#0B0F17]" />
                     <span>Create Custom Pet & Deploy to Battle Arena!</span>
                   </>
                 )}
@@ -1289,21 +1292,21 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
         {/* Pass Purchase Trigger Modal */}
         {showPassModal && (
           <div className="absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-            <div className="bg-[#121728] border border-[#CCFF00]/40 rounded-3xl p-5 max-w-sm w-full shadow-2xl text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#CCFF00]/20 text-[#CCFF00] flex items-center justify-center mx-auto">
-                <Camera className="w-6 h-6" />
+            <div className="bg-[#151C28] border border-[#2A364F] rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/30 flex items-center justify-center mx-auto">
+                <Camera className="w-6 h-6 text-[#F59E0B]" />
               </div>
-              <h3 className="font-display font-black text-lg uppercase text-white">
+              <h3 className="font-display font-black text-lg uppercase text-[#F8FAFC]">
                 Custom Pet DNA Pass
               </h3>
-              <p className="text-xs text-neutral-300">
+              <p className="text-sm text-[#CBD5E1]">
                 Turn your real pet photo into an animated avatar & playable battle fighter!
               </p>
-              <div className="p-2.5 bg-black/40 rounded-xl border border-white/10 text-xs font-mono font-bold text-[#CCFF00]">
+              <div className="p-2.5 bg-[#0B0F17] rounded-xl border border-[#2A364F] text-sm font-mono font-bold text-[#F59E0B]">
                 $1.00 USD or 1,000 Slam Credits
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-2">
+              <div className="pt-2">
                 <button
                   onClick={async () => {
                     try {
@@ -1322,7 +1325,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
                       alert(e?.message || 'Failed to connect to Dodo Payments');
                     }
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold text-xs uppercase cursor-pointer shadow-md"
+                  className="w-full py-3 px-4 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-bold text-sm uppercase cursor-pointer shadow-md transition-all"
                 >
                   Unlock AI Photo Pass $1.00 (Dodo Payments)
                 </button>
@@ -1330,7 +1333,7 @@ export const PetAvatarPhotoStudioModal: React.FC<PetAvatarPhotoStudioModalProps>
 
               <button
                 onClick={() => setShowPassModal(false)}
-                className="text-[11px] text-neutral-400 hover:text-white underline cursor-pointer mt-1"
+                className="text-sm text-[#CBD5E1] hover:text-[#F8FAFC] underline cursor-pointer mt-1"
               >
                 Cancel
               </button>

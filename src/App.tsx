@@ -8,23 +8,8 @@ import { AlphaQueueModal } from './components/game/AlphaQueueModal';
 import { PetSlamIntroSplash } from './components/game/PetSlamIntroSplash';
 
 export default function App() {
-  const [showIntro, setShowIntro] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.toLowerCase();
-      if (
-        hash === '#game' ||
-        hash === '#arena' ||
-        hash.includes('access_token') ||
-        window.location.search.includes('code=')
-      ) {
-        return false;
-      }
-      const hasEntered = localStorage.getItem('petslam_has_entered_game') === 'true';
-      const remember = localStorage.getItem('petslam_remember_me') !== 'false';
-      if (hasEntered && remember) return false;
-    }
-    return true;
-  });
+  // Heavy Intro FX disabled for MVP to prioritize fast, direct access
+  const [showIntro, setShowIntro] = useState<boolean>(false);
 
   const [hasEnteredGame, setHasEnteredGame] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -84,7 +69,7 @@ export default function App() {
   return (
     <GameProvider>
       <PetCompanionProvider>
-        <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-50 text-slate-900 dark:bg-[#0B0E14] dark:text-slate-50 font-medium flex flex-col selection:bg-[#CCFF00] selection:text-black transition-colors duration-300">
+        <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#0B0F17] text-[#F8FAFC] font-medium flex flex-col selection:bg-[#F59E0B] selection:text-black transition-colors duration-150">
         {showIntro && <PetSlamIntroSplash onComplete={() => setShowIntro(false)} />}
         {showSystemDetailsDirect ? (
           <>

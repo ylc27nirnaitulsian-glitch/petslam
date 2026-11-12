@@ -51,13 +51,13 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full max-w-full overflow-hidden bg-white/95 dark:bg-[#090D17]/98 backdrop-blur-xl border-b border-slate-200 dark:border-white/20 shadow-md dark:shadow-xl px-2 sm:px-5 py-2 sm:py-2.5 flex items-center justify-between select-none text-slate-900 dark:text-white gap-1.5 sm:gap-3 transition-colors duration-300">
+      <header className="sticky top-0 z-40 w-full max-w-full overflow-hidden bg-white/95 dark:bg-[#151C28] backdrop-blur-xl border-b border-slate-200 dark:border-[#2A364F] shadow-sm px-2 sm:px-5 py-2 sm:py-2.5 flex items-center justify-between select-none text-slate-900 dark:text-[#F8FAFC] gap-1.5 sm:gap-3 transition-colors duration-150">
         {/* Left Side: Profile & Account (Truncates gracefully, NEVER overlaps right controls) */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink">
           {onReturnToTitle && (
             <button
               onClick={onReturnToTitle}
-              className="p-1.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/90 dark:hover:bg-slate-800 border border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white cursor-pointer shrink-0 transition-colors shadow-xs"
+              className="p-1.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2738] dark:hover:bg-[#2A364F] border border-slate-300 dark:border-[#2A364F] text-slate-700 dark:text-[#CBD5E1] hover:text-slate-950 dark:hover:text-[#F8FAFC] cursor-pointer shrink-0 transition-colors shadow-xs"
               title="Return to Title Screen"
             >
               <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -67,11 +67,11 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
           {/* Account Button (Google Cloud Player Hub) */}
           <button
             onClick={() => setAuthModalOpen(true)}
-            className="flex items-center gap-1.5 sm:gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/90 dark:hover:bg-slate-800 border border-slate-300 dark:border-white/20 rounded-xl px-1.5 sm:px-2.5 py-1 sm:py-1.5 transition-all cursor-pointer shadow-sm min-w-0 shrink text-left"
+            className="flex items-center gap-1.5 sm:gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-[#1E2738] dark:hover:bg-[#2A364F] border border-slate-300 dark:border-[#2A364F] rounded-xl px-1.5 sm:px-2.5 py-1 sm:py-1.5 transition-all cursor-pointer shadow-sm min-w-0 shrink text-left"
             title="Google Player Hub"
           >
             {connectedAccount.avatarUrl ? (
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden border-2 border-emerald-500 dark:border-[#CCFF00] shrink-0 shadow-sm">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden border-2 border-emerald-500 shrink-0 shadow-sm">
                 <img src={connectedAccount.avatarUrl} alt={trainerName} className="w-full h-full object-cover" />
               </div>
             ) : connectedAccount.provider === 'Google' ? (
@@ -84,15 +84,15 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
                 </svg>
               </div>
             ) : (
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-[10px] sm:text-xs shrink-0 shadow-sm">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-[#F59E0B] flex items-center justify-center text-[#0B0F17] font-black text-[10px] sm:text-xs shrink-0 shadow-sm">
                 ID
               </div>
             )}
             <div className="flex flex-col leading-tight min-w-0 pr-0.5 sm:pr-1">
-              <span className="font-display font-black text-xs sm:text-base text-slate-900 dark:text-white uppercase truncate max-w-[60px] xs:max-w-[85px] sm:max-w-[140px] drop-shadow-xs">
+              <span className="font-display font-black text-xs sm:text-base text-slate-900 dark:text-[#F8FAFC] uppercase truncate max-w-[60px] xs:max-w-[85px] sm:max-w-[140px]">
                 {trainerName}
               </span>
-              <span className="text-[9px] sm:text-xs font-mono text-emerald-600 dark:text-[#CCFF00] font-black truncate max-w-[60px] xs:max-w-[85px] sm:max-w-[140px]">
+              <span className="text-[9px] sm:text-xs font-mono text-emerald-600 dark:text-[#10B981] font-bold truncate max-w-[60px] xs:max-w-[85px] sm:max-w-[140px]">
                 {connectedAccount.isLoggedIn ? `${connectedAccount.provider} ✓` : playerTag}
               </span>
             </div>

@@ -3,18 +3,36 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-display: 'Barlow Condensed', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
   --font-body: 'Plus Jakarta Sans', sans-serif;
-  --color-brand-lime: #CCFF00;
-  --color-brand-orange: #FF5500;
-  --color-brand-cyan: #00F0FF;
-  --color-brand-magenta: #FF007A;
-  --color-dark-950: #0B0E14;
-  --color-dark-900: #0F1420;
-  --color-dark-850: #151C2C;
-  --color-dark-800: #1D253A;
-  --color-dark-750: #26314D;
-  --color-dark-700: #323F63;
+
+  /* Tactical Arcade Pet Battler Design System */
+  --color-arcade-base: #0B0F17;
+  --color-arcade-surface: #151C28;
+  --color-arcade-surface-elevated: #1E2738;
+  --color-arcade-border: #2A364F;
+  --color-arcade-border-strong: #3B4B6E;
+
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
+
+  --color-arcade-amber: #F59E0B;
+  --color-arcade-amber-hover: #D97706;
+  --color-arcade-emerald: #10B981;
+  --color-arcade-crimson: #F43F5E;
+
+  /* Normalized Brand Mappings */
+  --color-brand-lime: #F59E0B;
+  --color-brand-orange: #F59E0B;
+  --color-brand-cyan: #38BDF8;
+  --color-brand-magenta: #F43F5E;
+  --color-dark-950: #0B0F17;
+  --color-dark-900: #101522;
+  --color-dark-850: #151C28;
+  --color-dark-800: #1E2738;
+  --color-dark-750: #2A364F;
+  --color-dark-700: #3B4B6E;
 }
 
 html {
@@ -27,7 +45,7 @@ html {
 
 body {
   font-family: var(--font-body);
-  @apply text-slate-900 bg-slate-50 dark:bg-[#0B0E14] dark:text-slate-50 transition-colors duration-300;
+  @apply text-[#F8FAFC] bg-[#0B0F17] transition-colors duration-150;
   font-size: 16px;
   line-height: 1.6;
   font-weight: 500;
@@ -51,56 +69,79 @@ body {
 
 h1, h2, h3, h4, .font-display {
   font-family: var(--font-display);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
-/* High-Contrast Neon Text & Accent Utilities */
-.neon-cyan-text {
-  color: #00F0FF;
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.65), 0 1px 3px rgba(0, 0, 0, 0.95);
+/* Legibility Floor & Tabular Figures */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
-.neon-magenta-text {
-  color: #FF007A;
-  text-shadow: 0 0 10px rgba(255, 0, 122, 0.65), 0 1px 3px rgba(0, 0, 0, 0.95);
+/* Tactical Arcade Surfaces & Components */
+.arcade-surface {
+  background-color: #151C28;
+  border: 1px solid #2A364F;
 }
 
-.neon-lime-text {
-  color: #CCFF00;
-  text-shadow: 0 0 10px rgba(204, 255, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.95);
+.arcade-surface-elevated {
+  background-color: #1E2738;
+  border: 1px solid #2A364F;
 }
 
-/* Dual-Theme Ultra-Crisp High-Contrast Glass Panels */
-.glass-panel-elevated {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  color: #0F172A;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+.arcade-border {
+  border: 1px solid #2A364F;
 }
 
+.arcade-btn-primary {
+  background-color: #F59E0B;
+  color: #0B0F17;
+  font-family: var(--font-display);
+  font-weight: 700;
+  border: 1px solid #F59E0B;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+.arcade-btn-primary:hover {
+  background-color: #D97706;
+  border-color: #D97706;
+}
+.arcade-btn-primary:focus-visible {
+  outline: 2px solid #F8FAFC;
+  outline-offset: 2px;
+}
+
+.arcade-btn-secondary {
+  background-color: #151C28;
+  color: #F8FAFC;
+  border: 1px solid #2A364F;
+  font-family: var(--font-display);
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+.arcade-btn-secondary:hover {
+  background-color: #1E2738;
+  border-color: #3B4B6E;
+}
+.arcade-btn-secondary:focus-visible {
+  outline: 2px solid #F59E0B;
+  outline-offset: 2px;
+}
+
+/* Crisp Tactical Arcade Panels replacing blurry glows */
+.glass-panel-elevated,
 .dark .glass-panel-elevated {
-  background: rgba(11, 15, 25, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #FFFFFF;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55);
+  background: #151C28;
+  border: 1px solid #2A364F;
+  color: #F8FAFC;
+  box-shadow: none;
 }
 
-.glass-panel-accent {
-  background: rgba(248, 250, 252, 0.95);
-  border: 1.5px solid rgba(204, 255, 0, 0.7);
-  box-shadow: 0 0 15px rgba(204, 255, 0, 0.2);
-  color: #0F172A;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-
+.glass-panel-accent,
 .dark .glass-panel-accent {
-  background: rgba(14, 20, 34, 0.94);
-  border: 1.5px solid rgba(204, 255, 0, 0.4);
-  box-shadow: 0 0 20px rgba(204, 255, 0, 0.2);
-  color: #FFFFFF;
+  background: #151C28;
+  border: 1px solid #F59E0B;
+  color: #F8FAFC;
+  box-shadow: none;
 }
 
 /* Enhanced high-contrast scrollbar */
@@ -109,22 +150,22 @@ h1, h2, h3, h4, .font-display {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #0B0F17;
 }
 .dark ::-webkit-scrollbar-track {
-  background: #090C14;
+  background: #0B0F17;
 }
 ::-webkit-scrollbar-thumb {
-  background: #94A3B8;
+  background: #2A364F;
   border-radius: 4px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #2A364F;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #3B4B6E;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
+  background: #3B4B6E;
 }
 
 @keyframes floatUp {

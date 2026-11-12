@@ -319,110 +319,62 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-[#0e121a] border border-white/20 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-150">
+      <div className="relative w-full max-w-md bg-[#151C28] border border-[#2A364F] rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
         {/* Top Header */}
-        <div className="bg-[#141926] border-b border-white/10 px-5 py-4 flex items-center justify-between">
+        <div className="bg-[#1E2738] border-b border-[#2A364F] px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#CCFF00] to-emerald-500 flex items-center justify-center shadow">
-              <Shield className="w-5 h-5 text-black font-black" />
+            <div className="w-9 h-9 rounded-xl bg-[#F59E0B] flex items-center justify-center shadow">
+              <Shield className="w-5 h-5 text-[#0B0F17] font-bold" />
             </div>
             <div>
-              <h3 className="font-display font-black text-sm uppercase tracking-wider text-white">
+              <h3 className="font-display font-bold text-base uppercase tracking-wider text-[#F8FAFC]">
                 Player Authentication
               </h3>
-              <p className="text-[10px] text-neutral-400 font-mono">
-                {isSupabaseConfigured ? '🟢 Supabase Cloud DB Connected' : '🟡 Supabase Sandbox Mode'}
+              <p className="text-xs text-[#CBD5E1]">
+                Quick Play or Google Sign-In
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-xl bg-[#151C28] hover:bg-[#2A364F] flex items-center justify-center text-[#CBD5E1] hover:text-[#F8FAFC] transition-colors duration-150 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Auth Mode Tabs */}
-        {(!connectedAccount.isLoggedIn || showSwitchAccount) && (
-          <div className="flex border-b border-white/10 bg-[#0a0d14]">
-            <button
-              onClick={() => {
-                setActiveTab('signin');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                activeTab === 'signin'
-                  ? 'text-[#CCFF00] border-b-2 border-[#CCFF00] bg-white/5'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('signup');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                activeTab === 'signup'
-                  ? 'text-[#CCFF00] border-b-2 border-[#CCFF00] bg-white/5'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              Sign Up
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('forgot');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                activeTab === 'forgot'
-                  ? 'text-[#CCFF00] border-b-2 border-[#CCFF00] bg-white/5'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              Reset
-            </button>
-          </div>
-        )}
-
-        <div className="p-5 sm:p-6 overflow-y-auto space-y-4">
+        <div className="p-6 overflow-y-auto space-y-4">
           {/* Active Logged In Card */}
           {connectedAccount.isLoggedIn && !showSwitchAccount ? (
             <div className="space-y-4">
-              <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-2xl p-4 flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xl shrink-0">
-                  🐾
+              <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-[#10B981]/20 border border-[#10B981]/40 flex items-center justify-center text-xl shrink-0">
+                  <User className="w-6 h-6 text-[#10B981]" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-display font-black text-white text-base truncate">
+                    <span className="font-display font-bold text-[#F8FAFC] text-base truncate">
                       {trainerName}
                     </span>
-                    <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 font-bold">
+                    <span className="text-xs bg-[#10B981]/20 text-[#10B981] px-2 py-0.5 rounded-full border border-[#10B981]/30 font-bold">
                       AUTHENTICATED
                     </span>
                   </div>
-                  <div className="text-xs text-neutral-300 font-mono truncate">{connectedAccount.email}</div>
-                  <div className="text-[10px] text-neutral-400 mt-1">
+                  <div className="text-sm text-[#CBD5E1] truncate">{connectedAccount.email}</div>
+                  <div className="text-xs text-[#94A3B8] mt-1">
                     Provider: {connectedAccount.provider} · Cloud Synced
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 <button
                   type="button"
                   onClick={() => setShowSwitchAccount(true)}
-                  className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs transition cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-[#1E2738] hover:bg-[#2A364F] border border-[#2A364F] text-[#F8FAFC] font-bold text-sm transition-colors duration-150 cursor-pointer"
                 >
-                  Switch / Sign In with Another Account or Google
+                  Switch Account
                 </button>
                 <div className="flex gap-2">
                   <button
@@ -432,7 +384,7 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                       onUpdateTrainerName('Trainer');
                       setShowSwitchAccount(true);
                     }}
-                    className="flex-1 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 font-bold text-xs transition cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl bg-[#F43F5E]/15 hover:bg-[#F43F5E]/25 border border-[#F43F5E]/40 text-[#F43F5E] font-bold text-sm transition-colors duration-150 cursor-pointer"
                   >
                     Log Out
                   </button>
@@ -443,7 +395,7 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                       onClose();
                       onAuthSuccess?.();
                     }}
-                    className="flex-1 py-2 rounded-xl bg-[#CCFF00] text-black font-black text-xs transition hover:brightness-110 cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl bg-[#F59E0B] text-[#0B0F17] font-bold text-sm transition hover:bg-[#D97706] cursor-pointer"
                   >
                     Enter Arena
                   </button>
@@ -467,312 +419,78 @@ export const AccountAuthModal: React.FC<AccountAuthModalProps> = ({
                 </div>
               )}
 
-              {/* Primary Option 1: Native In-App Google Sign-In */}
-              {activeTab !== 'forgot' && (
-                <div className="space-y-3 pt-1">
-                  <div className="w-full flex flex-col items-center justify-center">
-                    {/* Official Google Identity Services in-app button */}
-                    <div ref={googleBtnContainerRef} className="flex justify-center min-h-[44px]" />
-
-                    {/* Fallback button while GSI script is mounting */}
-                    {!gsiLoaded && (
-                      <button
-                        type="button"
-                        onClick={handleGoogleSignIn}
-                        disabled={isSubmitting}
-                        className="w-full py-3 px-4 rounded-xl bg-white hover:bg-neutral-100 active:scale-[0.99] text-neutral-900 font-bold text-xs flex items-center justify-center gap-3 transition shadow-md cursor-pointer border border-neutral-300 disabled:opacity-60"
-                      >
-                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                        </svg>
-                        <span>Sign in with Google</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Clean Divider */}
-                  <div className="relative flex py-1 items-center">
-                    <div className="flex-grow border-t border-white/10"></div>
-                    <span className="flex-shrink mx-3 text-[10px] font-mono text-neutral-400 uppercase tracking-wider font-semibold">
-                      Or use ID & Password
-                    </span>
-                    <div className="flex-grow border-t border-white/10"></div>
-                  </div>
-                </div>
-              )}
-
-              {/* SIGN IN FORM */}
-              {activeTab === 'signin' && (
-                <form onSubmit={handleSignIn} className="space-y-3.5">
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-neutral-300 mb-1 font-bold">
-                      Email or Username
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-                      <input
-                        type="text"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="trainer@petslam.app or Trainer_01"
-                        required
-                        className="w-full bg-[#131824] border border-white/10 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#CCFF00] transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[11px] font-mono uppercase text-neutral-300 font-bold">
-                        Password
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('forgot')}
-                        className="text-[10px] text-[#CCFF00] hover:underline cursor-pointer"
-                      >
-                        Forgot Password?
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-                      <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        className="w-full bg-[#131824] border border-white/10 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#CCFF00] transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between py-0.5">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => {
-                          setRememberMe(e.target.checked);
-                          try {
-                            localStorage.setItem('petslam_remember_me', e.target.checked ? 'true' : 'false');
-                          } catch {}
-                        }}
-                        className="w-3.5 h-3.5 accent-[#CCFF00] rounded cursor-pointer"
-                      />
-                      <span className="text-[11px] text-neutral-300 font-medium">Keep me signed in on this device</span>
-                    </label>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-3 bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black font-display text-sm uppercase tracking-wider rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(204,255,0,0.3)] disabled:opacity-50"
-                  >
-                    {isSubmitting ? (
-                      <span>Verifying Credentials...</span>
-                    ) : (
-                      <>
-                        <span>Sign In to Arena</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleGuestPlay}
-                    className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white font-mono text-xs transition border border-white/10 flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <span>⚡ Quick Play as Guest (Instant Access)</span>
-                  </button>
-                </form>
-              )}
-
-              {/* SIGN UP FORM */}
-              {activeTab === 'signup' && (
-                <form onSubmit={handleSignUp} className="space-y-3">
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-neutral-300 mb-1 font-bold">
-                      Trainer Username
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-                      <input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="e.g. ShadowK9"
-                        required
-                        className="w-full bg-[#131824] border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#CCFF00] transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-neutral-300 mb-1 font-bold">
-                      Email Address (For Resend Verification)
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="player@domain.com"
-                        required
-                        className="w-full bg-[#131824] border border-white/10 rounded-xl pl-9 pr-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#CCFF00] transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase text-neutral-300 mb-1 font-bold">
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Min 6 chars"
-                        required
-                        className="w-full bg-[#131824] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#CCFF00] transition"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase text-neutral-300 mb-1 font-bold">
-                        Confirm
-                      </label>
-                      <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Repeat"
-                        required
-                        className="w-full bg-[#131824] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#CCFF00] transition"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between py-0.5">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => {
-                          setRememberMe(e.target.checked);
-                          try {
-                            localStorage.setItem('petslam_remember_me', e.target.checked ? 'true' : 'false');
-                          } catch {}
-                        }}
-                        className="w-3.5 h-3.5 accent-[#CCFF00] rounded cursor-pointer"
-                      />
-                      <span className="text-[11px] text-neutral-300 font-medium">Keep me signed in on this device</span>
-                    </label>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full mt-2 py-3 bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black font-display text-sm uppercase tracking-wider rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(204,255,0,0.3)] disabled:opacity-50"
-                  >
-                    {isSubmitting ? (
-                      <span>Creating Account...</span>
-                    ) : (
-                      <>
-                        <span>Create Account & Send Verification</span>
-                        <Sparkles className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleGuestPlay}
-                    className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white font-mono text-xs transition border border-white/10 flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <span>⚡ Quick Play as Guest (Instant Access)</span>
-                  </button>
-                </form>
-              )}
-
-              {/* FORGOT PASSWORD FORM */}
-              {activeTab === 'forgot' && (
-                <form onSubmit={handleForgotPassword} className="space-y-3.5">
-                  <p className="text-xs text-neutral-300 leading-relaxed">
-                    Enter the email registered to your account. We will dispatch a secure password reset link powered by <strong className="text-white">Resend</strong>.
-                  </p>
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-neutral-300 mb-1 font-bold">
-                      Account Email
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="player@domain.com"
-                        required
-                        className="w-full bg-[#131824] border border-white/10 rounded-xl pl-9 pr-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#CCFF00] transition"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-3 bg-cyan-400 hover:bg-cyan-300 text-black font-black font-display text-sm uppercase tracking-wider rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(34,211,238,0.3)] disabled:opacity-50"
-                  >
-                    {isSubmitting ? 'Sending Link...' : 'Send Recovery Email'}
-                  </button>
-                </form>
-              )}
-
-              {/* Guest Play & Setup Helper */}
-              <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+              {/* Primary Option: Quick Play (Guest) */}
+              <div className="space-y-3 pt-1">
                 <button
                   type="button"
                   onClick={handleGuestPlay}
-                  className="text-neutral-400 hover:text-white transition cursor-pointer underline text-[11px]"
+                  className="w-full py-3.5 px-4 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] active:scale-[0.98] text-[#0B0F17] font-display font-bold text-base flex items-center justify-center gap-2 transition duration-150 cursor-pointer shadow-md"
                 >
-                  Continue as Guest / Demo Play
+                  <Sparkles className="w-5 h-5 fill-[#0B0F17]" />
+                  <span>Quick Play (Guest)</span>
                 </button>
-                <span className="text-[10px] font-mono text-neutral-500">
-                  Resend SMTP Verification Ready
-                </span>
+
+                {/* Divider */}
+                <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-[#2A364F]"></div>
+                  <span className="flex-shrink mx-3 text-xs text-[#94A3B8] uppercase tracking-wider font-semibold">
+                    Or Sign In
+                  </span>
+                  <div className="flex-grow border-t border-[#2A364F]"></div>
+                </div>
+
+                {/* Secondary Option: Native In-App Google Sign-In */}
+                <div className="w-full flex flex-col items-center justify-center">
+                  <div ref={googleBtnContainerRef} className="flex justify-center min-h-[44px]" />
+
+                  {!gsiLoaded && (
+                    <button
+                      type="button"
+                      onClick={handleGoogleSignIn}
+                      disabled={isSubmitting}
+                      className="w-full py-3 px-4 rounded-xl bg-[#1E2738] hover:bg-[#2A364F] active:scale-[0.99] text-[#F8FAFC] font-bold text-sm flex items-center justify-center gap-3 transition duration-150 cursor-pointer border border-[#2A364F] disabled:opacity-60"
+                    >
+                      <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                      </svg>
+                      <span>Sign in with Google</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
+              {/* FEATURE FLAG: Custom Auth Form on hold for MVP de-bloat */}
+              {/* Only Quick Play (Guest) and Google Sign In are active */}
+
               {/* Legal Terms & Privacy Disclosures */}
-              <div className="pt-2 text-[11px] text-center text-neutral-400 leading-relaxed border-t border-white/5">
-                By continuing, you agree to PET SLAM's{' '}
+              <div className="pt-3 text-[13px] text-center text-[#94A3B8] leading-relaxed border-t border-[#2A364F]">
+                By entering the arena, you agree to PET SLAM's{' '}
                 <a
                   href="/terms.html"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#CCFF00] hover:underline font-semibold"
+                  className="text-[#F59E0B] hover:underline font-semibold"
                 >
-                  Terms of Service
+                  Terms
                 </a>
                 ,{' '}
                 <a
                   href="/privacy.html"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#CCFF00] hover:underline font-semibold"
+                  className="text-[#F59E0B] hover:underline font-semibold"
                 >
-                  Privacy Policy
+                  Privacy
                 </a>
                 , and{' '}
                 <a
                   href="/fair-play.html"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-cyan-400 hover:underline font-semibold"
+                  className="text-[#CBD5E1] hover:underline font-semibold"
                 >
                   Fair Play Rules
                 </a>

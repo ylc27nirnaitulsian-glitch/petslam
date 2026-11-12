@@ -258,29 +258,29 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl max-h-[92vh] flex flex-col bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/20 rounded-3xl shadow-2xl overflow-hidden transition-colors duration-300">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="relative w-full max-w-2xl max-h-[92vh] flex flex-col bg-[#151C28] border border-[#2A364F] rounded-3xl shadow-2xl overflow-hidden transition-colors duration-150">
         
         {/* Toast Alert */}
         {toastMessage && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 bg-[#CCFF00] text-black font-mono font-black text-xs sm:text-sm rounded-xl shadow-2xl border-2 border-black animate-in slide-in-from-top-4 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-black" />
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 bg-[#F59E0B] text-[#0B0F17] font-mono font-bold text-xs sm:text-sm rounded-xl shadow-xl border border-[#2A364F] animate-in slide-in-from-top-4 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#0B0F17]" />
             <span>{toastMessage}</span>
           </div>
         )}
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#090D17]">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-400/40">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#2A364F] bg-[#0B0F17]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-[#1E2738] text-[#F59E0B] border border-[#2A364F]">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-display font-black text-xl sm:text-2xl uppercase tracking-wider text-slate-900 dark:text-white">
-                Pet Slam Hall of Fame
+              <h2 className="font-display font-black text-xl sm:text-2xl uppercase tracking-wider text-[#F8FAFC]">
+                Hall of Fame
               </h2>
-              <p className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                PvP Elo Kings & Community Champion Pets
+              <p className="text-xs font-mono text-[#CBD5E1]">
+                Top 10 Pet Battlers & Verified Pet Champions
               </p>
             </div>
           </div>
@@ -290,7 +290,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               sound.playClick();
               onClose();
             }}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC] border border-[#2A364F] transition-colors cursor-pointer"
             title="Close Leaderboard"
           >
             <X className="w-5 h-5" />
@@ -298,20 +298,20 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
         </div>
 
         {/* Dual Mode Switcher Tabs */}
-        <div className="flex p-2 bg-slate-100 dark:bg-[#070A12] border-b border-slate-200 dark:border-white/10 gap-2">
+        <div className="flex p-2 bg-[#0B0F17] border-b border-[#2A364F] gap-2">
           <button
             onClick={() => {
               sound.playClick();
               setActiveTab('champions');
             }}
-            className={`flex-1 py-2.5 px-4 rounded-2xl font-display font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`flex-1 py-2.5 px-4 rounded-xl font-display font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === 'champions'
-                ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black shadow-md'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-[#F59E0B] text-[#0B0F17] shadow-sm'
+                : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#1E2738]'
             }`}
           >
             <Crown className="w-4 h-4" />
-            <span>Hall of Champions (Top Pets)</span>
+            <span>Hall of Champions</span>
           </button>
 
           <button
@@ -319,14 +319,14 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               sound.playClick();
               setActiveTab('arena');
             }}
-            className={`flex-1 py-2.5 px-4 rounded-2xl font-display font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`flex-1 py-2.5 px-4 rounded-xl font-display font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === 'arena'
-                ? 'bg-slate-900 text-white dark:bg-[#CCFF00] dark:text-black shadow-md'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-[#F59E0B] text-[#0B0F17] shadow-sm'
+                : 'text-[#CBD5E1] hover:text-[#F8FAFC] hover:bg-[#1E2738]'
             }`}
           >
             <Swords className="w-4 h-4" />
-            <span>The Arena Kings (Skill PvP)</span>
+            <span>Top 10 Arena Kings</span>
           </button>
         </div>
 
@@ -335,9 +335,9 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
           {activeTab === 'arena' ? (
             /* TAB 1: THE ARENA KINGS */
             <div className="space-y-3">
-              <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-between text-xs font-mono text-slate-600 dark:text-slate-400">
+              <div className="p-3.5 rounded-2xl bg-[#1E2738] border border-[#2A364F] flex items-center justify-between text-xs font-mono text-[#CBD5E1]">
                 <span>Ranked strictly by Authoritative 20-Tick Netcode PvP Elo</span>
-                <span className="font-bold text-slate-900 dark:text-white">Season 1 Active</span>
+                <span className="font-bold text-[#F8FAFC]">Season 1 Active</span>
               </div>
 
               {arenaKings.map((player) => (
@@ -345,43 +345,37 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   key={player.rank}
                   className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
                     player.rank === 1
-                      ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-400/80 shadow-[0_0_20px_rgba(251,191,36,0.15)]'
-                      : player.rank === 2
-                      ? 'bg-slate-50 dark:bg-slate-800/40 border-slate-300 dark:border-slate-500'
-                      : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10'
+                      ? 'bg-[#1E2738] border-[#F59E0B]/70 shadow-sm'
+                      : 'bg-[#151C28] border-[#2A364F]'
                   }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     {/* Rank Badge */}
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-display font-black text-base shrink-0 shadow-xs ${
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-display font-black text-base shrink-0 border ${
                         player.rank === 1
-                          ? 'bg-amber-400 text-black'
-                          : player.rank === 2
-                          ? 'bg-slate-300 text-slate-900'
-                          : player.rank === 3
-                          ? 'bg-amber-700 text-white'
-                          : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300'
+                          ? 'bg-[#F59E0B] text-[#0B0F17] border-[#F59E0B]'
+                          : 'bg-[#0B0F17] text-[#CBD5E1] border-[#2A364F]'
                       }`}
                     >
-                      {player.rank === 1 ? '👑' : `#${player.rank}`}
+                      {player.rank === 1 ? <Crown className="w-5 h-5 text-[#0B0F17]" /> : `#${player.rank}`}
                     </div>
 
                     {/* Avatar */}
-                    <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-300 dark:border-white/20 shrink-0">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden border border-[#2A364F] shrink-0">
                       <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover" />
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 truncate">
-                        <span className="font-display font-black text-base sm:text-lg text-slate-900 dark:text-white truncate">
+                        <span className="font-display font-bold text-base sm:text-lg text-[#F8FAFC] truncate">
                           {player.name}
                         </span>
-                        <span className="text-xs font-mono font-bold bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 px-2 py-0.5 rounded-full">
+                        <span className="text-xs font-mono font-bold bg-[#1E2738] text-[#CBD5E1] border border-[#2A364F] px-2 py-0.5 rounded-full">
                           {player.tier}
                         </span>
                       </div>
-                      <div className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div className="text-xs font-mono text-[#CBD5E1] mt-0.5">
                         Lead: {player.leadPet} ({player.breed})
                       </div>
                     </div>
@@ -389,12 +383,12 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 
                   {/* Elo & Record */}
                   <div className="text-right shrink-0">
-                    <div className="font-mono font-black text-lg sm:text-xl text-emerald-700 dark:text-[#CCFF00]">
-                      {player.elo} <span className="text-xs text-slate-500">ELO</span>
+                    <div className="font-mono font-bold text-lg sm:text-xl text-[#F59E0B] tabular-nums">
+                      {player.elo} <span className="text-xs text-[#94A3B8]">ELO</span>
                     </div>
-                    <div className="text-xs font-mono text-slate-600 dark:text-slate-400 mt-0.5">
-                      <span className="text-emerald-600 font-bold">{player.wins}W</span> /{' '}
-                      <span className="text-red-500 font-bold">{player.losses}L</span>
+                    <div className="text-xs font-mono text-[#CBD5E1] mt-0.5 tabular-nums">
+                      <span className="text-[#10B981] font-bold">{player.wins}W</span> /{' '}
+                      <span className="text-[#F43F5E] font-bold">{player.losses}L</span>
                     </div>
                   </div>
                 </div>
@@ -404,16 +398,16 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
             /* TAB 2: HALL OF CHAMPIONS (FAIR PLAY COMMUNITY PETS) */
             <div className="space-y-4">
               {/* Header Action Banner with Instant Camera Trigger */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-400/15 to-amber-500/20 border-2 border-amber-400/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md">
+              <div className="p-4 rounded-2xl bg-[#1E2738] border border-[#2A364F] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-amber-400 text-black flex items-center justify-center text-xl font-black shadow-md shrink-0">
-                    👑
+                  <div className="w-11 h-11 rounded-2xl bg-[#F59E0B] text-[#0B0F17] flex items-center justify-center shrink-0">
+                    <Crown className="w-6 h-6 text-[#0B0F17]" />
                   </div>
                   <div>
-                    <h3 className="font-display font-black text-base sm:text-lg uppercase text-slate-900 dark:text-white tracking-wide">
-                      Showcase Your Pet In The Hall of Fame
+                    <h3 className="font-display font-bold text-base sm:text-lg uppercase text-[#F8FAFC] tracking-wide">
+                      Showcase Your Pet
                     </h3>
-                    <p className="text-xs font-mono text-slate-600 dark:text-neutral-300 mt-0.5">
+                    <p className="text-xs font-mono text-[#CBD5E1] mt-0.5">
                       Upload or snap your real pet to earn community fan cheers!
                     </p>
                   </div>
@@ -421,10 +415,10 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 
                 <button
                   onClick={() => handleOpenPhotoForm()}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-black hover:bg-slate-900 text-[#CCFF00] dark:bg-[#CCFF00] dark:text-black dark:hover:bg-[#b8e600] font-display font-black uppercase text-xs tracking-wider transition-all cursor-pointer shadow-lg active:scale-95 flex items-center justify-center gap-2 shrink-0"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-bold uppercase text-xs tracking-wider transition-all cursor-pointer shadow-md active:scale-95 flex items-center justify-center gap-2 shrink-0"
                 >
                   <Camera className="w-4 h-4" />
-                  <span>Showcase Pet Photo 📸</span>
+                  <span>Showcase Pet Photo</span>
                 </button>
               </div>
 
@@ -432,20 +426,21 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
               {showUploadForm && (
                 <div
                   ref={formRef}
-                  className="p-5 rounded-2xl bg-slate-50 dark:bg-[#111726] border-2 border-amber-400 shadow-2xl space-y-4 animate-in fade-in zoom-in-98 duration-200"
+                  className="p-5 rounded-2xl bg-[#1E2738] border border-[#F59E0B] shadow-2xl space-y-4 animate-in fade-in zoom-in-98 duration-200"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                  <div className="flex items-center justify-between border-b border-[#2A364F] pb-3">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
-                      <h4 className="font-display font-black text-base uppercase text-slate-900 dark:text-white tracking-wide">
+                      <Sparkles className="w-5 h-5 text-[#F59E0B]" />
+                      <h4 className="font-display font-black text-base uppercase text-[#F8FAFC] tracking-wide">
                         Feature Your Companion
                       </h4>
                     </div>
                     <button
                       onClick={() => setShowUploadForm(false)}
-                      className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-neutral-400 cursor-pointer"
+                      className="p-1.5 rounded-lg hover:bg-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC] cursor-pointer transition-colors"
+                      aria-label="Close form"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
 
@@ -469,7 +464,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   {/* Photo Preview & Capture Buttons */}
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     {previewPhoto ? (
-                      <div className="relative w-28 h-28 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-xl shrink-0 group">
+                      <div className="relative w-28 h-28 rounded-2xl overflow-hidden border-2 border-[#10B981] shadow-xl shrink-0 group">
                         <img
                           src={previewPhoto}
                           alt="Pet Preview"
@@ -477,19 +472,19 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         />
                         <button
                           onClick={() => setPreviewPhoto(null)}
-                          className="absolute top-1 right-1 bg-black/80 text-white rounded-full p-1 opacity-80 hover:opacity-100"
+                          className="absolute top-1 right-1 bg-black/80 text-white rounded-full p-1 opacity-80 hover:opacity-100 cursor-pointer"
                           title="Remove photo"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className="w-4 h-4" />
                         </button>
-                        <div className="absolute bottom-0 inset-x-0 bg-emerald-600/90 text-white text-[9px] font-mono font-black text-center py-0.5">
-                          ✓ PHOTO READY
+                        <div className="absolute bottom-0 inset-x-0 bg-[#10B981] text-[#0B0F17] text-xs font-bold font-mono text-center py-0.5 uppercase tracking-wider">
+                          Ready
                         </div>
                       </div>
                     ) : (
-                      <div className="w-28 h-28 rounded-2xl border-2 border-dashed border-amber-400/60 bg-amber-500/10 flex flex-col items-center justify-center text-amber-500 dark:text-amber-400 p-2 text-center shrink-0">
+                      <div className="w-28 h-28 rounded-2xl border-2 border-dashed border-[#2A364F] bg-[#151C28] flex flex-col items-center justify-center text-[#F59E0B] p-2 text-center shrink-0">
                         <ImageIcon className="w-8 h-8 mb-1" />
-                        <span className="text-[10px] font-mono font-bold leading-tight">
+                        <span className="text-xs font-mono font-bold leading-tight text-[#CBD5E1]">
                           No Photo Selected
                         </span>
                       </div>
@@ -501,23 +496,23 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         <button
                           type="button"
                           onClick={() => cameraInputRef.current?.click()}
-                          className="py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95 transition-transform"
+                          className="py-2.5 px-3 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-95 transition-all"
                         >
-                          <Camera className="w-4 h-4" />
-                          <span>Snap Camera 📷</span>
+                          <Camera className="w-4 h-4 text-[#0B0F17]" />
+                          <span>Snap Camera</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="py-2.5 px-3 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-800 dark:text-white font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
+                          className="py-2.5 px-3 rounded-xl bg-[#151C28] hover:bg-[#2A364F] text-[#F8FAFC] border border-[#2A364F] font-display font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all"
                         >
-                          <Upload className="w-4 h-4" />
-                          <span>Upload File 📁</span>
+                          <Upload className="w-4 h-4 text-[#CBD5E1]" />
+                          <span>Upload File</span>
                         </button>
                       </div>
 
-                      <p className="text-[11px] font-mono text-slate-500 dark:text-neutral-400">
+                      <p className="text-sm font-sans text-[#CBD5E1]">
                         Upload a photo of your pet companion. Verified pets earn exclusive cosmetic badges!
                       </p>
                     </div>
@@ -526,7 +521,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                   {/* Pet Name Input */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                     <div>
-                      <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-sm font-sans font-bold text-[#CBD5E1] mb-1">
                         Pet Name:
                       </label>
                       <input
@@ -534,12 +529,12 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         value={inputPetName}
                         onChange={(e) => setInputPetName(e.target.value)}
                         placeholder="e.g. Barnaby The Great"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-black/50 text-slate-900 dark:text-white font-mono text-sm focus:outline-hidden focus:border-amber-400"
+                        className="w-full px-3 py-2 rounded-xl border border-[#2A364F] bg-[#151C28] text-[#F8FAFC] font-sans text-base focus:outline-hidden focus:border-[#F59E0B]"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-mono font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-sm font-sans font-bold text-[#CBD5E1] mb-1">
                         Trainer Name:
                       </label>
                       <input
@@ -547,7 +542,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         value={inputTrainerName}
                         onChange={(e) => setInputTrainerName(e.target.value)}
                         placeholder="Your Trainer Name"
-                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-black/50 text-slate-900 dark:text-white font-mono text-sm focus:outline-hidden focus:border-amber-400"
+                        className="w-full px-3 py-2 rounded-xl border border-[#2A364F] bg-[#151C28] text-[#F8FAFC] font-sans text-base focus:outline-hidden focus:border-[#F59E0B]"
                       />
                     </div>
                   </div>
@@ -556,16 +551,16 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowUploadForm(false)}
-                      className="px-4 py-2.5 rounded-xl text-xs font-mono font-bold text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#CBD5E1] hover:text-[#F8FAFC] cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
                       onClick={handleSubmitNewChampion}
-                      className="px-6 py-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-6 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-black text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer flex items-center gap-2"
                     >
-                      <Crown className="w-4 h-4 text-black" />
+                      <Crown className="w-4 h-4 text-[#0B0F17]" />
                       <span>Feature Pet in Hall of Fame</span>
                     </button>
                   </div>
@@ -579,8 +574,8 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     key={entry.rank}
                     className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 rounded-2xl border gap-4 shadow-sm transition-all ${
                       entry.rank === 1
-                        ? 'bg-amber-50/70 dark:bg-gradient-to-r dark:from-amber-950/30 dark:to-black/50 border-amber-400/90 shadow-[0_0_25px_rgba(251,191,36,0.2)]'
-                        : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 hover:border-amber-400/50'
+                        ? 'bg-[#1E2738] border-2 border-[#F59E0B]'
+                        : 'bg-[#151C28] border border-[#2A364F] hover:border-[#3E4F6F]'
                     }`}
                   >
                     <div className="flex items-center gap-4 min-w-0">
@@ -588,15 +583,19 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                       <div
                         className={`w-12 h-12 rounded-2xl flex items-center justify-center font-display font-black text-xl shrink-0 border ${
                           entry.rank === 1
-                            ? 'bg-amber-400 text-black border-amber-300 shadow-md'
-                            : 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white border-slate-300 dark:border-white/10'
+                            ? 'bg-[#F59E0B] text-[#0B0F17] border-[#F59E0B] shadow-md'
+                            : 'bg-[#1E2738] text-[#F8FAFC] border-[#2A364F] tabular-nums'
                         }`}
                       >
-                        {entry.rank === 1 ? '👑' : `#${entry.rank}`}
+                        {entry.rank === 1 ? (
+                          <Crown className="w-6 h-6 text-[#0B0F17]" />
+                        ) : (
+                          `#${entry.rank}`
+                        )}
                       </div>
 
                       {/* Raw Pet Photo */}
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 border-amber-400/80 shrink-0 bg-black shadow-md overflow-hidden">
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-2 border-[#2A364F] shrink-0 bg-[#0B0F17] shadow-md overflow-hidden">
                         <img
                           src={entry.photoUrl}
                           alt={entry.petName}
@@ -604,7 +603,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                         />
                         {entry.isAiVerified && (
                           <div
-                            className="absolute bottom-0 inset-x-0 bg-emerald-600/95 text-white text-[9px] font-mono font-black text-center py-0.5 tracking-tight"
+                            className="absolute bottom-0 inset-x-0 bg-[#10B981] text-[#0B0F17] text-[11px] font-mono font-black text-center py-0.5 tracking-tight uppercase"
                             title="Verified real photograph by Gemini AI Bouncer"
                           >
                             ✓ REAL PET
@@ -614,14 +613,14 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
 
                       {/* Pet Information */}
                       <div className="min-w-0 flex-1">
-                        <div className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white tracking-wide truncate">
+                        <div className="font-display font-black text-lg sm:text-xl text-[#F8FAFC] tracking-wide truncate">
                           {entry.petName}
                         </div>
-                        <div className="text-xs sm:text-sm font-mono text-slate-600 dark:text-slate-300 mt-1 leading-normal">
-                          Trained by <span className="font-black text-slate-900 dark:text-white">{entry.trainerName}</span> · Featured {entry.featuredSince}
+                        <div className="text-sm font-sans text-[#CBD5E1] mt-1 leading-normal">
+                          Trained by <span className="font-bold text-[#F8FAFC]">{entry.trainerName}</span> · Featured {entry.featuredSince}
                         </div>
-                        <div className="text-base sm:text-lg font-mono font-black text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1.5">
-                          <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
+                        <div className="text-base sm:text-lg font-mono font-black text-[#F59E0B] tabular-nums mt-1 flex items-center gap-1.5">
+                          <Flame className="w-4 h-4 text-[#F59E0B] fill-[#F59E0B]" />
                           <span>{entry.cheers} Fan Cheers</span>
                         </div>
                       </div>
@@ -630,9 +629,9 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
                     {/* Cheer Action Button */}
                     <button
                       onClick={() => handleCheerPet(entry)}
-                      className="w-full sm:w-auto py-3 px-5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-display font-black text-xs sm:text-sm uppercase tracking-wider shadow-md hover:shadow-[0_0_15px_rgba(204,255,0,0.5)] transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 shrink-0"
+                      className="w-full sm:w-auto py-3 px-5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-black text-sm uppercase tracking-wider shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95 shrink-0"
                     >
-                      <Flame className="w-4 h-4 text-black fill-black" />
+                      <Flame className="w-4 h-4 text-[#0B0F17] fill-[#0B0F17]" />
                       <span>Cheer Pet (+1)</span>
                     </button>
                   </div>
@@ -643,11 +642,11 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#070A12] flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
+        <div className="p-4 border-t border-[#2A364F] bg-[#0B0F17] flex items-center justify-between text-sm font-sans text-[#CBD5E1]">
           <span>Protected by Google Identity & Dodo MoR Payments</span>
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-white font-bold hover:bg-slate-300 dark:hover:bg-white/20 transition-colors cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-[#151C28] hover:bg-[#2A364F] border border-[#2A364F] text-[#F8FAFC] font-bold transition-colors cursor-pointer"
           >
             Close
           </button>
