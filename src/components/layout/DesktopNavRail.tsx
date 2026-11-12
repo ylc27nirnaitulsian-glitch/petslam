@@ -60,6 +60,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
     { id: 'arena' as const, label: 'Battle Arena', icon: Swords, badge: 'LIVE' },
     { id: 'studio' as const, label: 'Pet Camera Studio', icon: Camera, badge: 'AI' },
     { id: 'leaderboard' as const, label: 'Top 10 Leaderboard', icon: Trophy, badge: 'TOP' },
+    { id: 'extension' as const, label: 'Pet Extension Hub', icon: Tv, badge: 'ZIP' },
   ];
 
   const handleSelect = (id: MainNavId) => {
@@ -142,6 +143,25 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
 
       {/* Bottom Utility Controls */}
       <div className="p-2.5 xl:p-3 border-t border-[#2A364F] space-y-2 bg-[#0B0F17]">
+        {/* Live Buddy Screen Companion Toggle */}
+        <button
+          onClick={() => {
+            sound.playClick();
+            toggleOverlay();
+          }}
+          className={`w-full flex items-center justify-center xl:justify-start gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer text-xs font-mono font-bold transition-all border ${
+            isOverlayActive
+              ? 'bg-[#1E2738] border-[#10B981] text-[#10B981]'
+              : 'bg-[#151C28] hover:bg-[#1E2738] border-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC]'
+          }`}
+          title={isOverlayActive ? 'Companion Roaming Screen (Click to Dock)' : 'Summon Screen Companion Buddy'}
+        >
+          <PawPrint className="w-4 h-4 text-[#F59E0B]" />
+          <span className="hidden xl:inline text-xs font-bold">
+            {isOverlayActive ? 'Buddy Live 🟢' : 'Summon Buddy'}
+          </span>
+        </button>
+
         {/* Fullscreen Toggle */}
         <button
           onClick={onToggleFullscreen}

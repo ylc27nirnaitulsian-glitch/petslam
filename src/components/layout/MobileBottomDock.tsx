@@ -1,5 +1,5 @@
 import React from 'react';
-import { Swords, Heart, Camera, Home, PawPrint, Compass, Trophy } from 'lucide-react';
+import { Swords, Heart, Camera, Home, PawPrint, Compass, Trophy, Tv } from 'lucide-react';
 import { sound } from '../../utils/audio';
 import { MainNavId } from './DesktopNavRail';
 
@@ -16,6 +16,7 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
     { id: 'arena' as const, label: 'Arena', icon: Swords },
     { id: 'studio' as const, label: 'Pet Camera', icon: Camera },
     { id: 'leaderboard' as const, label: 'Top 10', icon: Trophy },
+    { id: 'extension' as const, label: 'Extension', icon: Tv },
   ];
 
   const handleSelect = (tab: MainNavId) => {

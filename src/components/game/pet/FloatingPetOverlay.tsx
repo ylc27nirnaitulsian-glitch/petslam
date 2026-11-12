@@ -19,6 +19,9 @@ import {
   Smile,
   Volume2,
   VolumeX,
+  RotateCw,
+  Music,
+  PawPrint,
 } from 'lucide-react';
 import { sound } from '../../../utils/audio';
 import { voiceMimic } from '../../../utils/voiceMimic';
@@ -43,11 +46,11 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     if (typeof window !== 'undefined') {
       const mobileInit = window.innerWidth < 768;
       return {
-        x: mobileInit ? Math.max(10, window.innerWidth - 170) : Math.max(20, window.innerWidth - 240),
+        x: mobileInit ? Math.max(10, window.innerWidth - 170) : Math.max(260, window.innerWidth - 380),
         y: mobileInit ? Math.max(50, window.innerHeight - 130) : Math.max(30, window.innerHeight - 270),
       };
     }
-    return { x: 100, y: 100 };
+    return { x: 400, y: 100 };
   });
   const [isDragging, setIsDragging] = useState(false);
   const [animState, setAnimState] = useState<PetAnimationState>('idle');
@@ -70,8 +73,9 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
       setPosition((prev) => {
         const petW = isMinimized ? 150 : (mobile ? 130 : (petScaleMode === 'large' ? 200 : 160));
         const petH = isMinimized ? 50 : (mobile ? 130 : (petScaleMode === 'large' ? 200 : 160));
+        const minX = mobile ? 10 : 90;
         return {
-          x: Math.max(10, Math.min(window.innerWidth - petW - 10, prev.x)),
+          x: Math.max(minX, Math.min(window.innerWidth - petW - 10, prev.x)),
           y: Math.max(10, Math.min(window.innerHeight - petH - (mobile ? 75 : 10), prev.y)),
         };
       });
@@ -482,22 +486,22 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 }
                 setShowRadialMenu(false);
               }}
-              className="absolute top-0 left-1/2 -translate-x-1/2 bg-amber-500 hover:bg-amber-400 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
+              className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
               title="Feed Treat"
             >
-              <Utensils className="w-4 h-4" />
+              <Utensils className="w-4 h-4 text-[#0B0F17]" />
             </button>
 
-            {/* Top-Right Upper: Voice Mimic 🎙️ */}
+            {/* Top-Right Upper: Voice Mimic */}
             <button
               onClick={() => {
                 setShowRadialMenu(false);
                 handleVoiceMimic();
               }}
-              className="absolute -top-3 right-8 bg-red-500 hover:bg-red-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
-              title="Voice Mimic (Repeats Your Voice!) 🎙️"
+              className="absolute -top-3 right-8 bg-[#F43F5E] hover:bg-rose-600 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
+              title="Voice Mimic (Repeats Your Voice!)"
             >
-              🎙️
+              <Mic className="w-4 h-4 text-white" />
             </button>
 
             {/* Top-Left: Backflip Trick */}
@@ -506,10 +510,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 handlePerformTrick('backflip');
                 setShowRadialMenu(false);
               }}
-              className="absolute top-2 left-6 bg-yellow-400 hover:bg-yellow-300 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
-              title="Trick: Backflip 🤸"
+              className="absolute top-2 left-6 bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
+              title="Trick: Backflip"
             >
-              🤸
+              <Sparkles className="w-4 h-4 text-[#0B0F17]" />
             </button>
 
             {/* Top-Right: Dance Trick */}
@@ -518,10 +522,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 handlePerformTrick('dance');
                 setShowRadialMenu(false);
               }}
-              className="absolute top-2 right-6 bg-purple-500 hover:bg-purple-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
-              title="Trick: Dance 💃"
+              className="absolute top-2 right-6 bg-purple-600 hover:bg-purple-500 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
+              title="Trick: Dance"
             >
-              💃
+              <Music className="w-4 h-4 text-white" />
             </button>
 
             {/* Far Left: Roll Over */}
@@ -530,10 +534,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 handlePerformTrick('rollover');
                 setShowRadialMenu(false);
               }}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-pink-500 hover:bg-pink-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
-              title="Trick: Roll Over 🔄"
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-pink-600 hover:bg-pink-500 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
+              title="Trick: Roll Over"
             >
-              🔄
+              <RotateCw className="w-4 h-4 text-white" />
             </button>
 
             {/* Far Right: Zoomies */}
@@ -542,10 +546,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 handlePerformTrick('zoomies');
                 setShowRadialMenu(false);
               }}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-lime-400 hover:bg-lime-300 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
-              title="Trick: Zoomies ⚡"
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-[#10B981] hover:bg-emerald-600 text-[#0B0F17] p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
+              title="Trick: Zoomies"
             >
-              ⚡
+              <Zap className="w-4 h-4 text-[#0B0F17]" />
             </button>
 
             {/* Bottom-Left: Beg / Paw Wave */}
@@ -554,10 +558,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 handlePerformTrick('beg');
                 setShowRadialMenu(false);
               }}
-              className="absolute bottom-2 left-6 bg-rose-500 hover:bg-rose-400 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
-              title="Trick: Paw Wave 🐾"
+              className="absolute bottom-2 left-6 bg-rose-600 hover:bg-rose-500 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
+              title="Trick: Paw Wave"
             >
-              🐾
+              <PawPrint className="w-4 h-4 text-white" />
             </button>
 
             {/* Bottom-Right: 360 Spin */}
@@ -566,10 +570,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 handlePerformTrick('spin');
                 setShowRadialMenu(false);
               }}
-              className="absolute bottom-2 right-6 bg-cyan-400 hover:bg-cyan-300 text-black p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center font-bold text-xs"
-              title="Trick: 360 Spin 💫"
+              className="absolute bottom-2 right-6 bg-cyan-500 hover:bg-cyan-400 text-[#0B0F17] p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
+              title="Trick: 360 Spin"
             >
-              💫
+              <RotateCw className="w-4 h-4 text-[#0B0F17]" />
             </button>
 
             {/* Bottom Center: Bath */}
@@ -578,19 +582,19 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 handleBath();
                 setShowRadialMenu(false);
               }}
-              className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-blue-500 hover:bg-blue-400 text-white p-2 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
+              className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
               title="Bubble Bath"
             >
-              <Bath className="w-3.5 h-3.5" />
+              <Bath className="w-3.5 h-3.5 text-white" />
             </button>
 
             {/* Center: Open Sanctuary */}
             <button
               onClick={handleTriggerSanctuary}
-              className="bg-[#CCFF00] hover:bg-[#b8e600] text-black font-bold p-3 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
+              className="bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-bold p-3 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
               title="Open Sanctuary"
             >
-              <Home className="w-4 h-4" />
+              <Home className="w-4 h-4 text-[#0B0F17]" />
             </button>
           </div>
         </div>

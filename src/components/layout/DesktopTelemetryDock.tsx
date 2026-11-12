@@ -6,10 +6,12 @@ import {
   Tv,
   Sparkles,
   ChevronRight,
-  TrendingUp,
-  Flame,
-  CheckCircle2,
-  Lock,
+  Download,
+  PawPrint,
+  Crown,
+  Target,
+  Swords,
+  Dna,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { usePetCompanion } from '../../context/PetCompanionContext';
@@ -60,28 +62,224 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
   ];
 
   return (
-    <aside className="hidden xl:flex flex-col w-[320px] h-full bg-white/95 dark:bg-[#090D17]/98 backdrop-blur-xl border-l border-slate-200 dark:border-white/20 select-none z-30 shrink-0 p-4 space-y-4 overflow-y-auto scrollbar-thin text-slate-900 dark:text-white shadow-2xl transition-colors duration-300">
+    <aside className="hidden lg:flex flex-col w-[320px] xl:w-[350px] h-full bg-[#151C28] border-l border-[#2A364F] select-none z-30 shrink-0 p-4 space-y-3.5 overflow-y-auto scrollbar-thin text-[#F8FAFC]">
       {/* Dock Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/15 pb-3">
+      <div className="flex items-center justify-between border-b border-[#2A364F] pb-3">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] animate-pulse shadow-[0_0_8px_#CCFF00]" />
-          <span className="font-display font-black text-sm uppercase tracking-wider text-slate-900 dark:text-white">
-            Combat Telemetry
+          <div className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse" />
+          <span className="font-display font-bold text-sm uppercase tracking-wider text-[#F8FAFC]">
+            Features & Telemetry
           </span>
         </div>
-        <span className="text-xs font-mono text-emerald-700 dark:text-emerald-300 font-black bg-emerald-500/15 border border-emerald-400/40 px-2.5 py-0.5 rounded-full shadow-xs">
-          60 FPS LIVE
+        <span className="text-xs font-mono text-[#10B981] font-bold bg-[#10B981]/15 border border-[#10B981]/40 px-2.5 py-0.5 rounded-full">
+          LIVE
         </span>
       </div>
 
-      {/* 1. Active Battle Deck (Squad Roster) */}
-      <div className="bg-slate-100/90 dark:bg-[#0E1424] border border-slate-200 dark:border-white/15 rounded-2xl p-3.5 shadow-md dark:shadow-lg">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-xs font-mono font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-            <Shield className="w-4 h-4 text-emerald-600 dark:text-[#CCFF00]" />
+      {/* 1. PET EXTENSION & LIVE BUDDY BRIDGE */}
+      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
+            <Tv className="w-4 h-4 text-[#F59E0B]" />
+            Pet Extension & Buddy Hub
+          </span>
+          <button
+            onClick={onOpenBuddyHub}
+            className="text-xs font-mono font-bold text-[#F59E0B] hover:underline cursor-pointer flex items-center gap-0.5"
+          >
+            Hub <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between bg-[#151C28] border border-[#2A364F] rounded-xl p-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#F59E0B]/20 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center shrink-0">
+              <PawPrint className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-[#F8FAFC] truncate">
+                {pet.name} ({pet.species})
+              </div>
+              <div className="text-xs font-mono text-[#CBD5E1]">
+                {isOverlayActive ? '🟢 Roaming Screen' : '⚪ Asleep in Kennel'}
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              toggleOverlay();
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold cursor-pointer transition-all ${
+              isOverlayActive
+                ? 'bg-[#10B981] text-[#0B0F17] shadow-sm'
+                : 'bg-[#1E2738] hover:bg-[#2A364F] border border-[#2A364F] text-[#F8FAFC]'
+            }`}
+          >
+            {isOverlayActive ? 'Dock' : 'Summon'}
+          </button>
+        </div>
+
+        {/* Primary CTA: Download Chrome Extension ZIP */}
+        <button
+          onClick={onOpenBuddyHub}
+          className="w-full py-2.5 px-3 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95"
+        >
+          <Download className="w-4 h-4 text-[#0B0F17]" />
+          <span>Export Pet Extension (ZIP)</span>
+        </button>
+
+        {/* Secondary: Summon Companion on Screen */}
+        <button
+          onClick={() => {
+            sound.playClick();
+            toggleOverlay();
+          }}
+          className={`w-full py-2 px-3 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer border ${
+            isOverlayActive
+              ? 'bg-[#1E2738] border-[#10B981] text-[#10B981]'
+              : 'bg-[#151C28] hover:bg-[#2A364F] border-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC]'
+          }`}
+        >
+          <PawPrint className="w-4 h-4 text-[#F59E0B]" />
+          <span>{isOverlayActive ? 'Buddy Roaming Active 🟢' : 'Preview Screen Companion'}</span>
+        </button>
+      </div>
+
+      {/* 2. SLAM BATTLE PASS (ROYAL PASS) */}
+      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 shadow-sm space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
+            <Crown className="w-4 h-4 text-[#F59E0B]" />
+            Slam Battle Pass (Tier {royalPassTier})
+          </span>
+          <span className="text-xs font-mono font-bold text-[#10B981] bg-[#10B981]/15 border border-[#10B981]/30 px-2 py-0.5 rounded-full">
+            FREE PASS
+          </span>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-mono text-[#CBD5E1]">
+            <span>Progression:</span>
+            <span className="text-[#F8FAFC] font-bold tabular-nums">
+              {passPoints % 100} / 100 PTS
+            </span>
+          </div>
+          <div className="w-full h-2 bg-[#0B0F17] border border-[#2A364F] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#F59E0B] rounded-full transition-all duration-300"
+              style={{ width: `${Math.min(100, passPoints % 100)}%` }}
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={onOpenPass}
+          className="w-full py-2.5 px-3 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95"
+        >
+          <Crown className="w-4 h-4 text-[#0B0F17]" />
+          <span>Open Pass & Claim Rewards</span>
+        </button>
+      </div>
+
+      {/* 3. SANCTUARY PET ADOPTION SHELTER */}
+      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 shadow-sm space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
+            <Home className="w-4 h-4 text-[#10B981]" />
+            Pet Adoption Shelter
+          </span>
+          <button
+            onClick={onOpenAuctions}
+            className="text-xs font-mono font-bold text-[#F59E0B] hover:underline cursor-pointer flex items-center gap-0.5"
+          >
+            Enter <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {liveTickers.map((item, idx) => (
+            <div
+              key={idx}
+              className="flex items-center justify-between p-2.5 rounded-xl bg-[#151C28] border border-[#2A364F] text-xs font-mono"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-[#F59E0B] shrink-0" />
+                <span className="font-bold text-[#F8FAFC] truncate max-w-[130px]">{item.pet}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[#F59E0B] font-bold tabular-nums">{item.bid}</span>
+                <span className="text-xs text-[#CBD5E1]">{item.time}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={onOpenAuctions}
+          className="w-full py-2 px-3 rounded-xl bg-[#151C28] hover:bg-[#2A364F] border border-[#2A364F] text-[#F8FAFC] font-sans font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+        >
+          <span>Enter Adoption Shelter</span>
+          <ChevronRight className="w-4 h-4 text-[#CBD5E1]" />
+        </button>
+      </div>
+
+      {/* 4. LIVEOPS & NETCODE GRID */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={onOpenRanked}
+          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group"
+        >
+          <div className="text-xs font-mono text-[#F59E0B] font-bold flex items-center justify-between">
+            <span>NETCODE</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
+          </div>
+          <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
+            1v1 Ranked
+          </div>
+          <div className="text-xs font-mono text-[#CBD5E1]">Matchmaking</div>
+        </button>
+
+        <button
+          onClick={onOpenBreeding}
+          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group"
+        >
+          <div className="text-xs font-mono text-[#F59E0B] font-bold flex items-center justify-between">
+            <span>GENETICS</span>
+            <Dna className="w-3.5 h-3.5 text-[#F59E0B]" />
+          </div>
+          <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
+            Breeding Lab
+          </div>
+          <div className="text-xs font-mono text-[#CBD5E1]">DNA Mutants</div>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2">
+        <button
+          onClick={onOpenQuests}
+          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group flex items-center justify-between"
+        >
+          <div>
+            <div className="text-xs font-mono text-[#10B981] font-bold">3 ACTIVE MISSIONS</div>
+            <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
+              Daily Quests & Challenges
+            </div>
+            <div className="text-xs font-mono text-[#CBD5E1]">Earn XP & Tokens</div>
+          </div>
+          <Target className="w-5 h-5 text-[#F59E0B]" />
+        </button>
+      </div>
+
+      {/* 5. ACTIVE SQUAD DECK */}
+      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 shadow-sm space-y-2.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
+            <Shield className="w-4 h-4 text-[#F59E0B]" />
             Active Squad Deck ({battleDeck.length}/4)
           </span>
-          <span className="text-xs font-mono text-emerald-600 dark:text-[#CCFF00] font-bold">Tag-In Ready</span>
+          <span className="text-xs font-mono text-[#10B981] font-bold">Tag-In</span>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -97,220 +295,37 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
                   sound.playClick();
                   selectActiveBeast(beast.id);
                 }}
-                className={`relative flex items-center gap-2 p-2.5 rounded-xl text-left border cursor-pointer transition-all duration-200 ${
+                className={`relative flex items-center gap-2 p-2 rounded-xl text-left border cursor-pointer transition-all duration-150 ${
                   isActive
-                    ? 'bg-gradient-to-r from-[#CCFF00]/30 to-transparent border-2 border-[#CCFF00] shadow-[0_0_15px_rgba(204,255,0,0.3)]'
-                    : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/15 hover:border-slate-300 dark:hover:border-white/30 hover:bg-slate-50 dark:hover:bg-white/10'
+                    ? 'bg-[#151C28] border-2 border-[#F59E0B] shadow-sm'
+                    : 'bg-[#151C28] border-[#2A364F] hover:border-[#3E4F6F]'
                 }`}
               >
-                <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-black/60 shrink-0 border border-slate-300 dark:border-white/20">
+                <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-[#0B0F17] shrink-0 border border-[#2A364F]">
                   <img src={photo} alt={beast.name} className="w-full h-full object-cover" />
                   {isActive && (
-                    <div className="absolute inset-0 bg-[#CCFF00]/30 flex items-center justify-center">
-                      <Zap className="w-4 h-4 text-[#CCFF00]" />
+                    <div className="absolute inset-0 bg-[#F59E0B]/30 flex items-center justify-center">
+                      <Zap className="w-3.5 h-3.5 text-[#F59E0B]" />
                     </div>
                   )}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-display font-black uppercase text-slate-900 dark:text-white truncate">
+                  <div className="text-xs font-display font-bold uppercase text-[#F8FAFC] truncate">
                     {beast.name}
                   </div>
-                  <div className="text-xs font-mono text-emerald-600 dark:text-[#CCFF00] font-black">
+                  <div className="text-xs font-mono text-[#F59E0B] font-bold tabular-nums">
                     CP {cp}
                   </div>
                 </div>
 
-                <span className="absolute top-1 right-1 text-[9px] font-mono text-slate-500 dark:text-slate-400 font-bold">
+                <span className="absolute top-1 right-1 text-[9px] font-mono text-[#CBD5E1] font-bold">
                   #{idx + 1}
                 </span>
               </button>
             );
           })}
         </div>
-      </div>
-
-      {/* 2. Desktop Companion Sync Status */}
-      <div className="bg-slate-100/90 dark:bg-[#0E1424] border border-slate-200 dark:border-white/15 rounded-2xl p-3.5 shadow-md dark:shadow-lg">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-xs font-mono font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-            <Tv className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-            Companion Buddy Bridge
-          </span>
-          <button
-            onClick={onOpenBuddyHub}
-            className="text-xs font-mono font-bold text-cyan-600 dark:text-cyan-300 hover:underline cursor-pointer flex items-center gap-0.5"
-          >
-            Hub <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="flex items-center justify-between bg-white dark:bg-black/60 border border-slate-200 dark:border-white/10 rounded-xl p-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-600 dark:text-cyan-300 flex items-center justify-center shrink-0">
-              <Tv className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                {pet.name} ({pet.species})
-              </div>
-              <div className="text-xs font-mono text-cyan-600 dark:text-cyan-300 font-semibold">
-                {isOverlayActive ? '🟢 Roaming Screen' : '⚪ Asleep in Kennel'}
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              sound.playClick();
-              toggleOverlay();
-            }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-black cursor-pointer transition-all ${
-              isOverlayActive
-                ? 'bg-cyan-500 dark:bg-cyan-400 text-black shadow-md'
-                : 'bg-slate-200 dark:bg-white/15 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-white/25 border border-slate-300 dark:border-white/20'
-            }`}
-          >
-            {isOverlayActive ? 'Dock' : 'Summon'}
-          </button>
-        </div>
-
-        <button
-          onClick={() => {
-            sound.playClick();
-            toggleOverlay();
-          }}
-          className={`w-full mt-2.5 py-2 px-3 rounded-xl text-xs font-mono font-black flex items-center justify-center gap-2 transition-all cursor-pointer border shadow-xs ${
-            isOverlayActive
-              ? 'bg-cyan-100 dark:bg-cyan-950/80 border-2 border-cyan-500 dark:border-cyan-400 text-cyan-950 dark:text-cyan-200 shadow-[0_0_15px_rgba(0,240,255,0.3)]'
-              : 'bg-white dark:bg-white/10 border-slate-300 dark:border-white/20 text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-white/15'
-          }`}
-        >
-          <span className="text-sm">🐾</span>
-          <span>{isOverlayActive ? 'Buddy Roaming Active 🟢' : 'Preview Desktop Buddy on Screen'}</span>
-        </button>
-      </div>
-
-      {/* 3. Sanctuary Pet Adoption Ticker */}
-      <div className="bg-slate-100/90 dark:bg-[#0E1424] border border-slate-200 dark:border-white/15 rounded-2xl p-3.5 shadow-md dark:shadow-lg">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-xs font-mono font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-            <Home className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-            Adoption Shelter Stream
-          </span>
-          <button
-            onClick={onOpenAuctions}
-            className="text-xs font-mono font-bold text-amber-600 dark:text-amber-300 hover:underline cursor-pointer flex items-center gap-0.5"
-          >
-            Enter <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          {liveTickers.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-black/60 border border-slate-200 dark:border-white/10 text-xs font-mono"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0" />
-                <span className="font-bold text-slate-900 dark:text-white truncate max-w-[120px]">{item.pet}</span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-amber-600 dark:text-amber-300 font-black">{item.bid}</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">{item.time}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* LiveOps & Netcode Shortcuts */}
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={onOpenRanked}
-          className="p-2.5 rounded-xl bg-cyan-100/70 dark:bg-cyan-950/60 border border-cyan-400/50 hover:border-cyan-400 text-left transition-all cursor-pointer shadow-xs active:scale-95 group"
-        >
-          <div className="text-xs font-mono text-cyan-700 dark:text-cyan-400 font-bold flex items-center justify-between">
-            <span>NETCODE</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-          </div>
-          <div className="text-xs font-bold text-slate-900 dark:text-white uppercase mt-0.5 group-hover:text-cyan-600 dark:group-hover:text-cyan-200">
-            1v1 Ranked
-          </div>
-          <div className="text-xs font-mono text-slate-500 dark:text-neutral-400">±150 CP Match</div>
-        </button>
-
-        <button
-          onClick={onOpenBreeding}
-          className="p-2.5 rounded-xl bg-fuchsia-100/70 dark:bg-fuchsia-950/60 border border-fuchsia-400/50 hover:border-fuchsia-400 text-left transition-all cursor-pointer shadow-xs active:scale-95 group"
-        >
-          <div className="text-xs font-mono text-fuchsia-700 dark:text-fuchsia-400 font-bold flex items-center justify-between">
-            <span>GENETICS</span>
-            <Sparkles className="w-3 h-3 text-fuchsia-500 dark:text-fuchsia-300" />
-          </div>
-          <div className="text-xs font-bold text-slate-900 dark:text-white uppercase mt-0.5 group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-200">
-            Breeding Lab
-          </div>
-          <div className="text-xs font-mono text-slate-500 dark:text-neutral-400">5% Mutant Roll</div>
-        </button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={onOpenPass}
-          className="p-2.5 rounded-xl bg-amber-100/70 dark:bg-amber-950/60 border border-amber-400/50 hover:border-amber-400 text-left transition-all cursor-pointer shadow-xs active:scale-95 group"
-        >
-          <div className="text-xs font-mono text-amber-700 dark:text-amber-400 font-bold">TIER {royalPassTier}</div>
-          <div className="text-xs font-bold text-slate-900 dark:text-white uppercase mt-0.5 group-hover:text-amber-600 dark:group-hover:text-amber-200">
-            Royal Pass
-          </div>
-          <div className="text-xs font-mono text-slate-500 dark:text-neutral-400">Season 1 Free</div>
-        </button>
-
-        <button
-          onClick={onOpenQuests}
-          className="p-2.5 rounded-xl bg-lime-100/70 dark:bg-lime-950/60 border border-lime-400/50 hover:border-lime-400 text-left transition-all cursor-pointer shadow-xs active:scale-95 group"
-        >
-          <div className="text-xs font-mono text-lime-700 dark:text-lime-400 font-bold">3 ACTIVE</div>
-          <div className="text-xs font-bold text-slate-900 dark:text-white uppercase mt-0.5 group-hover:text-lime-600 dark:group-hover:text-lime-200">
-            Daily Quests
-          </div>
-          <div className="text-xs font-mono text-slate-500 dark:text-neutral-400">XP & Credits</div>
-        </button>
-      </div>
-
-      {/* 4. Slam Royal Pass Progress Bar (100% Free Progression) */}
-      <div className="mt-auto pt-2">
-        <button
-          onClick={onOpenPass}
-          className="w-full p-3 rounded-2xl bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-600/10 dark:from-amber-950/40 dark:via-yellow-950/30 dark:to-neutral-900 border border-amber-400/40 hover:border-amber-400 cursor-pointer shadow-md transition-all group"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-400 text-black flex items-center justify-center font-display font-black text-xs shadow-sm">
-                T{royalPassTier}
-              </div>
-              <div className="text-left">
-                <div className="font-display font-black text-xs uppercase text-slate-900 dark:text-white tracking-wider flex items-center gap-1 group-hover:text-amber-500 dark:group-hover:text-amber-300">
-                  Slam Royal Pass
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-300" />
-                </div>
-                <div className="text-[10px] font-mono text-slate-600 dark:text-slate-300 font-medium">
-                  {passPoints % 100} / 100 PTS · Tier {Math.min(50, royalPassTier + 1)}
-                </div>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-amber-500 dark:text-amber-400 group-hover:translate-x-1 transition-transform" />
-          </div>
-
-          <div className="mt-2.5 w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-300"
-              style={{ width: `${passPoints % 100}%` }}
-            />
-          </div>
-        </button>
       </div>
     </aside>
   );
