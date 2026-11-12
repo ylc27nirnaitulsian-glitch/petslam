@@ -383,11 +383,11 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
       {/* Active Floating Dragged Tool Physics Ghost */}
       {activeDragTool && dragPointerPos && (
         <div
-          className="fixed pointer-events-none z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/90 border border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.6)] backdrop-blur-md transform -translate-x-1/2 -translate-y-1/2 scale-125 transition-transform"
+          className="fixed pointer-events-none z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#151C28] border border-[#2A364F] shadow-xl backdrop-blur-md transform -translate-x-1/2 -translate-y-1/2 scale-125 transition-transform"
           style={{ left: `${dragPointerPos.x}px`, top: `${dragPointerPos.y}px` }}
         >
           <span className="text-2xl animate-bounce">{activeDragTool.emoji}</span>
-          <span className="text-xs font-mono font-bold text-[#CCFF00]">
+          <span className="text-xs font-mono font-bold text-[#F59E0B]">
             {isHoveringPetStage ? 'Drop to Apply!' : activeDragTool.name}
           </span>
         </div>
@@ -422,7 +422,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
       <div className="shrink-0 bg-gradient-to-b from-[#141C2E] to-[#0D121F] border border-white/10 rounded-2xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-sm">
         {/* Active Pet Identity */}
         <div className="flex items-center gap-2 min-w-0 shrink">
-          <div className="w-8 h-8 rounded-xl overflow-hidden border border-[#CCFF00] shrink-0 bg-black shadow-xs">
+          <div className="w-8 h-8 rounded-xl overflow-hidden border border-[#2A364F] shrink-0 bg-[#0B0F17] shadow-xs">
             <img
               src={getPetPhoto(activeBeast)}
               alt={activeBeast.name}
@@ -434,11 +434,11 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
               <span className="font-display font-black text-xs text-white uppercase truncate">
                 {activeBeast.name}
               </span>
-              <span className="text-[9px] font-mono font-bold bg-[#CCFF00]/15 border border-[#CCFF00]/40 text-[#CCFF00] px-1 py-0.2 rounded">
+              <span className="text-[9px] font-mono font-bold bg-[#F59E0B]/15 border border-[#F59E0B]/40 text-[#F59E0B] px-1 py-0.2 rounded">
                 LVL {activeBeast.level}
               </span>
             </div>
-            <span className="text-[10px] font-mono text-[#CCFF00] truncate block">
+            <span className="text-[10px] font-mono text-[#F59E0B] truncate block">
               {activeBeast.breed || activeBeast.species}
             </span>
           </div>
@@ -469,13 +469,13 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
         </div>
 
         {/* Cute Buddy vs Photo Card Switcher */}
-        <div className="flex items-center bg-black/60 border border-white/15 rounded-xl p-0.5 shrink-0">
+        <div className="flex items-center bg-[#0B0F17] border border-[#2A364F] rounded-xl p-0.5 shrink-0">
           <button
             onClick={() => setDisplayMode('cute')}
             className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer ${
               displayMode === 'cute'
-                ? 'bg-[#CCFF00] text-black shadow'
-                : 'text-neutral-400 hover:text-white'
+                ? 'bg-[#F59E0B] text-[#0B0F17] shadow-xs'
+                : 'text-[#CBD5E1] hover:text-[#F8FAFC]'
             }`}
             title="Interactive Animated Talking Tom Buddy"
           >
@@ -485,8 +485,8 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
             onClick={() => setDisplayMode('card')}
             className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer ${
               displayMode === 'card'
-                ? 'bg-[#CCFF00] text-black shadow'
-                : 'text-neutral-400 hover:text-white'
+                ? 'bg-[#F59E0B] text-[#0B0F17] shadow-xs'
+                : 'text-[#CBD5E1] hover:text-[#F8FAFC]'
             }`}
             title="Authentic Champion Breed Card"
           >
@@ -541,7 +541,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
         ref={petStageRef}
         className={`flex-1 flex flex-col items-center justify-center relative min-h-0 my-1 overflow-hidden rounded-2xl transition-all duration-300 ${
           isHoveringPetStage
-            ? 'ring-2 ring-[#CCFF00] bg-[#CCFF00]/5 scale-[1.01]'
+            ? 'ring-2 ring-[#F59E0B] bg-[#F59E0B]/5 scale-[1.01]'
             : 'border border-transparent'
         }`}
       >
@@ -556,15 +556,15 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
 
         {/* Speech Bubble (Floating above pet) */}
         {speechBubbleText && (
-          <div className="relative z-20 mb-1 px-3 py-1 rounded-xl bg-black/90 backdrop-blur-md text-[#CCFF00] text-[11px] font-mono font-bold shadow-lg animate-in fade-in zoom-in-95 max-w-[320px] text-center border border-[#CCFF00]/50">
+          <div className="relative z-20 mb-1 px-3 py-1 rounded-xl bg-[#151C28] backdrop-blur-md text-[#F59E0B] text-[11px] font-mono font-bold shadow-lg animate-in fade-in zoom-in-95 max-w-[320px] text-center border border-[#2A364F]">
             {speechBubbleText}
-            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-black/90 rotate-45 border-r border-b border-[#CCFF00]/50" />
+            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-[#151C28] rotate-45 border-r border-b border-[#2A364F]" />
           </div>
         )}
 
         {/* Hover Target Indicator */}
         {isHoveringPetStage && (
-          <div className="absolute top-2 z-30 px-2.5 py-0.5 rounded-full bg-[#CCFF00] text-black font-mono font-bold text-[10px] animate-pulse">
+          <div className="absolute top-2 z-30 px-2.5 py-0.5 rounded-full bg-[#F59E0B] text-[#0B0F17] font-mono font-bold text-[10px]">
             🎯 Release to Care for {activeBeast.name}!
           </div>
         )}
@@ -584,10 +584,10 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
               }}
               title="Tap to pet · Double-click to perform trick! 🤸"
             >
-              {/* Pedestal Glow Shadow */}
+              {/* Pedestal Shadow */}
               <div
                 className={`absolute -bottom-2 inset-x-2 h-6 rounded-full blur-md transition-colors ${
-                  isHoveringPetStage ? 'bg-[#CCFF00]/40 scale-125' : 'bg-[#CCFF00]/15'
+                  isHoveringPetStage ? 'bg-black/60 scale-125' : 'bg-black/40'
                 }`}
               />
 
@@ -625,7 +625,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
               onClick={handlePetTheBeast}
               title="Tap to inspect"
             >
-              <div className="relative w-40 h-48 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_25px_rgba(204,255,0,0.25)] bg-black transition-transform group-hover:scale-102">
+              <div className="relative w-40 h-48 rounded-2xl overflow-hidden border border-[#2A364F] shadow-lg bg-[#0B0F17] transition-transform group-hover:scale-102">
                 <img
                   src={getPetPhoto(activeBeast)}
                   alt={activeBeast.name}
@@ -633,7 +633,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
 
-                <div className="absolute top-2 left-2 bg-black/80 px-1.5 py-0.5 rounded border border-white/20 text-[9px] font-mono font-bold text-[#CCFF00]">
+                <div className="absolute top-2 left-2 bg-[#0B0F17]/90 px-1.5 py-0.5 rounded border border-[#2A364F] text-[9px] font-mono font-bold text-[#F59E0B]">
                   LVL {activeBeast.level}
                 </div>
 
@@ -647,7 +647,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
                   <span className="font-display font-black text-sm text-white uppercase truncate block">
                     {activeBeast.name}
                   </span>
-                  <span className="text-[10px] text-[#CCFF00] font-mono font-bold truncate block">
+                  <span className="text-[10px] text-[#F59E0B] font-mono font-bold truncate block">
                     {activeBeast.breed || activeBeast.species}
                   </span>
                 </div>
@@ -663,7 +663,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
         <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 px-1">
           <span className="flex items-center gap-1 font-bold text-neutral-300">
             <span>✨ Tactile Care Tray</span>
-            <span className="text-[9px] text-[#CCFF00] font-normal">(Drag onto pet or tap)</span>
+            <span className="text-[9px] text-[#F59E0B] font-normal">(Drag onto pet or tap)</span>
           </span>
           <div className="flex items-center gap-2">
             <span className="text-[9px]">Satiety: {hungerLevel}%</span>
@@ -711,7 +711,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
 
         {/* Interactive Tricks & Acrobatics Row */}
         <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 px-1 pt-1">
-          <span className="flex items-center gap-1 font-bold text-[#CCFF00]">
+          <span className="flex items-center gap-1 font-bold text-[#F59E0B]">
             <span>🤸 Pet Tricks & Acrobatics</span>
             <span className="text-[9px] text-neutral-400 font-normal">(Tap trick or double-click buddy)</span>
           </span>
@@ -771,10 +771,10 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
       </div>
 
       {/* SECTION 4: COMPACT COMPANION KENNEL */}
-      <div className="shrink-0 bg-[#0E131F] border border-white/10 rounded-2xl p-1.5 space-y-1">
+      <div className="shrink-0 bg-[#151C28] border border-[#2A364F] rounded-2xl p-1.5 space-y-1">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-1.5 text-[11px] font-display font-black uppercase text-white">
-            <Layers className="w-3 h-3 text-[#CCFF00]" />
+            <Layers className="w-3 h-3 text-[#F59E0B]" />
             <span>Companion Kennel ({ownedBeasts.length})</span>
           </div>
 
@@ -782,8 +782,8 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
             onClick={toggleOverlay}
             className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold transition-all cursor-pointer ${
               isOverlayActive
-                ? 'bg-[#CCFF00] text-black shadow'
-                : 'bg-white/10 text-neutral-300 hover:text-white'
+                ? 'bg-[#F59E0B] text-[#0B0F17] shadow-xs'
+                : 'bg-[#1E2738] text-[#CBD5E1] hover:text-[#F8FAFC]'
             }`}
             title="Toggle Desktop Screen Buddy"
           >
@@ -805,11 +805,11 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
                 }}
                 className={`flex items-center gap-1.5 px-2 py-1 rounded-xl border cursor-pointer transition-all shrink-0 ${
                   isActive
-                    ? 'bg-[#182030] border-[#CCFF00] shadow-[0_0_10px_rgba(204,255,0,0.25)]'
-                    : 'bg-[#121622] border-white/10 hover:border-white/20 opacity-75 hover:opacity-100'
+                    ? 'bg-[#1E2738] border-2 border-[#F59E0B]'
+                    : 'bg-[#0B0F17] border-[#2A364F] hover:border-[#3E4F6F] opacity-75 hover:opacity-100'
                 }`}
               >
-                <div className="w-7 h-7 rounded-lg overflow-hidden border border-white/20 bg-black shrink-0">
+                <div className="w-7 h-7 rounded-lg overflow-hidden border border-[#2A364F] bg-[#0B0F17] shrink-0">
                   <img
                     src={getPetPhoto(beast)}
                     alt={beast.name}
@@ -820,7 +820,7 @@ export const PetSanctuaryScreen: React.FC<PetSanctuaryScreenProps> = ({ onGoToAr
                   <div className="font-display font-black text-[10px] text-white uppercase truncate max-w-[80px]">
                     {beast.name}
                   </div>
-                  <div className="text-[8px] font-mono text-[#CCFF00] truncate max-w-[80px]">
+                  <div className="text-[8px] font-mono text-[#F59E0B] truncate max-w-[80px]">
                     {beast.breed || beast.species}
                   </div>
                 </div>

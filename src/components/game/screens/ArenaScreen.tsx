@@ -1681,12 +1681,12 @@ export const ArenaScreen: React.FC = () => {
               key={p.id}
               className={`absolute pointer-events-none font-display font-black text-sm sm:text-base z-50 animate-out fade-out slide-out-to-top-8 duration-1000 ${
                 p.type === 'crit'
-                  ? 'text-[#CCFF00] text-lg sm:text-xl drop-shadow-[0_2px_10px_rgba(204,255,0,0.9)]'
+                  ? 'text-[#F59E0B] text-lg sm:text-xl font-black drop-shadow-md'
                   : p.type === 'block'
-                  ? 'text-cyan-300 drop-shadow-[0_2px_8px_rgba(0,229,255,0.8)]'
+                  ? 'text-[#38BDF8] drop-shadow-md'
                   : p.type === 'player'
-                  ? 'text-red-400'
-                  : 'text-amber-300'
+                  ? 'text-[#F43F5E]'
+                  : 'text-[#F59E0B]'
               }`}
               style={{ left: `${p.x}px`, top: `${p.y}px` }}
             >

@@ -140,11 +140,11 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
           {/* Sound Toggle */}
           <button
             onClick={toggleSound}
-            className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-slate-900/90 dark:hover:bg-slate-800 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+            className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-[#1E2738] dark:hover:bg-[#2A364F] dark:border-[#2A364F] text-slate-700 dark:text-[#CBD5E1] hover:text-slate-950 dark:hover:text-[#F8FAFC] transition-colors cursor-pointer shrink-0 shadow-sm"
             title={soundEnabled ? 'Mute Audio' : 'Unmute Audio'}
           >
             {soundEnabled ? (
-              <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-[#CCFF00]" />
+              <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#10B981]" />
             ) : (
               <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
             )}
@@ -153,7 +153,7 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
           {/* Guide Button */}
           <button
             onClick={() => setGuideModalOpen(true)}
-            className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-slate-900/90 dark:hover:bg-slate-800 dark:border-white/20 text-slate-800 dark:text-[#CCFF00] transition-colors cursor-pointer shrink-0 shadow-sm"
+            className="flex items-center justify-center w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-[#1E2738] dark:hover:bg-[#2A364F] dark:border-[#2A364F] text-slate-800 dark:text-[#CBD5E1] hover:text-slate-950 dark:hover:text-[#F8FAFC] transition-colors cursor-pointer shrink-0 shadow-sm"
             title="Game Guide"
           >
             <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

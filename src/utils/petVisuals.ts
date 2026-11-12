@@ -126,16 +126,16 @@ export function getRarityBadgeClasses(rarity: string): string {
   const r = (rarity || 'Common').toLowerCase();
   switch (r) {
     case 'apex':
-      return 'border-2 border-[#CCFF00] bg-black text-[#CCFF00] font-display font-black text-[10px] tracking-widest uppercase shadow-[0_0_14px_rgba(204,255,0,0.7)] px-2 py-0.5 rounded-md';
+      return 'border border-[#F59E0B] bg-[#1E2738] text-[#F59E0B] font-display font-black text-[10px] tracking-widest uppercase px-2 py-0.5 rounded-md';
     case 'legendary':
-      return 'border border-amber-400 bg-amber-950/90 text-amber-300 font-display font-black text-[9px] tracking-wider uppercase shadow-[0_0_10px_rgba(245,158,11,0.5)] px-2 py-0.5 rounded-md';
+      return 'border border-amber-500/60 bg-[#151C28] text-[#F59E0B] font-display font-bold text-[9px] tracking-wider uppercase px-2 py-0.5 rounded-md';
     case 'epic':
-      return 'border border-purple-400 bg-purple-950/90 text-purple-200 font-mono text-[9px] font-bold uppercase shadow-[0_0_8px_rgba(168,85,247,0.4)] px-1.5 py-0.5 rounded-md';
+      return 'border border-purple-500/60 bg-[#151C28] text-purple-300 font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md';
     case 'rare':
-      return 'border border-cyan-400 bg-cyan-950/90 text-cyan-300 font-mono text-[9px] font-bold uppercase shadow-[0_0_6px_rgba(0,229,255,0.3)] px-1.5 py-0.5 rounded-md';
+      return 'border border-[#38BDF8]/60 bg-[#151C28] text-[#38BDF8] font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md';
     case 'common':
     default:
-      return 'border border-neutral-600 bg-neutral-900/80 text-neutral-300 font-mono text-[9px] font-medium uppercase px-1.5 py-0.5 rounded-md';
+      return 'border border-[#2A364F] bg-[#151C28] text-[#CBD5E1] font-mono text-[9px] font-medium uppercase px-1.5 py-0.5 rounded-md';
   }
 }
 

@@ -158,7 +158,7 @@ export const SlamBattlePassModal: React.FC<SlamBattlePassModalProps> = ({ isOpen
             </div>
             <div className="w-full h-2 rounded-full bg-black/60 border border-white/10 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-[#CCFF00] rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-300"
                 style={{ width: `${royalPassTier >= 50 ? 100 : pointsIntoCurrentTier}%` }}
               />
             </div>
@@ -246,7 +246,7 @@ export const SlamBattlePassModal: React.FC<SlamBattlePassModalProps> = ({ isOpen
                       {t.title}
                     </div>
 
-                    <div className="text-xs font-mono font-black text-[#CCFF00] flex items-center justify-center gap-1">
+                    <div className="text-xs font-mono font-black text-[#F59E0B] flex items-center justify-center gap-1">
                       <Coins className="w-3.5 h-3.5" />
                       <span>+{t.credits.toLocaleString()} Credits</span>
                     </div>

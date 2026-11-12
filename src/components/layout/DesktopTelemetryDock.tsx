@@ -4,14 +4,13 @@ import {
   Zap,
   Home,
   Tv,
-  Sparkles,
   ChevronRight,
   Download,
   PawPrint,
-  Crown,
   Target,
   Swords,
-  Dna,
+  Users,
+  Compass,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { usePetCompanion } from '../../context/PetCompanionContext';
@@ -32,10 +31,7 @@ interface DesktopTelemetryDockProps {
 export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
   onOpenAuctions,
   onOpenBuddyHub,
-  onOpenStudio,
   onOpenRanked,
-  onOpenBreeding,
-  onOpenPass,
   onOpenQuests,
 }) => {
   const {
@@ -43,8 +39,6 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
     battleDeckIds,
     activeBeast,
     selectActiveBeast,
-    passPoints,
-    royalPassTier,
   } = useGame();
 
   const { isOverlayActive, toggleOverlay, pet } = usePetCompanion();
@@ -64,24 +58,24 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
   return (
     <aside className="hidden lg:flex flex-col w-[320px] xl:w-[350px] h-full bg-[#151C28] border-l border-[#2A364F] select-none z-30 shrink-0 p-4 space-y-3.5 overflow-y-auto scrollbar-thin text-[#F8FAFC]">
       {/* Dock Header */}
-      <div className="flex items-center justify-between border-b border-[#2A364F] pb-3">
+      <div className="flex items-center justify-between border-b border-[#2A364F] pb-3 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse" />
+          <div className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
           <span className="font-display font-bold text-sm uppercase tracking-wider text-[#F8FAFC]">
-            Features & Telemetry
+            Live Squad & Telemetry
           </span>
         </div>
         <span className="text-xs font-mono text-[#10B981] font-bold bg-[#10B981]/15 border border-[#10B981]/40 px-2.5 py-0.5 rounded-full">
-          LIVE
+          60 FPS
         </span>
       </div>
 
       {/* 1. PET EXTENSION & LIVE BUDDY BRIDGE */}
-      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 shadow-sm space-y-3">
+      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 space-y-3 shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-xs font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
             <Tv className="w-4 h-4 text-[#F59E0B]" />
-            Pet Extension & Buddy Hub
+            Pet Extension & Buddy Bridge
           </span>
           <button
             onClick={onOpenBuddyHub}
@@ -113,7 +107,7 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
             }}
             className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold cursor-pointer transition-all ${
               isOverlayActive
-                ? 'bg-[#10B981] text-[#0B0F17] shadow-sm'
+                ? 'bg-[#10B981] text-[#0B0F17]'
                 : 'bg-[#1E2738] hover:bg-[#2A364F] border border-[#2A364F] text-[#F8FAFC]'
             }`}
           >
@@ -129,62 +123,10 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
           <Download className="w-4 h-4 text-[#0B0F17]" />
           <span>Export Pet Extension (ZIP)</span>
         </button>
-
-        {/* Secondary: Summon Companion on Screen */}
-        <button
-          onClick={() => {
-            sound.playClick();
-            toggleOverlay();
-          }}
-          className={`w-full py-2 px-3 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition-all cursor-pointer border ${
-            isOverlayActive
-              ? 'bg-[#1E2738] border-[#10B981] text-[#10B981]'
-              : 'bg-[#151C28] hover:bg-[#2A364F] border-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC]'
-          }`}
-        >
-          <PawPrint className="w-4 h-4 text-[#F59E0B]" />
-          <span>{isOverlayActive ? 'Buddy Roaming Active 🟢' : 'Preview Screen Companion'}</span>
-        </button>
       </div>
 
-      {/* 2. SLAM BATTLE PASS (ROYAL PASS) */}
-      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 shadow-sm space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
-            <Crown className="w-4 h-4 text-[#F59E0B]" />
-            Slam Battle Pass (Tier {royalPassTier})
-          </span>
-          <span className="text-xs font-mono font-bold text-[#10B981] bg-[#10B981]/15 border border-[#10B981]/30 px-2 py-0.5 rounded-full">
-            FREE PASS
-          </span>
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs font-mono text-[#CBD5E1]">
-            <span>Progression:</span>
-            <span className="text-[#F8FAFC] font-bold tabular-nums">
-              {passPoints % 100} / 100 PTS
-            </span>
-          </div>
-          <div className="w-full h-2 bg-[#0B0F17] border border-[#2A364F] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#F59E0B] rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(100, passPoints % 100)}%` }}
-            />
-          </div>
-        </div>
-
-        <button
-          onClick={onOpenPass}
-          className="w-full py-2.5 px-3 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md active:scale-95"
-        >
-          <Crown className="w-4 h-4 text-[#0B0F17]" />
-          <span>Open Pass & Claim Rewards</span>
-        </button>
-      </div>
-
-      {/* 3. SANCTUARY PET ADOPTION SHELTER */}
-      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 shadow-sm space-y-2.5">
+      {/* 2. SANCTUARY PET ADOPTION SHELTER (LIVE TICKER) */}
+      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 space-y-2.5 shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-xs font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
             <Home className="w-4 h-4 text-[#10B981]" />
@@ -220,66 +162,19 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
           onClick={onOpenAuctions}
           className="w-full py-2 px-3 rounded-xl bg-[#151C28] hover:bg-[#2A364F] border border-[#2A364F] text-[#F8FAFC] font-sans font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
         >
-          <span>Enter Adoption Shelter</span>
+          <span>Browse Adoption Shelter</span>
           <ChevronRight className="w-4 h-4 text-[#CBD5E1]" />
         </button>
       </div>
 
-      {/* 4. LIVEOPS & NETCODE GRID */}
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={onOpenRanked}
-          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group"
-        >
-          <div className="text-xs font-mono text-[#F59E0B] font-bold flex items-center justify-between">
-            <span>NETCODE</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
-          </div>
-          <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
-            1v1 Ranked
-          </div>
-          <div className="text-xs font-mono text-[#CBD5E1]">Matchmaking</div>
-        </button>
-
-        <button
-          onClick={onOpenBreeding}
-          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group"
-        >
-          <div className="text-xs font-mono text-[#F59E0B] font-bold flex items-center justify-between">
-            <span>GENETICS</span>
-            <Dna className="w-3.5 h-3.5 text-[#F59E0B]" />
-          </div>
-          <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
-            Breeding Lab
-          </div>
-          <div className="text-xs font-mono text-[#CBD5E1]">DNA Mutants</div>
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-2">
-        <button
-          onClick={onOpenQuests}
-          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group flex items-center justify-between"
-        >
-          <div>
-            <div className="text-xs font-mono text-[#10B981] font-bold">3 ACTIVE MISSIONS</div>
-            <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
-              Daily Quests & Challenges
-            </div>
-            <div className="text-xs font-mono text-[#CBD5E1]">Earn XP & Tokens</div>
-          </div>
-          <Target className="w-5 h-5 text-[#F59E0B]" />
-        </button>
-      </div>
-
-      {/* 5. ACTIVE SQUAD DECK */}
-      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 shadow-sm space-y-2.5">
+      {/* 3. ACTIVE SQUAD DECK (TAG-IN SELECTION) */}
+      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 space-y-2.5 shrink-0">
         <div className="flex items-center justify-between">
           <span className="text-xs font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
             <Shield className="w-4 h-4 text-[#F59E0B]" />
             Active Squad Deck ({battleDeck.length}/4)
           </span>
-          <span className="text-xs font-mono text-[#10B981] font-bold">Tag-In</span>
+          <span className="text-xs font-mono text-[#10B981] font-bold">Tag-In Active</span>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -297,7 +192,7 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
                 }}
                 className={`relative flex items-center gap-2 p-2 rounded-xl text-left border cursor-pointer transition-all duration-150 ${
                   isActive
-                    ? 'bg-[#151C28] border-2 border-[#F59E0B] shadow-sm'
+                    ? 'bg-[#151C28] border-2 border-[#F59E0B]'
                     : 'bg-[#151C28] border-[#2A364F] hover:border-[#3E4F6F]'
                 }`}
               >
@@ -326,6 +221,69 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
             );
           })}
         </div>
+      </div>
+
+      {/* 4. DAILY QUESTS & QUICK CHALLENGES */}
+      <div className="bg-[#1E2738] border border-[#2A364F] rounded-2xl p-4 space-y-2.5 shrink-0">
+        <button
+          onClick={onOpenQuests}
+          className="w-full text-left cursor-pointer group"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-display font-bold uppercase tracking-wider text-[#F8FAFC] flex items-center gap-1.5">
+              <Target className="w-4 h-4 text-[#F59E0B]" />
+              Daily Challenges
+            </span>
+            <span className="text-[11px] font-mono font-bold text-[#10B981] bg-[#10B981]/15 border border-[#10B981]/40 px-2 py-0.5 rounded-full">
+              3 ACTIVE
+            </span>
+          </div>
+          <div className="text-xs font-mono text-[#CBD5E1] mt-1 group-hover:text-[#F8FAFC]">
+            Complete arena battles to earn XP & tokens
+          </div>
+        </button>
+
+        <button
+          onClick={onOpenQuests}
+          className="w-full py-2 px-3 rounded-xl bg-[#151C28] hover:bg-[#2A364F] border border-[#2A364F] text-[#F8FAFC] font-sans font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+        >
+          <span>Open Mission Log</span>
+          <ChevronRight className="w-4 h-4 text-[#CBD5E1]" />
+        </button>
+      </div>
+
+      {/* 5. MULTIPLAYER ROSTER & 1V1 QUEUE */}
+      <div className="grid grid-cols-2 gap-2 shrink-0">
+        <button
+          onClick={onOpenRanked}
+          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group"
+        >
+          <div className="text-xs font-mono text-[#F59E0B] font-bold flex items-center justify-between">
+            <span>NETCODE</span>
+            <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+          </div>
+          <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
+            1v1 Ranked
+          </div>
+          <div className="text-xs font-mono text-[#CBD5E1]">Quick Queue</div>
+        </button>
+
+        <button
+          onClick={() => {
+            sound.playClick();
+            window.dispatchEvent(new CustomEvent('petslam:open-friends'));
+          }}
+          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group"
+        >
+          <div className="text-xs font-mono text-[#F59E0B] font-bold flex items-center justify-between">
+            <span>SOCIAL</span>
+            <Users className="w-3.5 h-3.5 text-[#F59E0B]" />
+          </div>
+          <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
+            Friends Party
+          </div>
+          <div className="text-xs font-mono text-[#CBD5E1]">Lobby Invites</div>
+        </button>
       </div>
     </aside>
   );

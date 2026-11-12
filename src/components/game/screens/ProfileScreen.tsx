@@ -109,7 +109,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
           {/* Avatar Profile Photo with 1-Click Upload */}
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="relative w-18 h-18 rounded-3xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.35)] bg-[#121622] shrink-0 aspect-square group cursor-pointer"
+            className="relative w-18 h-18 rounded-2xl overflow-hidden border border-[#2A364F] bg-[#1E2738] shrink-0 aspect-square group cursor-pointer shadow-md"
             title="Tap to Upload Custom Profile Photo"
           >
             <input
@@ -126,18 +126,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
                 className="w-full h-full object-cover object-center aspect-square"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-[#CCFF00] font-black text-2xl font-display">
+              <div className="w-full h-full flex items-center justify-center text-[#F59E0B] font-black text-2xl font-display">
                 {trainerName.charAt(0)}
               </div>
             )}
 
             {/* Hover Camera Overlay */}
             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
-              <Camera className="w-5 h-5 text-[#CCFF00]" />
+              <Camera className="w-5 h-5 text-[#F59E0B]" />
               <span className="text-[8px] font-mono font-bold mt-0.5">Upload</span>
             </div>
 
-            <div className="absolute -bottom-0.5 inset-x-0 bg-black/80 text-[#CCFF00] font-mono font-black text-[9px] text-center py-0.5 border-t border-white/10">
+            <div className="absolute -bottom-0.5 inset-x-0 bg-[#0B0F17]/90 text-[#F59E0B] font-mono font-black text-[9px] text-center py-0.5 border-t border-[#2A364F]">
               LVL {playerLevel}
             </div>
           </div>
@@ -150,13 +150,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
                   type="text"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
-                  className="bg-[#1A2234] border border-[#CCFF00] rounded-xl px-2.5 py-1 text-sm font-bold text-white outline-none w-full"
+                  className="bg-[#151C28] border border-[#F59E0B] rounded-xl px-2.5 py-1 text-sm font-bold text-white outline-none w-full"
                   maxLength={18}
                   autoFocus
                 />
                 <button
                   onClick={handleSaveName}
-                  className="p-1.5 rounded-lg bg-[#CCFF00] text-black cursor-pointer font-bold shrink-0"
+                  className="p-1.5 rounded-lg bg-[#F59E0B] text-[#0B0F17] cursor-pointer font-bold shrink-0"
                 >
                   <Check className="w-4 h-4" />
                 </button>
@@ -171,7 +171,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
                     sound.playClick();
                     setIsEditingName(true);
                   }}
-                  className="text-neutral-400 hover:text-[#CCFF00] cursor-pointer"
+                  className="text-neutral-400 hover:text-[#F59E0B] cursor-pointer"
                   title="Edit Name"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
@@ -180,7 +180,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
             )}
 
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs font-mono font-bold text-[#CCFF00]">{playerTag}</span>
+              <span className="text-xs font-mono font-bold text-[#F59E0B]">{playerTag}</span>
               <span className="text-[10px] font-mono bg-white/10 text-neutral-300 px-2 py-0.5 rounded-full border border-white/15">
                 {connectedAccount.isLoggedIn
                   ? `${connectedAccount.provider === 'Apple' ? 'Google' : connectedAccount.provider} ✓`
@@ -192,21 +192,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
 
         {/* 4 Quick Stat Badges */}
         <div className="grid grid-cols-4 gap-2 mt-4 text-center">
-          <div className="bg-[#101422] border border-white/10 rounded-2xl p-2.5">
-            <span className="text-[9px] font-mono text-neutral-400 block uppercase">Trophies</span>
-            <span className="font-display font-black text-base text-amber-300">{trophies}</span>
+          <div className="bg-[#151C28] border border-[#2A364F] rounded-2xl p-2.5">
+            <span className="text-[9px] font-mono text-[#CBD5E1] block uppercase">Trophies</span>
+            <span className="font-display font-black text-base text-[#F59E0B]">{trophies}</span>
           </div>
-          <div className="bg-[#101422] border border-white/10 rounded-2xl p-2.5">
-            <span className="text-[9px] font-mono text-neutral-400 block uppercase">Wins</span>
-            <span className="font-display font-black text-base text-[#CCFF00]">{wins}</span>
+          <div className="bg-[#151C28] border border-[#2A364F] rounded-2xl p-2.5">
+            <span className="text-[9px] font-mono text-[#CBD5E1] block uppercase">Wins</span>
+            <span className="font-display font-black text-base text-[#10B981]">{wins}</span>
           </div>
-          <div className="bg-[#101422] border border-white/10 rounded-2xl p-2.5">
-            <span className="text-[9px] font-mono text-neutral-400 block uppercase">Losses</span>
-            <span className="font-display font-black text-base text-red-400">{losses}</span>
+          <div className="bg-[#151C28] border border-[#2A364F] rounded-2xl p-2.5">
+            <span className="text-[9px] font-mono text-[#CBD5E1] block uppercase">Losses</span>
+            <span className="font-display font-black text-base text-[#F43F5E]">{losses}</span>
           </div>
-          <div className="bg-[#101422] border border-white/10 rounded-2xl p-2.5">
-            <span className="text-[9px] font-mono text-neutral-400 block uppercase">Win Rate</span>
-            <span className="font-display font-black text-base text-cyan-300">{winRate}%</span>
+          <div className="bg-[#151C28] border border-[#2A364F] rounded-2xl p-2.5">
+            <span className="text-[9px] font-mono text-[#CBD5E1] block uppercase">Win Rate</span>
+            <span className="font-display font-black text-base text-[#38BDF8]">{winRate}%</span>
           </div>
         </div>
       </div>
@@ -215,7 +215,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between text-xs font-mono text-neutral-400">
           <span className="font-bold text-white uppercase flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-[#CCFF00]" />
+            <Shield className="w-3.5 h-3.5 text-[#F59E0B]" />
             <span>Active Battle Squad</span>
           </span>
           <span>4 Dogs & Cats</span>
@@ -269,7 +269,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
                   <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
                 </svg>
               ) : (
-                <User className="w-4 h-4 text-[#CCFF00]" />
+                <User className="w-4 h-4 text-[#F59E0B]" />
               )}
             </div>
             <div>
@@ -279,7 +279,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
               </div>
             </div>
           </div>
-          <span className="text-xs font-mono text-[#CCFF00]">Manage →</span>
+          <span className="text-xs font-mono text-[#F59E0B]">Manage →</span>
         </div>
 
         {/* Force Sync Button */}
@@ -288,7 +288,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
           disabled={isSyncing}
           className="w-full py-3 rounded-2xl bg-[#121622] hover:bg-[#182030] border border-white/10 text-white font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#CCFF00]' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#F59E0B]' : ''}`} />
           <span>{isSyncing ? 'Synchronizing Cloud Progress...' : 'Sync Cloud Save Now'}</span>
         </button>
 

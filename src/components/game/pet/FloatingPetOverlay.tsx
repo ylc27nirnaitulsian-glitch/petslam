@@ -46,8 +46,8 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     if (typeof window !== 'undefined') {
       const mobileInit = window.innerWidth < 768;
       return {
-        x: mobileInit ? Math.max(10, window.innerWidth - 170) : Math.max(260, window.innerWidth - 380),
-        y: mobileInit ? Math.max(50, window.innerHeight - 130) : Math.max(30, window.innerHeight - 270),
+        x: mobileInit ? Math.max(10, window.innerWidth - 180) : Math.max(290, window.innerWidth - 560),
+        y: mobileInit ? Math.max(50, window.innerHeight - 130) : Math.max(40, window.innerHeight - 260),
       };
     }
     return { x: 400, y: 100 };
@@ -58,12 +58,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [showRadialMenu, setShowRadialMenu] = useState(false);
   const [speechBubble, setSpeechBubble] = useState<string | null>(null);
-  const [isMinimized, setIsMinimized] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 768;
-    }
-    return false;
-  });
+  const [isMinimized, setIsMinimized] = useState<boolean>(true);
   const [petScaleMode, setPetScaleMode] = useState<'normal' | 'large'>('normal');
 
   // Keep pet inside screen bounds on window resize
@@ -464,140 +459,146 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     >
       {/* Speech Bubble */}
       {speechBubble && !isMinimized && (
-        <div className="absolute -top-14 left-1/2 -translate-x-1/2 whitespace-nowrap bg-black/90 backdrop-blur-md text-[#CCFF00] border border-[#CCFF00]/40 px-3 py-1.5 rounded-2xl text-xs font-mono font-bold shadow-2xl pointer-events-none animate-in fade-in zoom-in-95 z-50">
+        <div className="absolute -top-14 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#151C28] text-[#F8FAFC] border border-[#2A364F] px-3.5 py-1.5 rounded-2xl text-xs font-mono font-bold shadow-xl pointer-events-none animate-in fade-in zoom-in-95 z-50">
           {speechBubble}
-          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-black/90 rotate-45 border-r border-b border-[#CCFF00]/40" />
+          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#151C28] rotate-45 border-r border-b border-[#2A364F]" />
         </div>
       )}
 
-      {/* Radial Menu & Tricks Hub */}
+      {/* Radial Menu & Tricks Hub with Click-Outside Backdrop */}
       {showRadialMenu && !isMinimized && (
-        <div className="absolute -top-36 left-1/2 -translate-x-1/2 w-64 h-36 pointer-events-auto z-40 animate-in fade-in zoom-in-90">
-          <div className="relative w-full h-full flex items-center justify-center">
-            {/* Top: Feed Treat (Silent) */}
-            <button
-              onClick={() => {
-                const b = availableBerries[0];
-                if (b) {
-                  feedPet(b);
-                  setAnimState('eat');
-                  showSpeech(`*Nom nom* Loved that ${b.name}! 🍓`);
-                  setTimeout(() => setAnimState('idle'), 2000);
-                }
-                setShowRadialMenu(false);
-              }}
-              className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Feed Treat"
-            >
-              <Utensils className="w-4 h-4 text-[#0B0F17]" />
-            </button>
+        <>
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setShowRadialMenu(false)}
+          />
+          <div className="absolute -top-36 left-1/2 -translate-x-1/2 w-64 h-36 pointer-events-auto z-40 animate-in fade-in zoom-in-90">
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Top: Feed Treat (Silent) */}
+              <button
+                onClick={() => {
+                  const b = availableBerries[0];
+                  if (b) {
+                    feedPet(b);
+                    setAnimState('eat');
+                    showSpeech(`*Nom nom* Loved that ${b.name}! 🍓`);
+                    setTimeout(() => setAnimState('idle'), 2000);
+                  }
+                  setShowRadialMenu(false);
+                }}
+                className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#1E2738] hover:bg-[#2A364F] text-[#F59E0B] p-2.5 rounded-full shadow-lg border border-[#2A364F] hover:border-[#F59E0B] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Feed Treat"
+              >
+                <Utensils className="w-4 h-4 text-[#F59E0B]" />
+              </button>
 
-            {/* Top-Right Upper: Voice Mimic */}
-            <button
-              onClick={() => {
-                setShowRadialMenu(false);
-                handleVoiceMimic();
-              }}
-              className="absolute -top-3 right-8 bg-[#F43F5E] hover:bg-rose-600 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Voice Mimic (Repeats Your Voice!)"
-            >
-              <Mic className="w-4 h-4 text-white" />
-            </button>
+              {/* Top-Right Upper: Voice Mimic */}
+              <button
+                onClick={() => {
+                  setShowRadialMenu(false);
+                  handleVoiceMimic();
+                }}
+                className="absolute -top-3 right-8 bg-[#1E2738] hover:bg-[#2A364F] text-[#F43F5E] p-2.5 rounded-full shadow-lg border border-[#2A364F] hover:border-[#F43F5E] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Voice Mimic (Repeats Your Voice!)"
+              >
+                <Mic className="w-4 h-4 text-[#F43F5E]" />
+              </button>
 
-            {/* Top-Left: Backflip Trick */}
-            <button
-              onClick={() => {
-                handlePerformTrick('backflip');
-                setShowRadialMenu(false);
-              }}
-              className="absolute top-2 left-6 bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Trick: Backflip"
-            >
-              <Sparkles className="w-4 h-4 text-[#0B0F17]" />
-            </button>
+              {/* Top-Left: Backflip Trick */}
+              <button
+                onClick={() => {
+                  handlePerformTrick('backflip');
+                  setShowRadialMenu(false);
+                }}
+                className="absolute top-2 left-6 bg-[#1E2738] hover:bg-[#2A364F] text-[#F59E0B] p-2.5 rounded-full shadow-lg border border-[#2A364F] hover:border-[#F59E0B] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Trick: Backflip"
+              >
+                <Sparkles className="w-4 h-4 text-[#F59E0B]" />
+              </button>
 
-            {/* Top-Right: Dance Trick */}
-            <button
-              onClick={() => {
-                handlePerformTrick('dance');
-                setShowRadialMenu(false);
-              }}
-              className="absolute top-2 right-6 bg-purple-600 hover:bg-purple-500 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Trick: Dance"
-            >
-              <Music className="w-4 h-4 text-white" />
-            </button>
+              {/* Top-Right: Dance Trick */}
+              <button
+                onClick={() => {
+                  handlePerformTrick('dance');
+                  setShowRadialMenu(false);
+                }}
+                className="absolute top-2 right-6 bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] p-2.5 rounded-full shadow-lg border border-[#2A364F] hover:border-[#F59E0B] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Trick: Dance"
+              >
+                <Music className="w-4 h-4 text-[#CBD5E1]" />
+              </button>
 
-            {/* Far Left: Roll Over */}
-            <button
-              onClick={() => {
-                handlePerformTrick('rollover');
-                setShowRadialMenu(false);
-              }}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-pink-600 hover:bg-pink-500 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Trick: Roll Over"
-            >
-              <RotateCw className="w-4 h-4 text-white" />
-            </button>
+              {/* Far Left: Roll Over */}
+              <button
+                onClick={() => {
+                  handlePerformTrick('rollover');
+                  setShowRadialMenu(false);
+                }}
+                className="absolute left-0 top-1/2 -translate-y-1/2 bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] p-2.5 rounded-full shadow-lg border border-[#2A364F] hover:border-[#F59E0B] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Trick: Roll Over"
+              >
+                <RotateCw className="w-4 h-4 text-[#CBD5E1]" />
+              </button>
 
-            {/* Far Right: Zoomies */}
-            <button
-              onClick={() => {
-                handlePerformTrick('zoomies');
-                setShowRadialMenu(false);
-              }}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-[#10B981] hover:bg-emerald-600 text-[#0B0F17] p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Trick: Zoomies"
-            >
-              <Zap className="w-4 h-4 text-[#0B0F17]" />
-            </button>
+              {/* Far Right: Zoomies */}
+              <button
+                onClick={() => {
+                  handlePerformTrick('zoomies');
+                  setShowRadialMenu(false);
+                }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 bg-[#1E2738] hover:bg-[#2A364F] text-[#10B981] p-2.5 rounded-full shadow-lg border border-[#2A364F] hover:border-[#10B981] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Trick: Zoomies"
+              >
+                <Zap className="w-4 h-4 text-[#10B981]" />
+              </button>
 
-            {/* Bottom-Left: Beg / Paw Wave */}
-            <button
-              onClick={() => {
-                handlePerformTrick('beg');
-                setShowRadialMenu(false);
-              }}
-              className="absolute bottom-2 left-6 bg-rose-600 hover:bg-rose-500 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Trick: Paw Wave"
-            >
-              <PawPrint className="w-4 h-4 text-white" />
-            </button>
+              {/* Bottom-Left: Beg / Paw Wave */}
+              <button
+                onClick={() => {
+                  handlePerformTrick('beg');
+                  setShowRadialMenu(false);
+                }}
+                className="absolute bottom-2 left-6 bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] p-2.5 rounded-full shadow-lg border border-[#2A364F] hover:border-[#F59E0B] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Trick: Paw Wave"
+              >
+                <PawPrint className="w-4 h-4 text-[#CBD5E1]" />
+              </button>
 
-            {/* Bottom-Right: 360 Spin */}
-            <button
-              onClick={() => {
-                handlePerformTrick('spin');
-                setShowRadialMenu(false);
-              }}
-              className="absolute bottom-2 right-6 bg-cyan-500 hover:bg-cyan-400 text-[#0B0F17] p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Trick: 360 Spin"
-            >
-              <RotateCw className="w-4 h-4 text-[#0B0F17]" />
-            </button>
+              {/* Bottom-Right: 360 Spin */}
+              <button
+                onClick={() => {
+                  handlePerformTrick('spin');
+                  setShowRadialMenu(false);
+                }}
+                className="absolute bottom-2 right-6 bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] p-2.5 rounded-full shadow-lg border border-[#2A364F] hover:border-[#F59E0B] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Trick: 360 Spin"
+              >
+                <RotateCw className="w-4 h-4 text-[#CBD5E1]" />
+              </button>
 
-            {/* Bottom Center: Bath */}
-            <button
-              onClick={() => {
-                handleBath();
-                setShowRadialMenu(false);
-              }}
-              className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-blue-600 hover:bg-blue-500 text-white p-2.5 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Bubble Bath"
-            >
-              <Bath className="w-3.5 h-3.5 text-white" />
-            </button>
+              {/* Bottom Center: Bath */}
+              <button
+                onClick={() => {
+                  handleBath();
+                  setShowRadialMenu(false);
+                }}
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] p-2.5 rounded-full shadow-lg border border-[#2A364F] hover:border-[#F59E0B] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Bubble Bath"
+              >
+                <Bath className="w-3.5 h-3.5 text-[#CBD5E1]" />
+              </button>
 
-            {/* Center: Open Sanctuary */}
-            <button
-              onClick={handleTriggerSanctuary}
-              className="bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-bold p-3 rounded-full shadow-lg border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center transition-transform hover:scale-110"
-              title="Open Sanctuary"
-            >
-              <Home className="w-4 h-4 text-[#0B0F17]" />
-            </button>
+              {/* Center: Open Sanctuary */}
+              <button
+                onClick={handleTriggerSanctuary}
+                className="bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-bold p-3 rounded-full shadow-lg border border-[#F59E0B] active:scale-95 cursor-pointer flex items-center justify-center transition-all hover:scale-110"
+                title="Open Sanctuary"
+              >
+                <Home className="w-4 h-4 text-[#0B0F17]" />
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Pet Canvas Container */}
@@ -615,15 +616,15 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 handleExpandPet();
               }
             }}
-            className={`bg-black/95 hover:bg-[#1E293B] border-2 border-[#CCFF00] hover:border-white text-white px-4 py-2 rounded-full shadow-[0_0_25px_rgba(204,255,0,0.5)] hover:shadow-[0_0_35px_rgba(204,255,0,0.85)] flex items-center gap-2.5 text-xs font-mono font-bold select-none touch-none group transition-shadow ${
-              isDragging ? 'cursor-grabbing ring-2 ring-[#CCFF00] scale-105' : 'cursor-grab hover:scale-105 active:scale-95'
+            className={`bg-[#151C28] hover:bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B]/50 text-[#F8FAFC] px-3.5 py-1.5 rounded-full shadow-lg flex items-center gap-2 text-xs font-mono font-bold select-none touch-none group transition-all ${
+              isDragging ? 'cursor-grabbing border-[#F59E0B] scale-105' : 'cursor-grab hover:scale-105 active:scale-95'
             }`}
             title="Drag anywhere to move screen companion · Click to expand"
           >
-            <div className="w-2.5 h-2.5 rounded-full bg-[#CCFF00] animate-pulse pointer-events-none group-hover:scale-125 transition-transform" />
-            <span className="text-[#CCFF00] font-black pointer-events-none group-hover:text-white transition-colors">{activeBeast.name}</span>
-            <span className="text-neutral-300 font-normal pointer-events-none">(Expand)</span>
-            <ChevronUp className="w-3.5 h-3.5 text-[#CCFF00] pointer-events-none transition-transform group-hover:-translate-y-0.5" />
+            <div className="w-2 h-2 rounded-full bg-[#F59E0B] pointer-events-none group-hover:scale-125 transition-transform" />
+            <span className="text-[#F8FAFC] font-display font-bold pointer-events-none">{activeBeast.name}</span>
+            <span className="text-[#94A3B8] font-normal pointer-events-none">(Expand)</span>
+            <ChevronUp className="w-3.5 h-3.5 text-[#F59E0B] pointer-events-none transition-transform group-hover:-translate-y-0.5" />
           </div>
         </div>
       ) : (
@@ -640,9 +641,9 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
           className="relative group cursor-grab active:cursor-grabbing flex flex-col items-center"
         >
           {/* Status Badge */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/85 backdrop-blur-sm text-xs font-mono px-2.5 py-1 rounded-full border border-white/15 text-neutral-300 flex items-center gap-1.5 mb-1 pointer-events-none shadow-lg">
-            <span className="text-[#CCFF00] font-black">{activeBeast.name}</span>
-            <span className="text-neutral-400">· Drag anywhere · Double-click for trick 🐾</span>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-[#151C28] text-xs font-mono px-2.5 py-1 rounded-full border border-[#2A364F] text-[#CBD5E1] flex items-center gap-1.5 mb-1 pointer-events-none shadow-lg">
+            <span className="text-[#F59E0B] font-bold">{activeBeast.name}</span>
+            <span className="text-[#94A3B8]">· Drag anywhere · Double-click for trick 🐾</span>
           </div>
 
           {/* Cute Animated Screen Companion Buddy (Bigger Size: 160px or 200px) */}
@@ -663,68 +664,68 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
           </div>
 
           {/* Mini Control Dock on hover */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 mt-1 bg-black/85 backdrop-blur-md px-3 py-1 rounded-full border border-white/15 shadow-xl">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 mt-1 bg-[#151C28]/95 backdrop-blur-md px-3 py-1 rounded-full border border-[#2A364F] shadow-xl">
             {/* Quick Interactive Tricks */}
-            <div className="flex items-center gap-1 border-r border-white/15 pr-1.5">
+            <div className="flex items-center gap-1 border-r border-[#2A364F] pr-1.5">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePerformTrick('backflip');
                 }}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#CCFF00]/20 hover:bg-[#CCFF00] hover:text-black text-[#CCFF00] border border-[#CCFF00]/40 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC] border border-[#2A364F] hover:border-[#F59E0B] transition-colors cursor-pointer"
                 title="Backflip"
               >
-                🤸 Flip
+                Flip
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePerformTrick('zoomies');
                 }}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500/20 hover:bg-cyan-400 hover:text-black text-cyan-300 border border-cyan-500/30 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC] border border-[#2A364F] hover:border-[#F59E0B] transition-colors cursor-pointer"
                 title="Zoomies"
               >
-                ⚡ Zoom
+                Zoom
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePerformTrick('dance');
                 }}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/20 hover:bg-purple-400 hover:text-black text-purple-300 border border-purple-500/30 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC] border border-[#2A364F] hover:border-[#F59E0B] transition-colors cursor-pointer"
                 title="Dance"
               >
-                💃 Dance
+                Dance
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePerformTrick('rollover');
                 }}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-pink-500/20 hover:bg-pink-400 hover:text-black text-pink-300 border border-pink-500/30 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC] border border-[#2A364F] hover:border-[#F59E0B] transition-colors cursor-pointer"
                 title="Roll Over"
               >
-                🔄 Roll
+                Roll
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePerformTrick('beg');
                 }}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 hover:bg-amber-400 hover:text-black text-amber-300 border border-amber-500/30 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC] border border-[#2A364F] hover:border-[#F59E0B] transition-colors cursor-pointer"
                 title="Beg / Paw Wave"
               >
-                🐾 Beg
+                Beg
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePerformTrick('spin');
                 }}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 hover:bg-emerald-400 hover:text-black text-emerald-300 border border-emerald-500/30 transition-colors cursor-pointer"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC] border border-[#2A364F] hover:border-[#F59E0B] transition-colors cursor-pointer"
                 title="360 Spin"
               >
-                💫 Spin
+                Spin
               </button>
             </div>
             {/* Context-Aware Voice Triggers */}
@@ -734,10 +735,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                   e.stopPropagation();
                   handleBark();
                 }}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 hover:bg-amber-400 hover:text-black text-amber-300 border border-amber-500/30 transition-colors cursor-pointer flex items-center gap-0.5"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1E2738] hover:bg-[#2A364F] text-[#F59E0B] border border-[#2A364F] hover:border-[#F59E0B] transition-colors cursor-pointer flex items-center gap-0.5"
                 title="Bark"
               >
-                <span>Bark 🐶</span>
+                <span>Bark</span>
               </button>
             )}
 
@@ -747,10 +748,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                   e.stopPropagation();
                   handleMeow();
                 }}
-                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-pink-500/20 hover:bg-pink-400 hover:text-black text-pink-300 border border-pink-500/30 transition-colors cursor-pointer flex items-center gap-0.5"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1E2738] hover:bg-[#2A364F] text-[#F59E0B] border border-[#2A364F] hover:border-[#F59E0B] transition-colors cursor-pointer flex items-center gap-0.5"
                 title="Meow"
               >
-                <span>Meow 🐱</span>
+                <span>Meow</span>
               </button>
             )}
 
@@ -762,12 +763,12 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
               }}
               className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors cursor-pointer flex items-center gap-1 ${
                 isRecordingVoice
-                  ? 'bg-red-500 text-white animate-pulse'
-                  : 'bg-red-500/20 hover:bg-red-500 hover:text-white text-red-300 border border-red-500/30'
+                  ? 'bg-[#F43F5E] text-[#F8FAFC]'
+                  : 'bg-[#1E2738] hover:bg-[#2A364F] text-[#F43F5E] border border-[#2A364F] hover:border-[#F43F5E]'
               }`}
-              title="Voice Mimic: Say something and your pet repeats it back in a pitched buddy voice! 🎙️"
+              title="Voice Mimic"
             >
-              <span>{isRecordingVoice ? '🎙️ Rec...' : '🎙️ Mimic'}</span>
+              <span>{isRecordingVoice ? 'Rec...' : 'Mimic'}</span>
             </button>
 
             {/* Kokoro Local TTS Voice Toggle */}
@@ -778,17 +779,17 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 const nowEnabled = kokoroTTS.toggle();
                 setTtsEnabled(nowEnabled);
                 if (nowEnabled) {
-                  showSpeech('Kokoro Voice Active! 🗣️');
+                  showSpeech('Kokoro Voice Active!');
                 }
               }}
               className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors cursor-pointer flex items-center gap-1 ${
                 ttsEnabled
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                  : 'bg-white/10 text-neutral-400 border border-white/10'
+                  ? 'bg-[#1E2738] text-[#F59E0B] border border-[#F59E0B]/50'
+                  : 'bg-[#151C28] text-[#94A3B8] border border-[#2A364F]'
               }`}
-              title={ttsEnabled ? 'Kokoro Neural TTS: ON (Click to Mute)' : 'Kokoro Neural TTS: OFF (Click to Enable)'}
+              title={ttsEnabled ? 'Kokoro Voice: ON' : 'Kokoro Voice: OFF'}
             >
-              {ttsEnabled ? <Volume2 className="w-3 h-3 text-cyan-400" /> : <VolumeX className="w-3 h-3" />}
+              {ttsEnabled ? <Volume2 className="w-3 h-3 text-[#F59E0B]" /> : <VolumeX className="w-3 h-3" />}
               <span>TTS</span>
             </button>
 
@@ -798,12 +799,12 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 e.stopPropagation();
                 sound.playClick();
                 setPetScaleMode((prev) => (prev === 'normal' ? 'large' : 'normal'));
-                showSpeech(petScaleMode === 'normal' ? 'Grown to Giant Size! 🐾' : 'Back to Normal Size.');
+                showSpeech(petScaleMode === 'normal' ? 'Grown to Giant Size!' : 'Back to Normal Size.');
               }}
-              className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white/10 hover:bg-[#CCFF00] hover:text-black text-neutral-300 transition-colors cursor-pointer"
-              title="Toggle Pet Size (160px / 200px)"
+              className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#1E2738] hover:bg-[#2A364F] text-[#CBD5E1] hover:text-[#F8FAFC] border border-[#2A364F] transition-colors cursor-pointer"
+              title="Toggle Pet Size"
             >
-              {petScaleMode === 'large' ? '200px (XL)' : '160px'}
+              {petScaleMode === 'large' ? '200px' : '160px'}
             </button>
 
             <button
@@ -814,7 +815,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
                 setShowRadialMenu(false);
                 setSpeechBubble(null);
               }}
-              className="text-neutral-400 hover:text-white p-1 rounded cursor-pointer"
+              className="text-[#94A3B8] hover:text-[#F8FAFC] p-1 rounded cursor-pointer"
               title="Minimize Companion"
             >
               <EyeOff className="w-3.5 h-3.5" />
@@ -822,10 +823,10 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
 
             <button
               onClick={handleTriggerSanctuary}
-              className="text-[#CCFF00] hover:text-[#b8e600] hover:underline px-2 py-0.5 font-bold text-xs cursor-pointer flex items-center gap-1 active:scale-95 transition-all"
+              className="text-[#F59E0B] hover:text-[#D97706] px-2 py-0.5 font-bold text-xs cursor-pointer flex items-center gap-1 active:scale-95 transition-all"
               title="Open Pet Sanctuary"
             >
-              <span>Sanctuary 🏡</span>
+              <span>Sanctuary</span>
             </button>
           </div>
         </div>
