@@ -13,7 +13,7 @@ import {
   Minimize2,
   Info,
   Dna,
-  Crown,
+  Award,
   Target,
   Trophy,
 } from 'lucide-react';
@@ -69,7 +69,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
     {
       title: 'Progression & Lab',
       items: [
-        { id: 'pass' as const, label: 'VIP Royal Pass', icon: Crown, badge: 'VIP' },
+        { id: 'pass' as const, label: 'Royal Pass', icon: Award, badge: 'SEASON 1' },
         { id: 'studio' as const, label: 'Pet Camera Studio', icon: Camera, badge: 'AI' },
         { id: 'genetics' as const, label: 'Breeding Lab', icon: Dna, badge: 'DNA' },
       ],
@@ -157,7 +157,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
                   {item.badge && (
                     <span
                       className={`hidden xl:inline-block shrink-0 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${
-                        item.badge === 'VIP'
+                        item.badge === 'SEASON 1'
                           ? 'bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/40'
                           : item.badge === 'LIVE'
                           ? 'bg-[#10B981]/15 text-[#10B981] border-[#10B981]/40'

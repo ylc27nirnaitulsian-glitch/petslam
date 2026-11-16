@@ -94,8 +94,26 @@ export const ArenaScreen: React.FC = () => {
   // Active Combatants
   const [currentActiveFighter, setCurrentActiveFighter] = useState<Animal>(activeBeast);
   useEffect(() => {
-    setCurrentActiveFighter(activeBeast);
-  }, [activeBeast]);
+    if (!inBattle) {
+      setCurrentActiveFighter(activeBeast);
+    }
+  }, [activeBeast, inBattle]);
+
+  useEffect(() => {
+    const handleBeastChanged = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail?.id && !inBattle) {
+        const found =
+          ownedBeasts.find((b) => b.id === detail.id) ||
+          ANIMALS_DATA.find((a) => a.id === detail.id);
+        if (found) {
+          setCurrentActiveFighter(found);
+        }
+      }
+    };
+    window.addEventListener('petslam:beast-changed', handleBeastChanged);
+    return () => window.removeEventListener('petslam:beast-changed', handleBeastChanged);
+  }, [ownedBeasts, inBattle]);
 
   // Battle HP & Stats
   const [playerHp, setPlayerHp] = useState<number>(1000);
@@ -303,14 +321,12 @@ export const ArenaScreen: React.FC = () => {
   };
 
   // Start Ranked Matchmaking Queue (Supports 1v1 and 2v2 Tag Team)
-  const handleStartMatchmaking = () => {
+  const handleStartMatchmaking = (instant = false) => {
     sound.playClick();
     if (matchmakingTimerRef.current) {
       clearInterval(matchmakingTimerRef.current);
       matchmakingTimerRef.current = null;
     }
-    setIsMatchmaking(true);
-    setMatchCountdown(3);
 
     // Pick real asynchronous ghost defense build from community roster
     const ghost = ghostDefenseService.pickGhostOpponent(trophies, playerTag);
@@ -324,6 +340,15 @@ export const ArenaScreen: React.FC = () => {
     setOpponentAlly(randomOpp2);
     setPlayerAlly(allyFighter);
     setOpponentTrainer(`${ghost.trainerName} ${ghost.playerTag}`);
+
+    if (instant) {
+      setIsMatchmaking(false);
+      startSlamMatch(randomOpp1, randomOpp2, allyFighter);
+      return;
+    }
+
+    setIsMatchmaking(true);
+    setMatchCountdown(3);
 
     matchmakingTimerRef.current = setInterval(() => {
       setMatchCountdown((prev) => {
@@ -792,12 +817,13 @@ export const ArenaScreen: React.FC = () => {
     return () => clearInterval(interval);
   }, [inBattle, battleOver, battleTimerSec, hasAnnouncedOverdrive]);
 
-  // AI Opponent Tactical Loop: Responsive, competitive, fair-play decision engine
+  // AI Opponent Tactical Loop: Aggressive, competitive Grandmaster decision engine
   useEffect(() => {
     if (!inBattle || battleOver || isPracticeDrill) return;
 
     const isDouble = battleTimerSec <= 60;
-    const aiIntervalMs = isDouble ? 850 : 1250;
+    // Fast competitive cadence: 620ms normal, 380ms in double elixir
+    const aiIntervalMs = isDouble ? 380 : 620;
 
     const aiInterval = setInterval(() => {
       if (battleOver || isPracticeDrill) return;
@@ -810,13 +836,14 @@ export const ArenaScreen: React.FC = () => {
       const isPlayerShieldedNow = isPlayerShieldedRef.current;
       const isOppShieldedNow = isOpponentShieldedRef.current;
       const currentOppHp = opponentHpRef.current;
+      const curPlayerHp = playerHpRef.current;
 
-      // 2v2 Tag-Team: if lead opponent is critical (< 28% HP) and ally is healthy, swap!
+      // 2v2 Tag-Team: if lead opponent is critical (< 32% HP) and ally is healthy, tactical tag out!
       if (
         battleModeRef.current === '2v2' &&
-        currentOppHp < maxOpponentHp * 0.28 &&
-        opponentAllyHpRef.current > maxOpponentAllyHp * 0.4 &&
-        Math.random() < 0.55
+        currentOppHp < maxOpponentHp * 0.32 &&
+        opponentAllyHpRef.current > maxOpponentAllyHp * 0.35 &&
+        Math.random() < 0.70
       ) {
         const currentLead = selectedOpponentRef.current;
         const partner = opponentAllyRef.current;
@@ -832,7 +859,7 @@ export const ArenaScreen: React.FC = () => {
         setOpponentAllyHp(currentHp);
         opponentAllyHpRef.current = currentHp;
 
-        setLastCombatLog(`🔁 Opponent tag-in! ${partner.name} enters the arena!`);
+        setLastCombatLog(`🔁 Strategic Tag-in! ${partner.name} rushes to the frontline!`);
         sound.playCardPlay();
         return;
       }
@@ -844,61 +871,84 @@ export const ArenaScreen: React.FC = () => {
 
       const aiRoll = Math.random();
 
-      // 1. Ultimate SLAM (costs 6 elixir)
-      if (curElixir >= 6 && !isPlayerShieldedNow && aiRoll < 0.50) {
+      // STRATEGY A: LETHAL FINISHER (If player is under 35% HP, bot goes for the kill!)
+      if (curPlayerHp < maxPlayerHp * 0.35 && !isPlayerShieldedNow) {
+        if (curElixir >= 6) {
+          const nextElixir = Math.max(0, Number((curElixir - 6).toFixed(1)));
+          opponentElixirRef.current = nextElixir;
+          setOpponentElixir(nextElixir);
+          setOpponentIntent('🔥 LETHAL PET SLAM OVERDRIVE!');
+          executeOpponentAttack(Math.round(opp.damage * 2.2), 'LETHAL OVERDRIVE!', true);
+          return;
+        }
+        if (curElixir >= 4) {
+          const nextElixir = Math.max(0, Number((curElixir - 4).toFixed(1)));
+          opponentElixirRef.current = nextElixir;
+          setOpponentElixir(nextElixir);
+          setOpponentIntent('🐾 Lethal Bite Finisher!');
+          executeOpponentAttack(Math.round(opp.damage * 1.45), 'Lethal Bite');
+          return;
+        }
+      }
+
+      // STRATEGY B: DEFENSIVE IRON GUARD (If bot HP < 60% and unshielded, or player has >= 5 elixir)
+      if (curElixir >= 2 && !isOppShieldedNow) {
+        const shouldShield = (currentOppHp < maxOpponentHp * 0.55 && aiRoll < 0.75) || (elixir >= 5 && aiRoll < 0.55);
+        if (shouldShield) {
+          const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
+          opponentElixirRef.current = nextElixir;
+          setOpponentElixir(nextElixir);
+          setIsOpponentShielded(true);
+          isOpponentShieldedRef.current = true;
+          setOpponentIntent('🛡️ Iron Guard Active');
+          sound.playBlock();
+          return;
+        }
+      }
+
+      // STRATEGY C: HEAVY BURST ULTIMATE (costs 6 elixir)
+      if (curElixir >= 6 && !isPlayerShieldedNow && aiRoll < 0.85) {
         const nextElixir = Math.max(0, Number((curElixir - 6).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
         setOpponentIntent('🔥 PET SLAM OVERDRIVE!');
-        executeOpponentAttack(Math.round(opp.damage * 2.0), 'PET SLAM OVERDRIVE!', true);
+        executeOpponentAttack(Math.round(opp.damage * 2.1), 'PET SLAM OVERDRIVE!', true);
         return;
       }
 
-      // 2. Heavy Fierce Bite (costs 4 elixir)
-      if (curElixir >= 4 && !isPlayerShieldedNow && aiRoll < 0.65) {
+      // STRATEGY D: PUNISHING FIERCE BITE (costs 4 elixir)
+      if (curElixir >= 4 && !isPlayerShieldedNow && aiRoll < 0.80) {
         const nextElixir = Math.max(0, Number((curElixir - 4).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
         setOpponentIntent('🐾 Fierce Bite Strike');
-        executeOpponentAttack(Math.round(opp.damage * 1.35), 'Fierce Bite');
+        executeOpponentAttack(Math.round(opp.damage * 1.4), 'Fierce Bite');
         return;
       }
 
-      // 3. Sonic Roar / Bark (costs 3 elixir)
-      if (curElixir >= 3 && aiRoll < 0.55) {
+      // STRATEGY E: SONIC SHOCKWAVE / ROAR (costs 3 elixir)
+      if (curElixir >= 3 && aiRoll < 0.70) {
         const nextElixir = Math.max(0, Number((curElixir - 3).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
         setOpponentIntent('📢 Sonic Shockwave');
-        executeOpponentAttack(Math.round(opp.damage * 1.0), 'Sonic Roar');
+        executeOpponentAttack(Math.round(opp.damage * 1.1), 'Sonic Roar');
         return;
       }
 
-      // 4. Iron Guard Defense (costs 2 elixir)
-      if (curElixir >= 2 && !isOppShieldedNow && (aiRoll < 0.40 || currentOppHp < maxOpponentHp * 0.6)) {
-        const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
-        opponentElixirRef.current = nextElixir;
-        setOpponentElixir(nextElixir);
-        setIsOpponentShielded(true);
-        isOpponentShieldedRef.current = true;
-        setOpponentIntent('🛡️ Iron Guard Active');
-        sound.playBlock();
-        return;
-      }
-
-      // 5. Quick Pounce Strike (costs 2 elixir)
-      if (curElixir >= 2) {
+      // STRATEGY F: RAPID POUNCE STRIKE (costs 2 elixir)
+      if (curElixir >= 2 && (!isPlayerShieldedNow || curElixir >= 5)) {
         const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
         setOpponentIntent('⚡ Quick Pounce Strike');
-        executeOpponentAttack(Math.round(opp.damage * 0.8), 'Quick Pounce');
+        executeOpponentAttack(Math.round(opp.damage * 0.9), 'Quick Pounce');
         return;
       }
     }, aiIntervalMs);
 
     return () => clearInterval(aiInterval);
-  }, [inBattle, battleOver, isPracticeDrill, battleTimerSec, maxOpponentHp, maxOpponentAllyHp]);
+  }, [inBattle, battleOver, isPracticeDrill, battleTimerSec, maxOpponentHp, maxOpponentAllyHp, maxPlayerHp, elixir]);
 
   // Execute Opponent Attack against Player or Partner
   const executeOpponentAttack = (rawDmg: number, moveName: string, isUlt = false) => {
@@ -1019,6 +1069,9 @@ export const ArenaScreen: React.FC = () => {
       return;
     }
 
+    // Immediately consume elixir for the executed card action
+    setElixir((prev) => Math.max(0, Number((prev - cost).toFixed(1))));
+
     if (cardType === 'shield') {
       // ⚡ ACTIVE PERFECT PARRY (Timing window deflection + riposte)
       if (parryWindowActiveRef.current && incomingOpponentAttackRef.current?.targetWho === 'host') {
@@ -1034,8 +1087,8 @@ export const ArenaScreen: React.FC = () => {
         sound.playParry();
         setMatchParryCount((prev) => prev + 1);
 
-        // Energy Surge: Full refund of the 2 shield cost + 1 bonus Elixir!
-        setElixir((prev) => Math.min(10, Number((prev + 1).toFixed(1))));
+        // Energy Surge: Full refund of the 2 shield cost + 1 bonus Elixir surge!
+        setElixir((prev) => Math.min(10, Number((prev + cost + 1).toFixed(1))));
 
         // Counter Riposte Damage (85% of attack or 125 base DMG)
         const counterDmg = Math.round(incoming.rawDmg * 0.85) || 125;
@@ -1102,7 +1155,6 @@ export const ArenaScreen: React.FC = () => {
       }
 
       // Normal passive Iron Guard
-      setElixir((prev) => Math.max(0, Number((prev - cost).toFixed(1))));
       setIsPlayerShielded(true);
       isPlayerShieldedRef.current = true;
       sound.playCardPlay();
@@ -1879,7 +1931,7 @@ export const ArenaScreen: React.FC = () => {
             ) : (
               <div className="space-y-2 mt-2 w-full">
                 <button
-                  onClick={handleStartMatchmaking}
+                  onClick={() => handleStartMatchmaking(false)}
                   className="w-full py-3.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-[#0B0F17] font-display font-bold text-base uppercase tracking-wider shadow-md flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer active:scale-98"
                 >
                   <Swords className="w-5 h-5 text-[#0B0F17]" />
@@ -1887,7 +1939,7 @@ export const ArenaScreen: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={handleStartMatchmaking}
+                  onClick={() => handleStartMatchmaking(true)}
                   className="w-full py-3 rounded-xl bg-[#1E2738] hover:bg-[#2A364F] text-[#F8FAFC] border border-[#2A364F] font-display font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-150 cursor-pointer active:scale-98"
                 >
                   <span>

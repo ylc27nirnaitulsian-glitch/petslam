@@ -11,8 +11,14 @@ import {
   Play,
   MessageSquare,
   Bot,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Radio,
 } from 'lucide-react';
 import { sound } from '../../utils/audio';
+import { voiceChat } from '../../utils/voiceChat';
 import { useGame } from '../../context/GameContext';
 import { friendNetwork, FriendLobbyItem } from '../../services/friendNetworkService';
 import { Animal, ANIMALS_DATA } from '../../data/animals';
@@ -82,6 +88,29 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
 
   const hasCreatedLobbyRef = useRef<boolean>(false);
   const lobbyIdRef = useRef<string | undefined>(undefined);
+
+  // Voice Chat State
+  const [isMicMuted, setIsMicMuted] = useState<boolean>(false);
+  const [isSpeakerMuted, setIsSpeakerMuted] = useState<boolean>(false);
+  const [voiceVolume, setVoiceVolume] = useState<number>(0);
+  const [, setIsVoiceActive] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Connect microphone for live party lobby voice channel
+    voiceChat.enableMicrophone().then((active) => {
+      setIsVoiceActive(active);
+    }).catch(() => {});
+
+    const unsubVoice = voiceChat.subscribe((st) => {
+      setIsMicMuted(st.isMuted);
+      setIsSpeakerMuted(st.teammateVolume === 0);
+      setVoiceVolume(st.volumeLevel);
+    });
+
+    return () => {
+      unsubVoice();
+    };
+  }, []);
 
   // Subscribe to real-time lobby updates
   useEffect(() => {
@@ -263,6 +292,64 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
           </div>
         </div>
 
+        {/* Real-time Voice Chat Bar */}
+        <div className="bg-[#101622] border-b border-white/10 px-6 py-2.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <Radio className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+              Lobby Voice Chat
+            </span>
+            <span className="hidden sm:inline-block text-[10px] font-mono text-neutral-400">
+              · Live 2-way audio channel
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Microphone Toggle Button */}
+            <button
+              onClick={() => {
+                sound.playClick();
+                voiceChat.toggleMute();
+              }}
+              className={`px-3 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
+                isMicMuted
+                  ? 'bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/30'
+                  : 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30'
+              }`}
+              title={isMicMuted ? 'Click to Unmute Mic' : 'Click to Mute Mic'}
+            >
+              {isMicMuted ? (
+                <MicOff className="w-3.5 h-3.5 text-rose-400" />
+              ) : (
+                <Mic className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              )}
+              <span>{isMicMuted ? 'Mic Muted' : 'Mic Active'}</span>
+            </button>
+
+            {/* Speaker Toggle Button */}
+            <button
+              onClick={() => {
+                sound.playClick();
+                voiceChat.setTeammateVolume(isSpeakerMuted ? 0.85 : 0);
+              }}
+              className={`px-3 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
+                isSpeakerMuted
+                  ? 'bg-rose-500/20 border-rose-500/50 text-rose-400 hover:bg-rose-500/30'
+                  : 'bg-cyan-500/20 border-cyan-400/50 text-cyan-300 hover:bg-cyan-500/30'
+              }`}
+              title={isSpeakerMuted ? 'Click to Unmute Speaker' : 'Click to Mute/Deafen Speaker'}
+            >
+              {isSpeakerMuted ? (
+                <VolumeX className="w-3.5 h-3.5 text-rose-400" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
+              )}
+              <span>{isSpeakerMuted ? 'Deafened' : 'Speaker On'}</span>
+            </button>
+          </div>
+        </div>
+
         {/* Quick Tactical Chat Toast */}
         {tacticalToast && (
           <div className="bg-[#CCFF00]/20 border-b border-[#CCFF00]/40 px-4 py-1.5 text-center text-xs font-mono font-bold text-[#CCFF00] animate-in fade-in">
@@ -278,7 +365,11 @@ export const FriendPartyLobbyModal: React.FC<FriendPartyLobbyModalProps> = ({
               YOU (HOST)
             </div>
 
-            <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.3)] my-2 bg-black">
+            <div className={`w-24 h-24 rounded-2xl overflow-hidden border-2 transition-all my-2 bg-black ${
+              voiceVolume > 15 && !isMicMuted
+                ? 'border-emerald-400 ring-4 ring-emerald-400/40 shadow-[0_0_25px_rgba(52,211,153,0.5)] scale-105'
+                : 'border-[#CCFF00] shadow-[0_0_20px_rgba(204,255,0,0.3)]'
+            }`}>
               <img
                 src={activeBeast.image}
                 alt={activeBeast.name}

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import {
   X,
-  Crown,
+  Trophy,
   Lock,
   CheckCircle,
   Sparkles,
@@ -112,12 +112,12 @@ export const SlamBattlePassModal: React.FC<SlamBattlePassModalProps> = ({ isOpen
         <div className="p-4 sm:p-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-amber-950/50 via-[#130E1E] to-[#0A0D16]">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.3)] shrink-0">
-              <Crown className="w-6 h-6" />
+              <Award className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-display font-black uppercase tracking-wider text-white">
-                  Slam Royal Pass · Season 1
+                  Royal Pass · Season 1
                 </h2>
                 <span className="text-[10px] bg-gradient-to-r from-amber-400 to-yellow-400 text-black px-2.5 py-0.5 rounded-full font-black font-mono shadow-sm">
                   TIER {royalPassTier} / 50
@@ -234,7 +234,7 @@ export const SlamBattlePassModal: React.FC<SlamBattlePassModalProps> = ({ isOpen
                   <div className="my-3 p-3 rounded-xl bg-black/50 border border-white/10 space-y-2 text-center">
                     <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border border-amber-400/40 flex items-center justify-center text-amber-300 shadow-inner">
                       {t.tier === 50 ? (
-                        <Crown className="w-6 h-6 text-amber-400 animate-pulse" />
+                        <Trophy className="w-6 h-6 text-amber-400 animate-pulse" />
                       ) : t.isMajor ? (
                         <Award className="w-6 h-6 text-amber-300" />
                       ) : (

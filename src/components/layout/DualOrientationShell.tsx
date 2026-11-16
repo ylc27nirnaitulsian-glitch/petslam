@@ -231,7 +231,10 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       return;
     }
     if (tab === 'ranked') {
-      setRankedModalOpen(true);
+      setCurrentTab('arena');
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('petslam:start-ranked-queue', { detail: { mode: '1v1' } }));
+      }, 70);
       return;
     }
     if (tab === 'genetics') {

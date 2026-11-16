@@ -105,7 +105,17 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
       } else if (event === 'countdown_tick') {
         setCountdown(data);
         if (data <= 0) {
-          setPhase('fighting');
+          onClose();
+          window.dispatchEvent(
+            new CustomEvent('petslam:start-battle', {
+              detail: {
+                mode: '1v1',
+                opponents: matchData ? [matchData.p2.fighter as any] : undefined,
+                partner: matchData ? matchData.p2 : undefined,
+                roomCode: matchData?.roomId,
+              },
+            })
+          );
         }
       } else if (event === 'tick_update') {
         setTickData(data);
@@ -203,8 +213,28 @@ export const RankedMatchmakingModal: React.FC<RankedMatchmakingModalProps> = ({ 
       setCountdown(cd);
       if (cd <= 0) {
         clearInterval(cdTimer);
-        setPhase('fighting');
-        initBotFighting(myFighterSnap, oppFighterSnap, bot.name);
+        onClose();
+        window.dispatchEvent(
+          new CustomEvent('petslam:start-battle', {
+            detail: {
+              mode: '1v1',
+              opponents: [
+                {
+                  id: 'bot_' + bot.name.toLowerCase().replace(/\s+/g, '_'),
+                  name: bot.name,
+                  category: 'Canines',
+                  rarity: 'Epic',
+                  species: 'dog',
+                  breed: bot.breed,
+                  image: bot.image,
+                  health: bot.hp,
+                  damage: 210,
+                  speed: 65,
+                },
+              ],
+            },
+          })
+        );
       }
     }, 1000);
   };

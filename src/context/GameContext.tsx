@@ -639,17 +639,29 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (next) sound.playClick();
   };
 
-  const activeBeast = ownedBeasts.find((b) => b.id === activeBeastId) || ownedBeasts[0];
+  const activeBeast =
+    ownedBeasts.find((b) => b.id === activeBeastId) ||
+    ANIMALS_DATA.find((a) => a.id === activeBeastId) ||
+    ownedBeasts[0];
 
   const selectActiveBeast = (id: string) => {
     sound.playClick();
+    const matched = ANIMALS_DATA.find((a) => a.id === id);
     setOwnedBeasts((prev) => {
       if (prev.some((b) => b.id === id)) return prev;
-      const matched = ANIMALS_DATA.find((a) => a.id === id);
-      if (matched) return [...prev, { ...matched, level: 1 }];
+      if (matched) return [{ ...matched, level: 1 }, ...prev];
       return prev;
     });
     setActiveBeastId(id);
+    // Put active beast at index 0 of battleDeckIds so all deck views immediately show it as lead!
+    setBattleDeckIds((prev) => {
+      const filtered = prev.filter((deckId) => deckId !== id);
+      return [id, ...filtered.slice(0, 3)];
+    });
+    // Broadcast beast change so all screens, components, and listeners update instantly
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('petslam:beast-changed', { detail: { id } }));
+    }
   };
 
   const getEffectiveStats = (beast: Animal) => {
