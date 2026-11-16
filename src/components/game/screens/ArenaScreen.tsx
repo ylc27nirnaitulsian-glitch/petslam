@@ -218,10 +218,8 @@ export const ArenaScreen: React.FC = () => {
     targetTag: string;
   } | null>(null);
 
-  // Gamepad Controller Support (Xbox, PlayStation, Switch, Generic USB/Bluetooth)
-  const [gamepadConnected, setGamepadConnected] = useState<boolean>(false);
-  const [gamepadName, setGamepadName] = useState<string>('');
-  const prevGamepadButtonsRef = useRef<boolean[]>([]);
+  // Synchronous Match Conclusion Guard (prevents post-death race conditions)
+  const battleOverRef = useRef<boolean>(false);
 
   // Gladiator Victory Card & Battle Match Stats
   const [matchParryCount, setMatchParryCount] = useState<number>(0);
@@ -387,6 +385,7 @@ export const ArenaScreen: React.FC = () => {
 
   // Initialize and launch match
   const startSlamMatch = (opp: Animal, oppAlly?: Animal, ally?: Animal) => {
+    battleOverRef.current = false;
     setIsMatchmaking(false);
     setInBattle(true);
     setBattleOver(false);
@@ -398,12 +397,12 @@ export const ArenaScreen: React.FC = () => {
     const pHp = Math.round(currentActiveFighter.health || 1000);
     const pDmg = Math.round(currentActiveFighter.damage || 200);
 
-    // Fair-play dynamic stat normalization: opponent HP & DMG scaled to match player within ±6%
-    // Preserves breed uniqueness while preventing either side from being overpowered
+    // Dynamic competitive scaling: opponents possess 1.25x HP and 1.12x DMG
+    // to provide an authentic esports challenge where players must time parries and defend!
     const breedHpRatio = (opp.health || 1000) / 1000;
     const breedDmgRatio = (opp.damage || 200) / 200;
-    const oHp = Math.round(pHp * Math.max(0.94, Math.min(1.06, breedHpRatio)));
-    const oDmg = Math.round(pDmg * Math.max(0.94, Math.min(1.06, breedDmgRatio)));
+    const oHp = Math.round(pHp * 1.25 * Math.max(0.95, Math.min(1.20, breedHpRatio)));
+    const oDmg = Math.round(pDmg * 1.12 * Math.max(0.95, Math.min(1.20, breedDmgRatio)));
 
     const balancedOpp: Animal = {
       ...opp,
@@ -789,11 +788,11 @@ export const ArenaScreen: React.FC = () => {
   }, [inBattle, battleOver, playerHp, maxPlayerHp, opponentHp, maxOpponentHp]);
 
   // Real-time Elixir Generation Loop (Clash Royale Style)
+  const isDoubleElixir = battleTimerSec <= 60;
   useEffect(() => {
     if (!inBattle || battleOver) return;
 
     // Double elixir during the last 60 seconds!
-    const isDoubleElixir = battleTimerSec <= 60;
     const intervalRate = isDoubleElixir ? 250 : 450;
 
     const interval = setInterval(() => {
@@ -815,18 +814,17 @@ export const ArenaScreen: React.FC = () => {
     }, intervalRate);
 
     return () => clearInterval(interval);
-  }, [inBattle, battleOver, battleTimerSec, hasAnnouncedOverdrive]);
+  }, [inBattle, battleOver, isDoubleElixir, hasAnnouncedOverdrive]);
 
   // AI Opponent Tactical Loop: Aggressive, competitive Grandmaster decision engine
   useEffect(() => {
     if (!inBattle || battleOver || isPracticeDrill) return;
 
-    const isDouble = battleTimerSec <= 60;
-    // Fast competitive cadence: 620ms normal, 380ms in double elixir
-    const aiIntervalMs = isDouble ? 380 : 620;
+    // Fast competitive cadence: 520ms normal, 340ms in double elixir
+    const aiIntervalMs = isDoubleElixir ? 340 : 520;
 
     const aiInterval = setInterval(() => {
-      if (battleOver || isPracticeDrill) return;
+      if (battleOver || battleOverRef.current || playerHpRef.current <= 0 || isPracticeDrill) return;
 
       // In multiplayer battle with a friend, ONLY the HOST runs the enemy AI loop!
       if (isMultiplayerBattleRef.current && !isBattleHostRef.current) return;
@@ -871,8 +869,8 @@ export const ArenaScreen: React.FC = () => {
 
       const aiRoll = Math.random();
 
-      // STRATEGY A: LETHAL FINISHER (If player is under 35% HP, bot goes for the kill!)
-      if (curPlayerHp < maxPlayerHp * 0.35 && !isPlayerShieldedNow) {
+      // STRATEGY A: LETHAL FINISHER (If player is under 38% HP, bot goes for the kill!)
+      if (curPlayerHp < maxPlayerHp * 0.38 && !isPlayerShieldedNow) {
         if (curElixir >= 6) {
           const nextElixir = Math.max(0, Number((curElixir - 6).toFixed(1)));
           opponentElixirRef.current = nextElixir;
@@ -891,9 +889,9 @@ export const ArenaScreen: React.FC = () => {
         }
       }
 
-      // STRATEGY B: DEFENSIVE IRON GUARD (If bot HP < 60% and unshielded, or player has >= 5 elixir)
+      // STRATEGY B: DEFENSIVE IRON GUARD (If bot HP < 60% and unshielded, or player has high energy)
       if (curElixir >= 2 && !isOppShieldedNow) {
-        const shouldShield = (currentOppHp < maxOpponentHp * 0.55 && aiRoll < 0.75) || (elixir >= 5 && aiRoll < 0.55);
+        const shouldShield = (currentOppHp < maxOpponentHp * 0.60 && aiRoll < 0.65) || (elixir >= 6 && aiRoll < 0.60);
         if (shouldShield) {
           const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
           opponentElixirRef.current = nextElixir;
@@ -902,12 +900,18 @@ export const ArenaScreen: React.FC = () => {
           isOpponentShieldedRef.current = true;
           setOpponentIntent('🛡️ Iron Guard Active');
           sound.playBlock();
+          setTimeout(() => {
+            if (isOpponentShieldedRef.current) {
+              setIsOpponentShielded(false);
+              isOpponentShieldedRef.current = false;
+            }
+          }, 2400);
           return;
         }
       }
 
       // STRATEGY C: HEAVY BURST ULTIMATE (costs 6 elixir)
-      if (curElixir >= 6 && !isPlayerShieldedNow && aiRoll < 0.85) {
+      if (curElixir >= 6 && (!isPlayerShieldedNow || curElixir >= 9)) {
         const nextElixir = Math.max(0, Number((curElixir - 6).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
@@ -917,7 +921,7 @@ export const ArenaScreen: React.FC = () => {
       }
 
       // STRATEGY D: PUNISHING FIERCE BITE (costs 4 elixir)
-      if (curElixir >= 4 && !isPlayerShieldedNow && aiRoll < 0.80) {
+      if (curElixir >= 4 && (!isPlayerShieldedNow || curElixir >= 7)) {
         const nextElixir = Math.max(0, Number((curElixir - 4).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
@@ -927,7 +931,7 @@ export const ArenaScreen: React.FC = () => {
       }
 
       // STRATEGY E: SONIC SHOCKWAVE / ROAR (costs 3 elixir)
-      if (curElixir >= 3 && aiRoll < 0.70) {
+      if (curElixir >= 3 && aiRoll < 0.75) {
         const nextElixir = Math.max(0, Number((curElixir - 3).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
@@ -937,7 +941,7 @@ export const ArenaScreen: React.FC = () => {
       }
 
       // STRATEGY F: RAPID POUNCE STRIKE (costs 2 elixir)
-      if (curElixir >= 2 && (!isPlayerShieldedNow || curElixir >= 5)) {
+      if (curElixir >= 2) {
         const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
@@ -948,7 +952,7 @@ export const ArenaScreen: React.FC = () => {
     }, aiIntervalMs);
 
     return () => clearInterval(aiInterval);
-  }, [inBattle, battleOver, isPracticeDrill, battleTimerSec, maxOpponentHp, maxOpponentAllyHp, maxPlayerHp, elixir]);
+  }, [inBattle, battleOver, isPracticeDrill, isDoubleElixir, maxOpponentHp, maxOpponentAllyHp, maxPlayerHp, elixir]);
 
   // Execute Opponent Attack against Player or Partner
   const executeOpponentAttack = (rawDmg: number, moveName: string, isUlt = false) => {
@@ -1052,6 +1056,7 @@ export const ArenaScreen: React.FC = () => {
       }
 
       if (nextHostHp === 0 && (battleModeRef.current !== '2v2' || nextPartnerHp === 0)) {
+        battleOverRef.current = true;
         handleMatchConclusion(false);
       }
     }, impactDelay);
@@ -1059,7 +1064,7 @@ export const ArenaScreen: React.FC = () => {
 
   // Player Plays an Action Card
   const handlePlayCard = (cardType: 'pounce' | 'bark' | 'shield' | 'bite' | 'slam') => {
-    if (!inBattle || battleOver) return;
+    if (!inBattle || battleOver || battleOverRef.current || playerHpRef.current <= 0) return;
 
     const costs = { pounce: 2, bark: 3, shield: 2, bite: 4, slam: 6 };
     const cost = costs[cardType];
@@ -1090,16 +1095,20 @@ export const ArenaScreen: React.FC = () => {
         // Energy Surge: Full refund of the 2 shield cost + 1 bonus Elixir surge!
         setElixir((prev) => Math.min(10, Number((prev + cost + 1).toFixed(1))));
 
-        // Counter Riposte Damage (85% of attack or 125 base DMG)
-        const counterDmg = Math.round(incoming.rawDmg * 0.85) || 125;
+        // Counter Riposte Damage (65% of attack or 75 base DMG)
+        const counterDmg = Math.round(incoming.rawDmg * 0.65) || 75;
 
         // Apply counter damage to opponent
         setOpponentHp((prev) => {
+          if (battleOverRef.current || playerHpRef.current <= 0) return prev;
           const next = Math.max(0, prev - counterDmg);
           opponentHpRef.current = next;
           setTimeout(() => setGhostOpponentHp(next), 350);
           if (next === 0 && (battleModeRef.current !== '2v2' || opponentAllyHpRef.current === 0)) {
-            handleMatchConclusion(true);
+            if (!battleOverRef.current && playerHpRef.current > 0) {
+              battleOverRef.current = true;
+              handleMatchConclusion(true);
+            }
           }
           return next;
         });
@@ -1264,11 +1273,11 @@ export const ArenaScreen: React.FC = () => {
     let multiplier = 1;
     let isCrit = false;
 
-    if (cardType === 'pounce') multiplier = 0.8;
-    if (cardType === 'bark') multiplier = 0.95;
-    if (cardType === 'bite') multiplier = 1.35;
+    if (cardType === 'pounce') multiplier = 0.52;
+    if (cardType === 'bark') multiplier = 0.68;
+    if (cardType === 'bite') multiplier = 0.95;
     if (cardType === 'slam') {
-      multiplier = 2.1;
+      multiplier = 1.40;
       isCrit = true;
     }
 
@@ -1289,6 +1298,8 @@ export const ArenaScreen: React.FC = () => {
     });
 
     setTimeout(() => {
+      if (battleOverRef.current || playerHpRef.current <= 0) return;
+
       if (isOpponentShieldedRef.current) {
         setIsOpponentShielded(false);
         isOpponentShieldedRef.current = false;
@@ -1300,6 +1311,7 @@ export const ArenaScreen: React.FC = () => {
 
       let nextOppHp = 0;
       setOpponentHp((prev) => {
+        if (battleOverRef.current || playerHpRef.current <= 0) return prev;
         const next = Math.max(0, prev - totalDmg);
         nextOppHp = next;
         opponentHpRef.current = next;
@@ -1321,7 +1333,10 @@ export const ArenaScreen: React.FC = () => {
           setLastCombatLog(`💥 Lead K.O.! Rival Ally ${partner.name} enters!`);
           nextOppHp = partnerHp;
         } else if (next === 0 && (battleModeRef.current !== '2v2' || opponentAllyHpRef.current === 0)) {
-          handleMatchConclusion(true);
+          if (!battleOverRef.current && playerHpRef.current > 0) {
+            battleOverRef.current = true;
+            handleMatchConclusion(true);
+          }
         }
         return next;
       });
@@ -1353,38 +1368,43 @@ export const ArenaScreen: React.FC = () => {
 
   // Tag-In Swap to another Dog/Cat from 4-Pet Squad
   const handleTagIn = (beast: Animal) => {
-    if (beast.id === currentActiveFighter.id || !inBattle || battleOver) return;
+    if (beast.id === currentActiveFighter.id || !inBattle || battleOver || battleOverRef.current || playerHpRef.current <= 0) return;
 
     sound.playCardPlay();
     setCurrentActiveFighter(beast);
     selectActiveBeast(beast.id);
-    setLastCombatLog(`🔁 Tag-in! ${beast.name} enters with 75 DMG slam!`);
+    setLastCombatLog(`🔁 Tag-in! ${beast.name} enters with 45 DMG slam!`);
 
     setCurrentCanvasAction({
       id: Date.now(),
       attacker: 'player',
       type: 'slam',
-      damage: 75,
+      damage: 45,
       isCrit: true,
       isBlocked: false,
     });
 
-    // Tag-In landing impact (deals instant 75 damage)
+    // Tag-In landing impact (deals instant 45 damage)
     setPlayerAnim('slam');
     setTimeout(() => {
+      if (battleOverRef.current || playerHpRef.current <= 0) return;
       sound.playImpact();
       let nextOppHp = 0;
       setOpponentHp((prev) => {
-        const next = Math.max(0, prev - 75);
+        if (battleOverRef.current || playerHpRef.current <= 0) return prev;
+        const next = Math.max(0, prev - 45);
         nextOppHp = next;
         opponentHpRef.current = next;
         setTimeout(() => setGhostOpponentHp(next), 350);
         if (next === 0 && (battleModeRef.current !== '2v2' || opponentAllyHpRef.current === 0)) {
-          handleMatchConclusion(true);
+          if (!battleOverRef.current && playerHpRef.current > 0) {
+            battleOverRef.current = true;
+            handleMatchConclusion(true);
+          }
         }
         return next;
       });
-      addPopup('TAG IMPACT -75!', 'crit', 170, 80);
+      addPopup('TAG IMPACT -45!', 'crit', 170, 80);
       setOpponentAnim('hit');
       setTimeout(() => {
         setPlayerAnim('idle');
@@ -1398,12 +1418,12 @@ export const ArenaScreen: React.FC = () => {
           senderName: trainerName || 'Trainer',
           cardType: 'tag',
           target: 'opponent',
-          damage: 75,
+          damage: 45,
           isCrit: true,
           isBlocked: false,
           newOpponentHp: nextOppHp,
           newOpponentAllyHp: opponentAllyHpRef.current,
-          log: `Tag-in! ${beast.name} enters with 75 DMG slam!`,
+          log: `Tag-in! ${beast.name} enters with 45 DMG slam!`,
         });
       }
 
@@ -1423,14 +1443,16 @@ export const ArenaScreen: React.FC = () => {
 
   // Forfeit Battle
   const handleForfeit = () => {
-    if (!inBattle || battleOver) return;
+    if (!inBattle || battleOver || battleOverRef.current) return;
+    battleOverRef.current = true;
     sound.playClick();
     handleMatchConclusion(false);
   };
 
   // Match Finished
   const handleMatchConclusion = (won: boolean, fromRemote = false) => {
-    if (battleOver) return;
+    if (battleOverRef.current && battleOver) return;
+    battleOverRef.current = true;
     setBattleOver(true);
     setBattleResult(won ? 'victory' : 'defeat');
     setAnnouncerText(won ? '🏆 K.O.! VICTORY!' : '💀 K.O.! DEFEATED');
@@ -1479,75 +1501,6 @@ export const ArenaScreen: React.FC = () => {
     }, 1350);
     return () => clearInterval(interval);
   }, [inBattle, battleOver, playerHp, maxPlayerHp]);
-
-  // Gamepad Connection Event Listeners
-  useEffect(() => {
-    const handleConnect = (e: GamepadEvent) => {
-      setGamepadConnected(true);
-      setGamepadName(e.gamepad.id.split('(')[0].trim() || 'Gamepad');
-    };
-    const handleDisconnect = () => {
-      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      const hasAny = Array.from(gamepads).some((g) => g !== null);
-      setGamepadConnected(hasAny);
-      if (!hasAny) setGamepadName('');
-    };
-
-    window.addEventListener('gamepadconnected', handleConnect);
-    window.addEventListener('gamepaddisconnected', handleDisconnect);
-
-    if (typeof navigator !== 'undefined' && navigator.getGamepads) {
-      const gamepads = navigator.getGamepads();
-      for (const gp of gamepads) {
-        if (gp) {
-          setGamepadConnected(true);
-          setGamepadName(gp.id.split('(')[0].trim() || 'Gamepad');
-          break;
-        }
-      }
-    }
-
-    return () => {
-      window.removeEventListener('gamepadconnected', handleConnect);
-      window.removeEventListener('gamepaddisconnected', handleDisconnect);
-    };
-  }, []);
-
-  // Gamepad Polling Loop during Battle
-  useEffect(() => {
-    if (!inBattle || battleOver) return;
-
-    let animId: number;
-
-    const pollGamepad = () => {
-      if (typeof navigator !== 'undefined' && navigator.getGamepads) {
-        const gamepads = navigator.getGamepads();
-        const gp = Array.from(gamepads).find((g) => g !== null);
-        if (gp) {
-          const btns = gp.buttons.map((b) => b.pressed);
-          const prev = prevGamepadButtonsRef.current;
-          const justPressed = (idx: number) => btns[idx] && !prev[idx];
-
-          if (justPressed(0)) handlePlayCard('pounce'); // A / Cross
-          if (justPressed(1)) handlePlayCard('shield'); // B / Circle (Iron Guard / Parry)
-          if (justPressed(2)) handlePlayCard('bark');   // X / Square
-          if (justPressed(3)) handlePlayCard('bite');   // Y / Triangle
-          if (justPressed(7) || justPressed(9)) handlePlayCard('slam'); // RT or Start
-
-          if ((justPressed(14) || justPressed(4)) && safeDeck[0]) handleTagIn(safeDeck[0]); // D-Left / LB
-          if (justPressed(12) && safeDeck[1]) handleTagIn(safeDeck[1]);                     // D-Up
-          if ((justPressed(15) || justPressed(5)) && safeDeck[2]) handleTagIn(safeDeck[2]); // D-Right / RB
-          if (justPressed(13) && safeDeck[3]) handleTagIn(safeDeck[3]);                     // D-Down
-
-          prevGamepadButtonsRef.current = btns;
-        }
-      }
-      animId = requestAnimationFrame(pollGamepad);
-    };
-
-    animId = requestAnimationFrame(pollGamepad);
-    return () => cancelAnimationFrame(animId);
-  }, [inBattle, battleOver, elixir, safeDeck, currentActiveFighter, isOpponentShielded, isPlayerShielded]);
 
   // Desktop Hotkey Listener ([1] Pounce, [2] Bark, [3] Guard, [4] Bite, [SPACE] SLAM, [Q/W/E/R] Tag-in)
   useEffect(() => {
@@ -2311,14 +2264,6 @@ export const ArenaScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Gamepad Active Status Pill */}
-          {gamepadConnected && (
-            <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono text-[#F59E0B] py-1 px-2.5 bg-[#F59E0B]/10 rounded-lg border border-[#F59E0B]/30 shrink-0">
-              <span>🎮 {gamepadName || 'Controller'} Active</span>
-              <span className="text-[#CBD5E1] hidden sm:inline">· (A) Pounce · (B) Parry · (X) Bark · (Y) Bite · (RT) Slam</span>
-            </div>
-          )}
-
           {/* 6. SLAM ACTION MOVES DOCK */}
           <div className="grid grid-cols-5 gap-1.5 shrink-0">
             {/* Card 1: Quick Pounce (2 Energy / Hotkey [1]) */}
@@ -2334,7 +2279,7 @@ export const ArenaScreen: React.FC = () => {
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">2 ⚡</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
-                  {gamepadConnected ? '(A)' : '[1]'}
+                  [1]
                 </span>
               </div>
               <PawPrint className="w-5 h-5 text-[#CBD5E1] my-0.5" />
@@ -2354,7 +2299,7 @@ export const ArenaScreen: React.FC = () => {
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">3 ⚡</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
-                  {gamepadConnected ? '(X)' : '[2]'}
+                  [2]
                 </span>
               </div>
               <Volume2 className="w-5 h-5 text-[#CBD5E1] my-0.5" />
@@ -2382,7 +2327,7 @@ export const ArenaScreen: React.FC = () => {
                   {isParryWindowActive ? '⚡ FREE' : '2 ⚡'}
                 </span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
-                  {gamepadConnected ? '(B)' : '[3]'}
+                  [3]
                 </span>
               </div>
               <Shield
@@ -2412,7 +2357,7 @@ export const ArenaScreen: React.FC = () => {
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">4 ⚡</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
-                  {gamepadConnected ? '(Y)' : '[4]'}
+                  [4]
                 </span>
               </div>
               <Flame className="w-5 h-5 text-[#F43F5E] my-0.5" />
@@ -2438,7 +2383,7 @@ export const ArenaScreen: React.FC = () => {
                   6 ⚡
                 </span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#CBD5E1] font-bold hidden sm:inline">
-                  {gamepadConnected ? '(RT)' : '[SPC]'}
+                  [SPC]
                 </span>
               </div>
               <Zap
