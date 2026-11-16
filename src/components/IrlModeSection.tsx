@@ -9,7 +9,7 @@ interface NearbyTrainer {
   species: string;
   level: number;
   strength: number;
-  status: 'Ready for Bout' | 'Sparring' | 'Cooldown';
+  status: 'Ready for Battle' | 'Sparring' | 'Cooldown';
   avatarInitials: string;
 }
 
@@ -26,7 +26,7 @@ export const IrlModeSection: React.FC = () => {
       species: 'German Shepherd',
       level: 11,
       strength: 81,
-      status: 'Ready for Bout',
+      status: 'Ready for Battle',
       avatarInitials: 'JK',
     },
     {
@@ -37,7 +37,7 @@ export const IrlModeSection: React.FC = () => {
       species: 'African Lion',
       level: 14,
       strength: 92,
-      status: 'Ready for Bout',
+      status: 'Ready for Battle',
       avatarInitials: 'MA',
     },
     {

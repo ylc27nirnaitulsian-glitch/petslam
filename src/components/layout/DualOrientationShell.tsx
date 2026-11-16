@@ -287,7 +287,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   }, []);
 
   return (
-    <div className="relative w-full h-[100dvh] bg-[#0B0F17] text-[#F8FAFC] flex overflow-hidden select-none">
+    <div className="relative w-full h-[100dvh] bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-[#F8FAFC] flex overflow-hidden select-none">
       {/* Floating Extension Companion Linked Toast */}
       {companionToast && (
         <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 duration-300 pointer-events-none">
@@ -310,7 +310,7 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
       />
 
       {/* 2. Center Primary Viewport (Zero Page Scroll on Desktop, Safe Area on Mobile) */}
-      <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-[#0B0F17]">
+      <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative bg-slate-100/70 dark:bg-[#0B0F17]">
         {/* Universal Top Bar */}
         <GameTopBar
           onOpenSystemDetails={onOpenSystemDetails || (() => setShowInfoDrawer(true))}

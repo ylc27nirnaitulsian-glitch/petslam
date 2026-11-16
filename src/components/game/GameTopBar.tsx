@@ -132,8 +132,8 @@ export const GameTopBar: React.FC<GameTopBarProps> = ({
             </span>
           </button>
 
-          {/* Light / Dark Mode Toggle (Desktop & Tablet) */}
-          <div className="hidden sm:block">
+          {/* Light / Dark Mode Toggle */}
+          <div className="flex items-center">
             <ThemeToggle />
           </div>
 

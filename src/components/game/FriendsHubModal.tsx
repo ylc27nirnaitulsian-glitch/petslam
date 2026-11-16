@@ -342,7 +342,7 @@ export const FriendsHubModal: React.FC<FriendsHubModalProps> = ({
     {
       id: 'm1',
       sender: 'ViperQueen',
-      text: 'Good bout earlier! Ready for a 2v2 Tag Team?',
+      text: 'Good match earlier! Ready for a 2v2 Tag Team?',
       timestamp: '2m ago',
       isSelf: false,
     },

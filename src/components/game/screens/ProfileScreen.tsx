@@ -295,7 +295,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = () => {
         {/* Audio Toggle */}
         <button
           onClick={() => {
-            sound.playClick();
             toggleSound();
           }}
           className="w-full py-3 rounded-2xl bg-[#121622] hover:bg-[#182030] border border-white/10 text-white font-mono text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"

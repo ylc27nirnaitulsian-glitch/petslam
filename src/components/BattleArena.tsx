@@ -20,7 +20,7 @@ export const BattleArena: React.FC = () => {
     {
       round: 0,
       attacker: 'Arena Referee',
-      action: 'Both beasts locked in starter inspection cages. Awaiting bout signal.',
+      action: 'Both beasts locked in starter inspection cages. Awaiting battle signal.',
       damage: 0,
       status: 'Match Initialized',
     },
@@ -102,7 +102,7 @@ export const BattleArena: React.FC = () => {
       {
         round: 0,
         attacker: 'Arena Referee',
-        action: 'Both beasts locked in starter inspection cages. Awaiting bout signal.',
+        action: 'Both beasts locked in starter inspection cages. Awaiting battle signal.',
         damage: 0,
         status: 'Match Initialized',
       },
@@ -121,7 +121,7 @@ export const BattleArena: React.FC = () => {
         {/* Section Heading */}
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[#CCFF00]">
-            <span>Esports Bout Simulation</span>
+            <span>Esports Match Simulation</span>
             <span aria-hidden="true" className="text-neutral-600">·</span>
             <span className="text-neutral-400">Illustrative Showcase</span>
           </div>
@@ -141,7 +141,7 @@ export const BattleArena: React.FC = () => {
             <div className="flex items-center gap-3">
               <Swords className="h-5 w-5 text-[#CCFF00]" />
               <span className="font-display text-lg font-bold uppercase tracking-wider text-white">
-                Main Card Bout · Tier I Championship Circuit
+                Main Card Match · Tier I Championship Circuit
               </span>
             </div>
 
@@ -161,7 +161,7 @@ export const BattleArena: React.FC = () => {
                   className="inline-flex items-center gap-2 bg-[#CCFF00] hover:bg-[#b8e600] disabled:opacity-50 text-black px-5 py-2 text-xs font-display font-bold uppercase tracking-wider transition-colors cursor-pointer shadow-[0_0_15px_rgba(204,255,0,0.3)]"
                 >
                   <Play className="h-3.5 w-3.5 fill-black" />
-                  <span>{matchState === 'fighting' ? 'Simulating Bout...' : 'Simulate Arena Clash'}</span>
+                  <span>{matchState === 'fighting' ? 'Simulating Match...' : 'Simulate Arena Clash'}</span>
                 </button>
               )}
             </div>
@@ -313,7 +313,7 @@ export const BattleArena: React.FC = () => {
           <div className="mt-8 border-t border-white/10 pt-6">
             <div className="flex items-center justify-between mb-3 text-xs">
               <span className="font-bold uppercase tracking-wider text-neutral-400">
-                Live Bout Action Logs
+                Live Match Action Logs
               </span>
               <span className="font-mono text-neutral-300">
                 {matchState === 'finished' ? 'Combat Completed' : matchState === 'fighting' ? 'Round Processing...' : 'Standby'}

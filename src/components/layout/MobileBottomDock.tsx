@@ -25,7 +25,7 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
   };
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 w-full max-w-full overflow-hidden bg-[#151C28]/95 backdrop-blur-xl border-t border-[#2A364F] select-none px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around transition-colors duration-150">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 w-full max-w-full overflow-hidden bg-white/95 dark:bg-[#151C28]/95 backdrop-blur-xl border-t border-slate-200 dark:border-[#2A364F] select-none px-2 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] flex items-center justify-around transition-colors duration-150">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = currentTab === tab.id;

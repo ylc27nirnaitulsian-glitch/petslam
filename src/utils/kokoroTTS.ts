@@ -4,6 +4,8 @@
  * 100% on-device neural voice generation via ONNX WebAssembly / WebGPU.
  */
 
+import { sound } from './audio';
+
 export type KokoroVoice =
   | 'af_heart'   // Default: Warm, affectionate companion pet voice
   | 'af_bella'   // Energetic, playful pet champion
@@ -80,7 +82,7 @@ class KokoroLocalTTSManager {
    * to browser SpeechSynthesis while the model downloads/warms up.
    */
   public async speak(text: string, options?: KokoroOptions): Promise<void> {
-    if (!this.isEnabled || !text.trim()) return;
+    if (!sound.enabled || !this.isEnabled || !text.trim()) return;
 
     const voice = options?.voice || this.currentVoice;
     const cacheKey = `${voice}_${text.trim().toLowerCase()}`;
@@ -141,7 +143,7 @@ class KokoroLocalTTSManager {
    * Browser SpeechSynthesis fallback with cute pitch modulation for pets.
    */
   private speakNativeBrowser(text: string, options?: KokoroOptions) {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (!sound.enabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
     try {
       window.speechSynthesis.cancel();

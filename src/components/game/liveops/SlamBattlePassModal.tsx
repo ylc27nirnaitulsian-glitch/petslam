@@ -173,7 +173,7 @@ export const SlamBattlePassModal: React.FC<SlamBattlePassModalProps> = ({ isOpen
               <Swords className="w-3 h-3" /> Arena Win (+100)
             </span>
             <span className="px-2 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 font-bold flex items-center gap-1">
-              <Shield className="w-3 h-3" /> Arena Bout (+40)
+              <Shield className="w-3 h-3" /> Arena Match (+40)
             </span>
             <span className="px-2 py-0.5 rounded-lg bg-purple-500/15 border border-purple-400/30 text-purple-300 font-bold flex items-center gap-1">
               <Zap className="w-3 h-3" /> Training (+50)

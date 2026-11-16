@@ -35,6 +35,32 @@
   --color-dark-700: #3B4B6E;
 }
 
+:root,
+html.dark {
+  --arcade-base: #0B0F17;
+  --arcade-surface: #151C28;
+  --arcade-surface-elevated: #1E2738;
+  --arcade-border: #2A364F;
+  --arcade-border-strong: #3B4B6E;
+  --arcade-text-primary: #F8FAFC;
+  --arcade-text-secondary: #CBD5E1;
+  --arcade-text-muted: #94A3B8;
+  color-scheme: dark;
+}
+
+html.light,
+html:not(.dark) {
+  --arcade-base: #F8FAFC;
+  --arcade-surface: #FFFFFF;
+  --arcade-surface-elevated: #F1F5F9;
+  --arcade-border: #E2E8F0;
+  --arcade-border-strong: #CBD5E1;
+  --arcade-text-primary: #0F172A;
+  --arcade-text-secondary: #334155;
+  --arcade-text-muted: #64748B;
+  color-scheme: light;
+}
+
 html {
   font-size: 16px;
   width: 100%;
@@ -45,7 +71,9 @@ html {
 
 body {
   font-family: var(--font-body);
-  @apply text-[#F8FAFC] bg-[#0B0F17] transition-colors duration-150;
+  background-color: var(--arcade-base, #0B0F17);
+  color: var(--arcade-text-primary, #F8FAFC);
+  transition: background-color 150ms ease, color 150ms ease;
   font-size: 16px;
   line-height: 1.6;
   font-weight: 500;
@@ -317,5 +345,144 @@ h1, h2, h3, h4, .font-display {
 
 .animate-sonicPulse {
   animation: sonicPulse 0.55s ease-out forwards;
+}
+
+/* =========================================================================
+   LIGHT / WHITE MODE COMPREHENSIVE OVERRIDES
+   Ensures that switching theme immediately transforms the entire dark UI into
+   a clean, crisp, high-contrast white & light slate tactical experience.
+   ========================================================================= */
+
+html.light body,
+html:not(.dark) body {
+  background-color: #F8FAFC !important;
+  color: #0F172A !important;
+}
+
+/* Base Viewport & Layout Backgrounds */
+html.light .bg-\[\#0B0F17\],
+html:not(.dark) .bg-\[\#0B0F17\],
+html.light [class*="bg-[#0B0F17]"]:not([class*="text-[#0B0F17]"]),
+html:not(.dark) [class*="bg-[#0B0F17]"]:not([class*="text-[#0B0F17]"]) {
+  background-color: #F8FAFC !important;
+}
+
+/* Surface Cards, Rails, Docks & Headers */
+html.light .bg-\[\#151C28\],
+html:not(.dark) .bg-\[\#151C28\],
+html.light [class*="bg-[#151C28]"],
+html:not(.dark) [class*="bg-[#151C28]"] {
+  background-color: #FFFFFF !important;
+}
+
+/* Elevated Surfaces, Inset Pills & Secondary Buttons */
+html.light .bg-\[\#1E2738\],
+html:not(.dark) .bg-\[\#1E2738\],
+html.light [class*="bg-[#1E2738]"],
+html:not(.dark) [class*="bg-[#1E2738]"],
+html.light .bg-\[\#121622\],
+html:not(.dark) .bg-\[\#121622\],
+html.light .bg-\[\#101522\],
+html:not(.dark) .bg-\[\#101522\] {
+  background-color: #F1F5F9 !important;
+}
+
+/* Hover States */
+html.light .hover\:bg-\[\#1E2738\]:hover,
+html:not(.dark) .hover\:bg-\[\#1E2738\]:hover {
+  background-color: #E2E8F0 !important;
+}
+
+html.light .hover\:bg-\[\#2A364F\]:hover,
+html:not(.dark) .hover\:bg-\[\#2A364F\]:hover {
+  background-color: #CBD5E1 !important;
+}
+
+/* Borders */
+html.light .border-\[\#2A364F\],
+html:not(.dark) .border-\[\#2A364F\],
+html.light [class*="border-[#2A364F]"],
+html:not(.dark) [class*="border-[#2A364F]"] {
+  border-color: #E2E8F0 !important;
+}
+
+html.light .border-\[\#3B4B6E\],
+html:not(.dark) .border-\[\#3B4B6E\],
+html.light [class*="border-[#3B4B6E]"],
+html:not(.dark) [class*="border-[#3B4B6E]"] {
+  border-color: #CBD5E1 !important;
+}
+
+/* Primary Text */
+html.light .text-\[\#F8FAFC\],
+html:not(.dark) .text-\[\#F8FAFC\],
+html.light [class*="text-[#F8FAFC]"],
+html:not(.dark) [class*="text-[#F8FAFC]"] {
+  color: #0F172A !important;
+}
+
+/* Secondary Subtitle Text */
+html.light .text-\[\#CBD5E1\],
+html:not(.dark) .text-\[\#CBD5E1\],
+html.light [class*="text-[#CBD5E1]"],
+html:not(.dark) [class*="text-[#CBD5E1]"] {
+  color: #334155 !important;
+}
+
+/* Muted / Tertiary Text */
+html.light .text-\[\#94A3B8\],
+html:not(.dark) .text-\[\#94A3B8\],
+html.light [class*="text-[#94A3B8]"],
+html:not(.dark) [class*="text-[#94A3B8]"] {
+  color: #64748B !important;
+}
+
+/* Tactical Arcade Base Components */
+html.light .arcade-surface,
+html:not(.dark) .arcade-surface {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+html.light .arcade-surface-elevated,
+html:not(.dark) .arcade-surface-elevated {
+  background-color: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+html.light .arcade-border,
+html:not(.dark) .arcade-border {
+  border-color: #E2E8F0 !important;
+}
+
+html.light .arcade-btn-secondary,
+html:not(.dark) .arcade-btn-secondary {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light .arcade-btn-secondary:hover,
+html:not(.dark) .arcade-btn-secondary:hover {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+}
+
+/* Custom Scrollbars in Light Mode */
+html.light ::-webkit-scrollbar-track,
+html:not(.dark) ::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+html.light ::-webkit-scrollbar-thumb,
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover,
+html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
 

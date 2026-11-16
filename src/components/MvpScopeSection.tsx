@@ -79,7 +79,7 @@ export const MvpScopeSection: React.FC<MvpScopeSectionProps> = ({ onJoinWaitlist
       category: 'Esports Rankings',
       target: 'Week 14 (Launches with PvP)',
       detail: 'Weekly, Monthly, and All-Time championship divisions with seasonal rating points and cosmetic rewards.',
-      rationale: 'Calibrated specifically to ranked PvP bout outcomes; cannot activate without live matchmaking.',
+      rationale: 'Calibrated specifically to ranked PvP match outcomes; cannot activate without live matchmaking.',
     },
     {
       title: 'IRL Proximity Radar Matchmaking',

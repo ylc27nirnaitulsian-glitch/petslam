@@ -89,18 +89,18 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
   };
 
   return (
-    <aside className="hidden lg:flex flex-col w-[88px] xl:w-[275px] 2xl:w-[290px] h-full bg-[#151C28] border-r border-[#2A364F] select-none z-30 shrink-0 transition-all duration-200">
+    <aside className="hidden lg:flex flex-col w-[88px] xl:w-[275px] 2xl:w-[290px] h-full bg-white dark:bg-[#151C28] border-r border-slate-200 dark:border-[#2A364F] select-none z-30 shrink-0 transition-all duration-200">
       {/* Brand Header */}
-      <div className="h-16 flex items-center justify-center xl:justify-start px-3 xl:px-5 border-b border-[#2A364F] gap-3 bg-[#0B0F17] shrink-0">
-        <div className="relative w-10 h-10 rounded-xl bg-[#1E2738] border border-[#2A364F] shrink-0 flex items-center justify-center">
+      <div className="h-16 flex items-center justify-center xl:justify-start px-3 xl:px-5 border-b border-slate-200 dark:border-[#2A364F] gap-3 bg-slate-50 dark:bg-[#0B0F17] shrink-0">
+        <div className="relative w-10 h-10 rounded-xl bg-slate-100 dark:bg-[#1E2738] border border-slate-300 dark:border-[#2A364F] shrink-0 flex items-center justify-center">
           <Swords className="w-5 h-5 text-[#F59E0B]" />
         </div>
         <div className="hidden xl:flex flex-col leading-none min-w-0">
-          <span className="font-display font-black text-xl tracking-wider text-[#F8FAFC] uppercase flex items-center gap-1.5 truncate">
+          <span className="font-display font-black text-xl tracking-wider text-slate-900 dark:text-[#F8FAFC] uppercase flex items-center gap-1.5 truncate">
             PET SLAM
             <span className="text-[10px] font-mono font-black bg-[#F59E0B] text-[#0B0F17] px-1.5 py-0.5 rounded-sm shrink-0">MVP</span>
           </span>
-          <span className="text-xs font-mono text-[#94A3B8] font-bold uppercase tracking-widest mt-1 truncate">
+          <span className="text-xs font-mono text-slate-500 dark:text-[#94A3B8] font-bold uppercase tracking-widest mt-1 truncate">
             Tactical Battler
           </span>
         </div>
@@ -175,7 +175,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
       </nav>
 
       {/* Bottom Utility Controls */}
-      <div className="p-2.5 xl:p-3 border-t border-[#2A364F] space-y-2 bg-[#0B0F17] shrink-0">
+      <div className="p-2.5 xl:p-3 border-t border-slate-200 dark:border-[#2A364F] space-y-2 bg-slate-50 dark:bg-[#0B0F17] shrink-0">
         {/* Live Buddy Screen Companion Toggle */}
         <button
           onClick={() => {

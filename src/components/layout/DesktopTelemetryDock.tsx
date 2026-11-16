@@ -56,12 +56,12 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
   ];
 
   return (
-    <aside className="hidden lg:flex flex-col w-[320px] xl:w-[350px] h-full bg-[#151C28] border-l border-[#2A364F] select-none z-30 shrink-0 p-4 space-y-3.5 overflow-y-auto scrollbar-thin text-[#F8FAFC]">
+    <aside className="hidden lg:flex flex-col w-[320px] xl:w-[350px] h-full bg-white dark:bg-[#151C28] border-l border-slate-200 dark:border-[#2A364F] select-none z-30 shrink-0 p-4 space-y-3.5 overflow-y-auto scrollbar-thin text-slate-900 dark:text-[#F8FAFC]">
       {/* Dock Header */}
-      <div className="flex items-center justify-between border-b border-[#2A364F] pb-3 shrink-0">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#2A364F] pb-3 shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
-          <span className="font-display font-bold text-sm uppercase tracking-wider text-[#F8FAFC]">
+          <span className="font-display font-bold text-sm uppercase tracking-wider text-slate-900 dark:text-[#F8FAFC]">
             Live Squad & Telemetry
           </span>
         </div>

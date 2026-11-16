@@ -2,6 +2,8 @@
 // Supports real microphone capture via Web Audio AnalyserNode and
 // audible teammate tactical voice communication via SpeechSynthesis + Radio FX.
 
+import { sound } from './audio';
+
 export interface VoiceChatState {
   isMicActive: boolean;
   isMuted: boolean;
@@ -45,6 +47,7 @@ class VoiceChatEngine {
 
   // Play subtle military radio squelch / walkie-talkie chirp
   private playRadioChirp(type: 'open' | 'close') {
+    if (!sound.enabled) return;
     try {
       const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
@@ -189,6 +192,14 @@ class VoiceChatEngine {
     this.state.lastTeammateMessage = text;
     this.state.isTeammateSpeaking = true;
     this.notify();
+
+    if (!sound.enabled) {
+      setTimeout(() => {
+        this.state.isTeammateSpeaking = false;
+        this.notify();
+      }, 2500);
+      return;
+    }
 
     this.playRadioChirp('open');
 

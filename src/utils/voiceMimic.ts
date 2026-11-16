@@ -1,6 +1,8 @@
 // Real-time Voice Mimic & Pitch Shifter for Pet Companion
 // Records microphone input and plays back in a pitched companion voice with mouth lip-sync!
 
+import { sound } from './audio';
+
 export class VoiceMimicEngine {
   private audioCtx: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
@@ -138,6 +140,11 @@ export class VoiceMimicEngine {
 
         // Helper to play via HTMLAudioElement (works seamlessly across all browsers)
         const playViaAudioElement = () => {
+          if (!sound.enabled) {
+            this.isPlaying = false;
+            onFinish();
+            return;
+          }
           try {
             const audioUrl = URL.createObjectURL(blob);
             const audio = new Audio(audioUrl);
@@ -260,6 +267,10 @@ export class VoiceMimicEngine {
     onMouthSync: (amplitude: number) => void,
     onFinish: () => void
   ) {
+    if (!sound.enabled) {
+      this.simulateSpeechAnimation(text.length * 60, onMouthSync, onFinish);
+      return;
+    }
     if (typeof window === 'undefined' || !window.speechSynthesis) {
       // Simulate mouth animation
       this.simulateSpeechAnimation(text.length * 80, onMouthSync, onFinish);

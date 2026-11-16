@@ -189,7 +189,7 @@ export const LeaderboardSection: React.FC = () => {
 
         {/* Bottom Qualifier note */}
         <div className="mt-4 flex items-center justify-between text-xs text-neutral-400">
-          <span>*Live leaderboard synchronized with sanctioned arena bouts. Minimum 20 ranked matches for placement.</span>
+          <span>*Live leaderboard synchronized with sanctioned arena matches. Minimum 20 ranked matches for placement.</span>
           <span className="font-mono text-neutral-300">Seasonal Reset: 14 Days</span>
         </div>
       </div>

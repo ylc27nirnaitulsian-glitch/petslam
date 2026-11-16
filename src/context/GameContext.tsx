@@ -127,7 +127,7 @@ const INITIAL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'ach_first_blood',
     title: 'First Arena Blood',
-    desc: 'Win your first real-time championship combat bout.',
+    desc: 'Win your first real-time championship combat match.',
     rewardCredits: 400,
     claimed: false,
     progress: 0,
@@ -368,7 +368,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const playerMaxExp = 1000;
   const [wins, setWins] = useState<number>(0);
   const [losses, setLosses] = useState<number>(0);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('petslam_sound_enabled');
+        if (saved !== null) return saved === 'true';
+      } catch {}
+    }
+    return true;
+  });
 
   const [ownedBeasts, setOwnedBeasts] = useState<Animal[]>(defaultOwnedBeasts);
   const [activeBeastId, setActiveBeastId] = useState<string>('dog_01');
@@ -616,10 +624,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ]);
 
   // Sound sync
+  useEffect(() => {
+    sound.setEnabled(soundEnabled);
+  }, [soundEnabled]);
+
   const toggleSound = () => {
     const next = !soundEnabled;
     setSoundEnabled(next);
-    sound.enabled = next;
+    sound.setEnabled(next);
     if (next) sound.playClick();
   };
 
@@ -659,7 +671,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, message: 'Insufficient energy! Refill or await recovery.' };
     }
     if (credits < creditCost) {
-      return { success: false, message: 'Insufficient credits! Win arena bouts to earn credits.' };
+      return { success: false, message: 'Insufficient credits! Win arena matches to earn credits.' };
     }
 
     setEnergy((prev) => Math.max(0, prev - energyCost));
@@ -783,9 +795,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const trophiesChange = won ? +35 : -15;
     const expGained = won ? 250 : 80;
 
-    // Slam Royal Pass points progression (+100 win, +40 bout completed)
+    // Slam Royal Pass points progression (+100 win, +40 match completed)
     const passPointsGained = won ? 100 : 40;
-    addPassPoints(passPointsGained, won ? 'Arena Victory' : 'Arena Bout');
+    addPassPoints(passPointsGained, won ? 'Arena Victory' : 'Arena Match');
 
     setCredits((prev) => prev + rewardCredits);
     setTrophies((prev) => Math.max(0, prev + trophiesChange));

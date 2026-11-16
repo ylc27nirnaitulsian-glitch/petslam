@@ -480,7 +480,7 @@ export const GameGuideModal: React.FC<GameGuideModalProps> = ({
                   <span>Championship MMR & Achievements</span>
                 </div>
                 <p className="mt-1 text-neutral-300 leading-relaxed">
-                  Every victory in Ranked Arena bouts awards +45 MMR rating and bonus credits. Defeats cost -25 MMR.
+                  Every victory in Ranked Arena matches awards +45 MMR rating and bonus credits. Defeats cost -25 MMR.
                 </p>
               </div>
 

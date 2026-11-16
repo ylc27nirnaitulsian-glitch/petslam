@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Swords, Zap } from 'lucide-react';
+import { sound } from '../../utils/audio';
 
 interface PetSlamIntroSplashProps {
   onComplete: () => void;
@@ -7,6 +8,7 @@ interface PetSlamIntroSplashProps {
 
 // Synthesize a high-production Supercell / Clash Royale style intro fanfare via Web Audio API
 const playIntroFanfare = () => {
+  if (!sound.enabled) return;
   try {
     const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;

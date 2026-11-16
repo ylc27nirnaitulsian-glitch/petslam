@@ -21,6 +21,7 @@ import { sound } from '../../utils/audio';
 import { GameGuideModal } from './GameGuideModal';
 import { AccountAuthModal } from './AccountAuthModal';
 import { PetSlamIntroSplash } from './PetSlamIntroSplash';
+import { ThemeToggle } from '../ThemeToggle';
 import {
   signInWithGoogleIdToken,
   GOOGLE_CLIENT_ID,
@@ -166,6 +167,9 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Light / Dark Mode Toggle */}
+          <ThemeToggle />
+
           {/* Sound Toggle */}
           <button
             onClick={toggleSound}

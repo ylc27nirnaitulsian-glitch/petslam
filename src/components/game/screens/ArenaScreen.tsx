@@ -1656,8 +1656,8 @@ export const ArenaScreen: React.FC = () => {
                 >
                   <span>
                     {battleMode === '2v2'
-                      ? 'Solo 2v2 Tag Team Sparring (vs CPU)'
-                      : 'Solo 1v1 Sparring Bout (vs CPU)'}
+                      ? 'Solo 2v2 Tag Team with Bots (vs CPU)'
+                      : 'Solo 1v1 Ranked with Bot (vs CPU)'}
                   </span>
                 </button>
               </div>
