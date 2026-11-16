@@ -65,6 +65,7 @@ export const ArenaScreen: React.FC = () => {
     trainerName,
     playerTag,
     playerLevel,
+    equippedGear,
   } = useGame();
   const { pet } = usePetCompanion();
 
@@ -2085,6 +2086,18 @@ export const ArenaScreen: React.FC = () => {
               maxPlayerAllyHp={maxPlayerAllyHp}
               opponentAllyHp={opponentAllyHp}
               maxOpponentAllyHp={maxOpponentAllyHp}
+              playerGear={{
+                collar: !!equippedGear?.collar,
+                armor: !!equippedGear?.armor,
+                paws: !!equippedGear?.paws,
+              }}
+              opponentGear={{
+                collar: selectedOpponent.rarity !== 'Common',
+                paws: (selectedOpponent.level || 1) >= 3,
+                armor: (selectedOpponent.level || 1) >= 6 || selectedOpponent.rarity === 'Legendary',
+              }}
+              playerHasCrown={(currentActiveFighter.level || 1) >= 8 || trophies >= 1200}
+              opponentHasCrown={(selectedOpponent.level || 1) >= 8}
               className="w-full h-full absolute inset-0"
             />
 

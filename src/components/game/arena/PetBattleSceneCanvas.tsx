@@ -37,6 +37,10 @@ export interface PetBattleSceneCanvasProps {
   maxPlayerAllyHp?: number;
   opponentAllyHp?: number;
   maxOpponentAllyHp?: number;
+  playerGear?: { collar?: boolean; armor?: boolean; paws?: boolean };
+  opponentGear?: { collar?: boolean; armor?: boolean; paws?: boolean };
+  playerHasCrown?: boolean;
+  opponentHasCrown?: boolean;
 }
 
 interface Particle {
@@ -98,6 +102,10 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
   maxPlayerAllyHp = 1000,
   opponentAllyHp = 1000,
   maxOpponentAllyHp = 1000,
+  playerGear,
+  opponentGear,
+  playerHasCrown,
+  opponentHasCrown,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -1046,6 +1054,13 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
         isBlinking: opp.isBlinking,
         time: s.time,
         accentColor: '#EF4444',
+        elementalAura: getFighterAura(arenaTheme, opponentPet),
+        equippedGear: opponentGear || {
+          collar: opponentPet.rarity !== 'Common',
+          paws: (opponentPet.level || 1) >= 3,
+          armor: (opponentPet.level || 1) >= 6 || opponentPet.rarity === 'Legendary',
+        },
+        hasCrown: opponentHasCrown ?? (opponentPet.level || 1) >= 8,
       });
 
       // =======================================================================
@@ -1070,6 +1085,9 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
           isBlinking: p.isBlinking,
           time: s.time,
           accentColor: '#00E5FF',
+          elementalAura: 'cyber',
+          equippedGear: { collar: true, paws: true, armor: false },
+          hasCrown: false,
         });
       }
 
@@ -1088,6 +1106,9 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
         isBlinking: p.isBlinking,
         time: s.time,
         accentColor: '#CCFF00',
+        elementalAura: getFighterAura(arenaTheme, playerPet),
+        equippedGear: playerGear || { collar: true, armor: false, paws: true },
+        hasCrown: playerHasCrown ?? (playerPet.level || 1) >= 8,
       });
 
       // =======================================================================
@@ -1581,6 +1602,13 @@ function drawFighterPedestal(
 // ===========================================================================
 // PROCEDURAL SKELETAL COMBATANT RENDERER
 // ===========================================================================
+export function getFighterAura(theme: ArenaTheme, pet: Animal): 'flame' | 'cyber' | 'zen' | 'gold' {
+  if (pet.rarity === 'Legendary' || (pet.level || 1) >= 10) return 'gold';
+  if (theme === 'cyber') return 'cyber';
+  if (theme === 'dojo') return 'zen';
+  return 'flame';
+}
+
 interface CombatantRenderProps {
   species: PetSpecies;
   x: number;
@@ -1597,6 +1625,9 @@ interface CombatantRenderProps {
   time: number;
   accentColor: string;
   silhouetteColor?: string;
+  elementalAura?: 'flame' | 'cyber' | 'zen' | 'gold' | 'none';
+  equippedGear?: { collar?: boolean; armor?: boolean; paws?: boolean };
+  hasCrown?: boolean;
 }
 
 function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
@@ -1711,6 +1742,92 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
     bellyColor = p.silhouetteColor;
   }
 
+  // ELEMENTAL AURA (Visible battle energy radiance behind combatant)
+  if (!p.silhouetteColor && !p.isKO && p.elementalAura && p.elementalAura !== 'none') {
+    if (p.elementalAura === 'flame') {
+      const fg = ctx.createRadialGradient(0, -12, 10, 0, -12, 54);
+      fg.addColorStop(0, 'rgba(249, 115, 22, 0.45)');
+      fg.addColorStop(0.6, 'rgba(239, 68, 68, 0.2)');
+      fg.addColorStop(1, 'rgba(239, 68, 68, 0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath();
+      ctx.arc(0, -12, 54, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Flame tongues licking upward
+      ctx.save();
+      for (let f = 0; f < 5; f++) {
+        const fOffset = Math.sin(p.time * 6 + f * 1.3) * 5;
+        const fH = 26 + Math.sin(p.time * 8 + f * 2.1) * 9;
+        const fX = -18 + f * 9 + fOffset * 0.5;
+        ctx.fillStyle = f % 2 === 0 ? 'rgba(251, 146, 60, 0.6)' : 'rgba(239, 68, 68, 0.65)';
+        ctx.beginPath();
+        ctx.moveTo(fX - 4, 2);
+        ctx.quadraticCurveTo(fX, -fH, fX + 4, 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    } else if (p.elementalAura === 'cyber') {
+      const cg = ctx.createRadialGradient(0, -12, 10, 0, -12, 56);
+      cg.addColorStop(0, 'rgba(0, 229, 255, 0.35)');
+      cg.addColorStop(0.6, 'rgba(56, 189, 248, 0.15)');
+      cg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = cg;
+      ctx.beginPath();
+      ctx.arc(0, -12, 56, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath();
+      ctx.ellipse(0, 8, 38, 12, p.time * 1.5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    } else if (p.elementalAura === 'zen') {
+      const zg = ctx.createRadialGradient(0, -12, 10, 0, -12, 52);
+      zg.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
+      zg.addColorStop(0.6, 'rgba(16, 185, 129, 0.15)');
+      zg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = zg;
+      ctx.beginPath();
+      ctx.arc(0, -12, 52, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let o = 0; o < 3; o++) {
+        const ang = p.time * 2.2 + (o * Math.PI * 2) / 3;
+        const orbX = Math.cos(ang) * 36;
+        const orbY = -12 + Math.sin(ang) * 16;
+        ctx.fillStyle = 'rgba(110, 231, 183, 0.8)';
+        ctx.beginPath();
+        ctx.arc(orbX, orbY, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (p.elementalAura === 'gold') {
+      const gg = ctx.createRadialGradient(0, -12, 10, 0, -12, 60);
+      gg.addColorStop(0, 'rgba(250, 204, 21, 0.45)');
+      gg.addColorStop(0.6, 'rgba(245, 158, 11, 0.2)');
+      gg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = gg;
+      ctx.beginPath();
+      ctx.arc(0, -12, 60, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(253, 224, 71, 0.35)';
+      ctx.lineWidth = 1.2;
+      for (let r = 0; r < 8; r++) {
+        const rayAng = p.time * 0.8 + (r * Math.PI) / 4;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(rayAng) * 20, -12 + Math.sin(rayAng) * 20);
+        ctx.lineTo(Math.cos(rayAng) * 48, -12 + Math.sin(rayAng) * 48);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
   // A. PROCEDURAL TAIL WITH INERTIAL SWAY
   ctx.save();
   ctx.translate(-24, -12);
@@ -1750,11 +1867,103 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
   ctx.ellipse(4, -8, 14, 15, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  // TACTICAL ARMOR EXO-VEST (Visible equipped armor)
+  if (!p.silhouetteColor && p.equippedGear?.armor) {
+    ctx.save();
+    ctx.fillStyle = '#1E293B';
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 21, 15, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#38BDF8';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    const reactorPulse = 0.5 + Math.sin(p.time * 5) * 0.3;
+    ctx.fillStyle = `rgba(56, 189, 248, ${0.7 + reactorPulse * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(2, -10, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(2, -10, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-11, -16);
+    ctx.lineTo(8, -4);
+    ctx.moveTo(-9, -4);
+    ctx.lineTo(9, -16);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // Front Paws
   ctx.fillStyle = secondaryColor;
   ctx.beginPath();
   ctx.ellipse(14, 12, 9, 7, 0.1, 0, Math.PI * 2);
   ctx.fill();
+
+  // COMBAT PAW WRAPS & SPUR GAUNTLETS (Visible equipped paws)
+  if (!p.silhouetteColor && p.equippedGear?.paws) {
+    ctx.save();
+    ctx.fillStyle = '#DC2626';
+    ctx.beginPath();
+    ctx.rect(-22, 9, 8, 4);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(-20, 10, 4, 1.2);
+
+    ctx.fillStyle = '#DC2626';
+    ctx.beginPath();
+    ctx.rect(10, 9, 8, 4);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(12, 10, 4, 1.2);
+
+    ctx.fillStyle = '#F59E0B';
+    ctx.beginPath();
+    ctx.arc(17, 11, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // SPIKED GLADIATOR COLLAR (Visible equipped collar)
+  if (!p.silhouetteColor && p.equippedGear?.collar) {
+    const neckX = 7;
+    const neckY = -23 + p.breathCycle * 1.0;
+    ctx.save();
+    ctx.translate(neckX, neckY);
+    ctx.rotate(0.18);
+
+    ctx.fillStyle = '#D97706';
+    ctx.strokeStyle = '#78350F';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 10, 4.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#FEF3C7';
+    [-6, -1, 4].forEach((sx) => {
+      ctx.beginPath();
+      ctx.moveTo(sx - 1.5, -2);
+      ctx.lineTo(sx, -6);
+      ctx.lineTo(sx + 1.5, -2);
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    ctx.fillStyle = '#EF4444';
+    ctx.beginPath();
+    ctx.arc(1.5, 4.5, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(1, 3.5, 1, 1);
+    ctx.restore();
+  }
 
   // D. HEAD WITH INERTIA & BREATHING BOB
   ctx.save();
@@ -1898,6 +2107,49 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
     ctx.lineTo(11, -14);
     ctx.closePath();
     ctx.fill();
+  }
+
+  // CHAMPIONSHIP GLADIATOR CROWN (Level 8+ / Elite rank champion)
+  if (!p.silhouetteColor && p.hasCrown) {
+    ctx.save();
+    ctx.translate(0, -22);
+
+    ctx.fillStyle = '#F59E0B';
+    ctx.strokeStyle = '#B45309';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.rect(-9, -2, 18, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(-9, -2);
+    ctx.lineTo(-7, -10);
+    ctx.lineTo(-3, -3);
+    ctx.lineTo(0, -12);
+    ctx.lineTo(3, -3);
+    ctx.lineTo(7, -10);
+    ctx.lineTo(9, -2);
+    ctx.closePath();
+    ctx.fillStyle = '#FCD34D';
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#10B981';
+    ctx.beginPath();
+    ctx.arc(-7, -8, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#EF4444';
+    ctx.beginPath();
+    ctx.arc(0, -9.5, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#38BDF8';
+    ctx.beginPath();
+    ctx.arc(7, -8, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   ctx.restore(); // Restore head
