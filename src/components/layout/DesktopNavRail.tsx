@@ -63,6 +63,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
       items: [
         { id: 'arena' as const, label: 'Battle Arena', icon: Swords, badge: 'LIVE' },
         { id: 'ranked' as const, label: '1v1 Ranked', icon: Target, badge: 'PVP' },
+        { id: 'multiplayer' as const, label: 'Friends & Socials', icon: Users, badge: 'ONLINE' },
         { id: 'leaderboard' as const, label: 'Top 10 Leaderboard', icon: Trophy, badge: 'TOP 10' },
       ],
     },
@@ -159,7 +160,7 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
                       className={`hidden xl:inline-block shrink-0 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${
                         item.badge === 'SEASON 1'
                           ? 'bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/40'
-                          : item.badge === 'LIVE'
+                          : item.badge === 'LIVE' || item.badge === 'ONLINE'
                           ? 'bg-[#10B981]/15 text-[#10B981] border-[#10B981]/40'
                           : 'bg-[#0B0F17] border-[#2A364F] text-[#94A3B8]'
                       }`}
@@ -176,6 +177,26 @@ export const DesktopNavRail: React.FC<DesktopNavRailProps> = ({
 
       {/* Bottom Utility Controls */}
       <div className="p-2.5 xl:p-3 border-t border-slate-200 dark:border-[#2A364F] space-y-2 bg-slate-50 dark:bg-[#0B0F17] shrink-0">
+        {/* Friends & Socials Quick Action Launch */}
+        <button
+          onClick={() => {
+            sound.playClick();
+            window.dispatchEvent(new CustomEvent('petslam:open-friends'));
+          }}
+          className="w-full flex items-center justify-center xl:justify-between px-3 py-2 rounded-xl bg-[#1E2738] hover:bg-[#2A364F] border border-[#2A364F] hover:border-[#F59E0B] text-[#F8FAFC] cursor-pointer text-xs font-mono font-bold transition-all active:scale-95 group shadow-xs"
+          title="Open Friends Roster & Social Party (Invite, Add & Voice Chat)"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Users className="w-4 h-4 text-[#F59E0B] shrink-0" />
+            <span className="hidden xl:inline text-xs font-bold text-[#F8FAFC] group-hover:text-[#F59E0B] truncate">
+              Friends & Socials
+            </span>
+          </div>
+          <span className="hidden xl:inline-block text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40">
+            ONLINE
+          </span>
+        </button>
+
         {/* Live Buddy Screen Companion Toggle */}
         <button
           onClick={() => {

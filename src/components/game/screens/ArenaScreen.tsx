@@ -1702,7 +1702,7 @@ export const ArenaScreen: React.FC = () => {
                   <div className="relative group flex flex-col items-center">
                     <div className="w-32 h-40 sm:w-36 sm:h-44 rounded-2xl overflow-hidden border border-[#2A364F] bg-[#151C28] relative">
                       <img
-                        src={currentActiveFighter.image}
+                        src={getPetPhoto(currentActiveFighter)}
                         alt={currentActiveFighter.name}
                         className="w-full h-full object-cover object-center"
                       />
@@ -1778,7 +1778,7 @@ export const ArenaScreen: React.FC = () => {
               <div className="relative group">
                 <div className="w-44 h-52 sm:w-52 sm:h-60 rounded-3xl overflow-hidden border border-[#2A364F] group-hover:border-[#F59E0B]/50 bg-[#151C28] relative shadow-md transition-all duration-200">
                   <img
-                    src={currentActiveFighter.image}
+                    src={getPetPhoto(currentActiveFighter)}
                     alt={currentActiveFighter.name}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                   />
@@ -1847,7 +1847,7 @@ export const ArenaScreen: React.FC = () => {
                   >
                     <div className="w-12 h-12 rounded-xl overflow-hidden bg-black border border-[#2A364F] aspect-square mb-1">
                       <img
-                        src={petFighter.image}
+                        src={getPetPhoto(petFighter)}
                         alt={petFighter.name}
                         className="w-full h-full object-cover object-center aspect-square"
                       />

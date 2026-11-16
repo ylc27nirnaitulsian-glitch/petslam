@@ -14,6 +14,8 @@ import {
   BidHistoryEntry,
 } from '../types/pet';
 import { sound } from '../utils/audio';
+import { ANIMALS_DATA } from '../data/animals';
+import { mapBeastToSpecies } from '../utils/petVisuals';
 
 const STORAGE_KEY = 'petslam_active_companion_v3';
 const KENNEL_STORAGE_KEY = 'petslam_kennel_pets_v3';
@@ -655,6 +657,32 @@ export const PetCompanionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
     return kennelPets[0] || createInitialPet('germanshepherd');
   });
+
+  // Synchronize Companion Pet with active beast selected in game
+  useEffect(() => {
+    const handleBeastChanged = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail?.id) {
+        const found = ANIMALS_DATA.find((a) => a.id === detail.id);
+        if (found) {
+          const mappedSpecies = mapBeastToSpecies(found.breed || found.species);
+          setPet((prev) => {
+            const updated: CompanionPet = {
+              ...prev,
+              name: found.name,
+              species: mappedSpecies,
+            };
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+        }
+      }
+    };
+    window.addEventListener('petslam:beast-changed', handleBeastChanged);
+    return () => window.removeEventListener('petslam:beast-changed', handleBeastChanged);
+  }, []);
 
   // 3. Desktop overlay active
   const [isOverlayActive, setIsOverlayActive] = useState<boolean>(() => {

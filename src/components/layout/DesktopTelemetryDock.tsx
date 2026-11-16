@@ -87,12 +87,16 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
 
         <div className="flex items-center justify-between bg-[#151C28] border border-[#2A364F] rounded-xl p-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#F59E0B]/20 border border-[#F59E0B]/40 text-[#F59E0B] flex items-center justify-center shrink-0">
-              <PawPrint className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-lg overflow-hidden border border-[#2A364F] bg-black shrink-0">
+              <img
+                src={getPetPhoto(activeBeast)}
+                alt={activeBeast.name}
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="min-w-0">
               <div className="text-sm font-bold text-[#F8FAFC] truncate">
-                {pet.name} ({pet.species})
+                {activeBeast.name} ({activeBeast.breed || activeBeast.species})
               </div>
               <div className="text-xs font-mono text-[#CBD5E1]">
                 {isOverlayActive ? '🟢 Roaming Screen' : '⚪ Asleep in Kennel'}
@@ -252,37 +256,23 @@ export const DesktopTelemetryDock: React.FC<DesktopTelemetryDockProps> = ({
         </button>
       </div>
 
-      {/* 5. MULTIPLAYER ROSTER & 1V1 QUEUE */}
-      <div className="grid grid-cols-2 gap-2 shrink-0">
+      {/* 5. MULTIPLAYER 1V1 QUEUE */}
+      <div className="shrink-0">
         <button
           onClick={onOpenRanked}
-          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group"
+          className="w-full p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group flex items-center justify-between"
         >
-          <div className="text-xs font-mono text-[#F59E0B] font-bold flex items-center justify-between">
-            <span>NETCODE</span>
-            <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+          <div>
+            <div className="text-xs font-mono text-[#F59E0B] font-bold flex items-center gap-1.5">
+              <span>NETCODE PVP</span>
+              <span className="w-2 h-2 rounded-full bg-[#10B981]" />
+            </div>
+            <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
+              1v1 Ranked Matchmaking
+            </div>
+            <div className="text-xs font-mono text-[#CBD5E1]">Instant Battle Queue</div>
           </div>
-          <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
-            1v1 Ranked
-          </div>
-          <div className="text-xs font-mono text-[#CBD5E1]">Quick Queue</div>
-        </button>
-
-        <button
-          onClick={() => {
-            sound.playClick();
-            window.dispatchEvent(new CustomEvent('petslam:open-friends'));
-          }}
-          className="p-3 rounded-xl bg-[#1E2738] border border-[#2A364F] hover:border-[#F59E0B] text-left transition-all cursor-pointer active:scale-95 group"
-        >
-          <div className="text-xs font-mono text-[#F59E0B] font-bold flex items-center justify-between">
-            <span>SOCIAL</span>
-            <Users className="w-3.5 h-3.5 text-[#F59E0B]" />
-          </div>
-          <div className="text-xs font-bold text-[#F8FAFC] uppercase mt-0.5 group-hover:text-[#F59E0B]">
-            Friends Party
-          </div>
-          <div className="text-xs font-mono text-[#CBD5E1]">Lobby Invites</div>
+          <ChevronRight className="w-4 h-4 text-[#CBD5E1] group-hover:text-[#F59E0B] transition-transform group-hover:translate-x-0.5" />
         </button>
       </div>
     </aside>
