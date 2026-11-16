@@ -56,9 +56,10 @@ interface GameContextType {
   updateUserAvatar: (avatarUrl: string) => void;
   credits: number;
   addCredits: (amount: number) => void;
+  trophies: number;
+  addTrophies: (amount: number) => void;
   energy: number;
   maxEnergy: number;
-  trophies: number;
   playerLevel: number;
   playerExp: number;
   playerMaxExp: number;
@@ -363,6 +364,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [energy, setEnergy] = useState<number>(100);
   const maxEnergy = 100;
   const [trophies, setTrophies] = useState<number>(0);
+  const addTrophies = (amount: number) => {
+    setTrophies((prev) => Math.max(0, prev + amount));
+  };
   const [playerLevel, setPlayerLevel] = useState<number>(1);
   const [playerExp, setPlayerExp] = useState<number>(0);
   const playerMaxExp = 1000;
@@ -893,6 +897,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         energy,
         maxEnergy,
         trophies,
+        addTrophies,
         playerLevel,
         playerExp,
         playerMaxExp,

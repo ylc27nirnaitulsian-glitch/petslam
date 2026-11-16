@@ -32,6 +32,8 @@ import { usePetCompanion } from '../../../context/PetCompanionContext';
 import { ProceduralPetCanvas } from '../pet/ProceduralPetCanvas';
 import { PetBattleSceneCanvas, BattleAction, ArenaTheme } from '../arena/PetBattleSceneCanvas';
 import { GladiatorVictoryCardModal } from '../arena/GladiatorVictoryCardModal';
+import { OfflineDefenseModal } from '../arena/OfflineDefenseModal';
+import { ghostDefenseService, OfflineDefenseReport } from '../../../services/ghostDefenseService';
 import { triggerVictoryExplosion } from '../../../utils/confetti';
 import {
   multiplayerBattleSync,
@@ -57,6 +59,7 @@ export const ArenaScreen: React.FC = () => {
     selectActiveBeast,
     recordMatchResult,
     trophies,
+    addTrophies,
     credits,
     addCredits,
     trainerName,
@@ -204,6 +207,23 @@ export const ArenaScreen: React.FC = () => {
   const [matchParryCount, setMatchParryCount] = useState<number>(0);
   const [showVictoryCardModal, setShowVictoryCardModal] = useState<boolean>(false);
 
+  // Offline Defense Meta & Sanctuary Raids
+  const [offlineReport, setOfflineReport] = useState<OfflineDefenseReport | null>(null);
+
+  useEffect(() => {
+    const report = ghostDefenseService.checkOfflineDefenseRewards(currentActiveFighter);
+    if (report) {
+      setOfflineReport(report);
+    }
+  }, [currentActiveFighter]);
+
+  const handleClaimOfflineReport = () => {
+    if (!offlineReport) return;
+    addTrophies(offlineReport.trophiesGained);
+    addCredits(offlineReport.creditsGained);
+    setOfflineReport(null);
+  };
+
   // Real-time Multiplayer Party Battle State (2v2 Co-Op & 1v1 Friendly Duel)
   const [isMultiplayerBattle, setIsMultiplayerBattle] = useState<boolean>(false);
   const [isBattleHost, setIsBattleHost] = useState<boolean>(false);
@@ -290,25 +310,18 @@ export const ArenaScreen: React.FC = () => {
     setIsMatchmaking(true);
     setMatchCountdown(3);
 
-    // Pick opponents from dogs & cats
-    const randomOpp1 = eligibleChallengers[Math.floor(Math.random() * eligibleChallengers.length)];
+    // Pick real asynchronous ghost defense build from community roster
+    const ghost = ghostDefenseService.pickGhostOpponent(trophies, playerTag);
+    const randomOpp1 = ghost.pet;
     const randomOpp2 =
       eligibleChallengers.find((b) => b.id !== randomOpp1.id) || eligibleChallengers[0];
     const allyFighter =
       safeDeck.find((b) => b.id !== currentActiveFighter.id) || eligibleChallengers[2];
 
-    const randomNames = [
-      'Trainer Axel',
-      'Champion Maya',
-      'Kenji & Hachi',
-      'Sarah Prowler',
-      'Leo Apex',
-      'Master Vance',
-    ];
     setSelectedOpponent(randomOpp1);
     setOpponentAlly(randomOpp2);
     setPlayerAlly(allyFighter);
-    setOpponentTrainer(randomNames[Math.floor(Math.random() * randomNames.length)]);
+    setOpponentTrainer(`${ghost.trainerName} ${ghost.playerTag}`);
 
     matchmakingTimerRef.current = setInterval(() => {
       setMatchCountdown((prev) => {
@@ -1388,6 +1401,9 @@ export const ArenaScreen: React.FC = () => {
     }
 
     recordMatchResult(won, selectedOpponent, 3);
+
+    // Save defense snapshot to asynchronous ghost meta roster
+    ghostDefenseService.recordPlayerDefense(currentActiveFighter, trainerName, playerTag, trophies);
 
     // If in multiplayer battle, broadcast conclusion so both screens finish at the exact same moment!
     if (isMultiplayerBattleRef.current && !fromRemote) {
@@ -2510,6 +2526,14 @@ export const ArenaScreen: React.FC = () => {
           parryCount={matchParryCount}
           trophiesEarned={30}
           onClose={() => setShowVictoryCardModal(false)}
+        />
+      )}
+
+      {/* Offline Sanctuary Defense Rewards Modal */}
+      {offlineReport && (
+        <OfflineDefenseModal
+          report={offlineReport}
+          onClaim={handleClaimOfflineReport}
         />
       )}
     </div>
