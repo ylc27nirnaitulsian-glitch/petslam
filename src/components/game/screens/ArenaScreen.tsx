@@ -35,6 +35,7 @@ import { GladiatorVictoryCardModal } from '../arena/GladiatorVictoryCardModal';
 import { OfflineDefenseModal } from '../arena/OfflineDefenseModal';
 import { ghostDefenseService, OfflineDefenseReport } from '../../../services/ghostDefenseService';
 import { triggerVictoryExplosion } from '../../../utils/confetti';
+import { triggerHeavyImpactHaptic, triggerSuccessHaptic } from '../../../utils/haptics';
 import {
   multiplayerBattleSync,
   BattlePlayerAction,
@@ -1026,12 +1027,8 @@ export const ArenaScreen: React.FC = () => {
         parryWindowActiveRef.current = false;
         setIsParryWindowActive(false);
 
-        // Haptic feedback on mobile devices
-        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-          try {
-            navigator.vibrate([60, 40, 90]);
-          } catch {}
-        }
+        // Tactile Haptic feedback on mobile devices
+        triggerHeavyImpactHaptic();
 
         // Visceral Metallic Parry Clank
         sound.playParry();
@@ -1387,13 +1384,15 @@ export const ArenaScreen: React.FC = () => {
     setAnnouncerText(won ? '🏆 K.O.! VICTORY!' : '💀 K.O.! DEFEATED');
     setAnnouncerPulse(true);
 
-    // Visceral K.O. Impact Boom
+    // Visceral K.O. Impact Boom & Haptic Crunch
     sound.playKO();
+    triggerHeavyImpactHaptic();
 
     if (won) {
       setTimeout(() => {
         sound.playVictory();
         triggerVictoryExplosion();
+        triggerSuccessHaptic();
       }, 400);
     } else {
       setTimeout(() => {
