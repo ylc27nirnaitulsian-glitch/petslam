@@ -43,7 +43,7 @@ import {
 interface DamagePopup {
   id: number;
   text: string;
-  type: 'player' | 'opponent' | 'crit' | 'block';
+  type: 'player' | 'opponent' | 'crit' | 'block' | 'parry';
   x: number;
   y: number;
 }
@@ -181,6 +181,23 @@ export const ArenaScreen: React.FC = () => {
 
   const playerAllyHpRef = useRef<number>(playerAllyHp);
   playerAllyHpRef.current = playerAllyHp;
+
+  // Active Parry & Counter Mechanics
+  const [isParryWindowActive, setIsParryWindowActive] = useState<boolean>(false);
+  const parryWindowActiveRef = useRef<boolean>(false);
+  const isParriedRef = useRef<boolean>(false);
+  const incomingOpponentAttackRef = useRef<{
+    rawDmg: number;
+    moveName: string;
+    isUlt: boolean;
+    targetWho: 'host' | 'partner';
+    targetTag: string;
+  } | null>(null);
+
+  // Gamepad Controller Support (Xbox, PlayStation, Switch, Generic USB/Bluetooth)
+  const [gamepadConnected, setGamepadConnected] = useState<boolean>(false);
+  const [gamepadName, setGamepadName] = useState<string>('');
+  const prevGamepadButtonsRef = useRef<boolean[]>([]);
 
   // Real-time Multiplayer Party Battle State (2v2 Co-Op & 1v1 Friendly Duel)
   const [isMultiplayerBattle, setIsMultiplayerBattle] = useState<boolean>(false);
@@ -876,6 +893,14 @@ export const ArenaScreen: React.FC = () => {
     setOpponentAnim(isUlt ? 'slam' : 'clash');
     setLastCombatLog(`⚠️ ${selectedOpponentRef.current.name} launches ${moveName}!`);
 
+    // Open active parry window for 360ms (500ms for ult)
+    if (targetWho === 'host') {
+      parryWindowActiveRef.current = true;
+      setIsParryWindowActive(true);
+      isParriedRef.current = false;
+      incomingOpponentAttackRef.current = { rawDmg, moveName, isUlt, targetWho, targetTag };
+    }
+
     const isBlocked = targetWho === 'host' ? isPlayerShieldedRef.current : false;
     const finalDamage = Math.round(isBlocked ? rawDmg * 0.4 : rawDmg);
     setCurrentCanvasAction({
@@ -887,7 +912,21 @@ export const ArenaScreen: React.FC = () => {
       isBlocked: isBlocked,
     });
 
+    const impactDelay = isUlt ? 550 : 340;
+
     setTimeout(() => {
+      // Close active parry window
+      parryWindowActiveRef.current = false;
+      setIsParryWindowActive(false);
+
+      // If attack was parried by player during the telegraph window:
+      if (isParriedRef.current) {
+        isParriedRef.current = false;
+        incomingOpponentAttackRef.current = null;
+        return;
+      }
+
+      incomingOpponentAttackRef.current = null;
       let nextHostHp = playerHpRef.current;
       let nextPartnerHp = playerAllyHpRef.current;
 
@@ -943,7 +982,7 @@ export const ArenaScreen: React.FC = () => {
       if (nextHostHp === 0 && (battleModeRef.current !== '2v2' || nextPartnerHp === 0)) {
         handleMatchConclusion(false);
       }
-    }, isUlt ? 550 : 320);
+    }, impactDelay);
   };
 
   // Player Plays an Action Card
@@ -958,9 +997,93 @@ export const ArenaScreen: React.FC = () => {
       return;
     }
 
-    setElixir((prev) => Math.max(0, Number((prev - cost).toFixed(1))));
-
     if (cardType === 'shield') {
+      // ⚡ ACTIVE PERFECT PARRY (Timing window deflection + riposte)
+      if (parryWindowActiveRef.current && incomingOpponentAttackRef.current?.targetWho === 'host') {
+        const incoming = incomingOpponentAttackRef.current;
+        isParriedRef.current = true;
+        parryWindowActiveRef.current = false;
+        setIsParryWindowActive(false);
+
+        // Haptic feedback on mobile devices
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate([60, 40, 90]);
+          } catch {}
+        }
+
+        // Visceral Metallic Parry Clank
+        sound.playParry();
+
+        // Energy Surge: Full refund of the 2 shield cost + 1 bonus Elixir!
+        setElixir((prev) => Math.min(10, Number((prev + 1).toFixed(1))));
+
+        // Counter Riposte Damage (85% of attack or 125 base DMG)
+        const counterDmg = Math.round(incoming.rawDmg * 0.85) || 125;
+
+        // Apply counter damage to opponent
+        setOpponentHp((prev) => {
+          const next = Math.max(0, prev - counterDmg);
+          opponentHpRef.current = next;
+          setTimeout(() => setGhostOpponentHp(next), 350);
+          if (next === 0 && (battleModeRef.current !== '2v2' || opponentAllyHpRef.current === 0)) {
+            handleMatchConclusion(true);
+          }
+          return next;
+        });
+
+        addPopup('⚡ PERFECT PARRY! +1 ENERGY', 'parry', 135, 190);
+        addPopup(`💥 RIPOSTE -${counterDmg}!`, 'crit', 170, 80);
+        setLastCombatLog(
+          `⚡ ${currentActiveFighter.name} PERFECT PARRIED ${incoming.moveName} & riposted for ${counterDmg} DMG! (+1 Energy)`
+        );
+        setOpponentAnim('hit');
+        setTimeout(() => setOpponentAnim('idle'), 400);
+
+        setCurrentCanvasAction({
+          id: Date.now(),
+          attacker: 'opponent',
+          type: incoming.isUlt ? 'slam' : 'bite',
+          damage: 0,
+          isCrit: false,
+          isBlocked: false,
+          isParried: true,
+          counterDamage: counterDmg,
+        });
+
+        if (isMultiplayerBattleRef.current) {
+          multiplayerBattleSync.sendPlayerAction({
+            senderTag: playerTag,
+            senderName: trainerName || 'Trainer',
+            cardType: 'shield',
+            target: 'opponent',
+            damage: counterDmg,
+            isCrit: true,
+            isBlocked: false,
+            isParried: true,
+            counterDamage: counterDmg,
+            newOpponentHp: opponentHpRef.current,
+            newOpponentAllyHp: opponentAllyHpRef.current,
+            log: `⚡ ${currentActiveFighter.name} performed a PERFECT PARRY on ${incoming.moveName}!`,
+          });
+        }
+
+        if (isPracticeDrill && practiceStep === 2) {
+          setTimeout(() => {
+            setPracticeStep(3);
+            sound.playBell();
+            setElixir(6);
+            setLastCombatLog('🥋 DOJO STEP 3/4: Energy Maxed! Unleash PET SLAM Overdrive [SPACE]!');
+            setAnnouncerText('🥋 DOJO: STEP 3/4');
+            setAnnouncerPulse(true);
+          }, 600);
+        }
+
+        return;
+      }
+
+      // Normal passive Iron Guard
+      setElixir((prev) => Math.max(0, Number((prev - cost).toFixed(1))));
       setIsPlayerShielded(true);
       isPlayerShieldedRef.current = true;
       sound.playCardPlay();
@@ -1242,11 +1365,18 @@ export const ArenaScreen: React.FC = () => {
     setAnnouncerText(won ? '🏆 K.O.! VICTORY!' : '💀 K.O.! DEFEATED');
     setAnnouncerPulse(true);
 
+    // Visceral K.O. Impact Boom
+    sound.playKO();
+
     if (won) {
-      sound.playVictory();
-      triggerVictoryExplosion();
+      setTimeout(() => {
+        sound.playVictory();
+        triggerVictoryExplosion();
+      }, 400);
     } else {
-      sound.playDefeat();
+      setTimeout(() => {
+        sound.playDefeat();
+      }, 400);
     }
 
     recordMatchResult(won, selectedOpponent, 3);
@@ -1260,6 +1390,88 @@ export const ArenaScreen: React.FC = () => {
       });
     }
   };
+
+  // Low-HP Tension Heartbeat Loop (<25% HP)
+  useEffect(() => {
+    if (!inBattle || battleOver) return;
+    const isLow = playerHp > 0 && playerHp <= maxPlayerHp * 0.25;
+    if (!isLow) return;
+
+    sound.playHeartbeat();
+    const interval = setInterval(() => {
+      sound.playHeartbeat();
+    }, 1350);
+    return () => clearInterval(interval);
+  }, [inBattle, battleOver, playerHp, maxPlayerHp]);
+
+  // Gamepad Connection Event Listeners
+  useEffect(() => {
+    const handleConnect = (e: GamepadEvent) => {
+      setGamepadConnected(true);
+      setGamepadName(e.gamepad.id.split('(')[0].trim() || 'Gamepad');
+    };
+    const handleDisconnect = () => {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      const hasAny = Array.from(gamepads).some((g) => g !== null);
+      setGamepadConnected(hasAny);
+      if (!hasAny) setGamepadName('');
+    };
+
+    window.addEventListener('gamepadconnected', handleConnect);
+    window.addEventListener('gamepaddisconnected', handleDisconnect);
+
+    if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+      const gamepads = navigator.getGamepads();
+      for (const gp of gamepads) {
+        if (gp) {
+          setGamepadConnected(true);
+          setGamepadName(gp.id.split('(')[0].trim() || 'Gamepad');
+          break;
+        }
+      }
+    }
+
+    return () => {
+      window.removeEventListener('gamepadconnected', handleConnect);
+      window.removeEventListener('gamepaddisconnected', handleDisconnect);
+    };
+  }, []);
+
+  // Gamepad Polling Loop during Battle
+  useEffect(() => {
+    if (!inBattle || battleOver) return;
+
+    let animId: number;
+
+    const pollGamepad = () => {
+      if (typeof navigator !== 'undefined' && navigator.getGamepads) {
+        const gamepads = navigator.getGamepads();
+        const gp = Array.from(gamepads).find((g) => g !== null);
+        if (gp) {
+          const btns = gp.buttons.map((b) => b.pressed);
+          const prev = prevGamepadButtonsRef.current;
+          const justPressed = (idx: number) => btns[idx] && !prev[idx];
+
+          if (justPressed(0)) handlePlayCard('pounce'); // A / Cross
+          if (justPressed(1)) handlePlayCard('shield'); // B / Circle (Iron Guard / Parry)
+          if (justPressed(2)) handlePlayCard('bark');   // X / Square
+          if (justPressed(3)) handlePlayCard('bite');   // Y / Triangle
+          if (justPressed(7) || justPressed(9)) handlePlayCard('slam'); // RT or Start
+
+          if ((justPressed(14) || justPressed(4)) && safeDeck[0]) handleTagIn(safeDeck[0]); // D-Left / LB
+          if (justPressed(12) && safeDeck[1]) handleTagIn(safeDeck[1]);                     // D-Up
+          if ((justPressed(15) || justPressed(5)) && safeDeck[2]) handleTagIn(safeDeck[2]); // D-Right / RB
+          if (justPressed(13) && safeDeck[3]) handleTagIn(safeDeck[3]);                     // D-Down
+
+          prevGamepadButtonsRef.current = btns;
+        }
+      }
+      animId = requestAnimationFrame(pollGamepad);
+    };
+
+    animId = requestAnimationFrame(pollGamepad);
+    return () => cancelAnimationFrame(animId);
+  }, [inBattle, battleOver, elixir, safeDeck, currentActiveFighter, isOpponentShielded, isPlayerShielded]);
 
   // Desktop Hotkey Listener ([1] Pounce, [2] Bark, [3] Guard, [4] Bite, [SPACE] SLAM, [Q/W/E/R] Tag-in)
   useEffect(() => {
@@ -1680,7 +1892,9 @@ export const ArenaScreen: React.FC = () => {
             <div
               key={p.id}
               className={`absolute pointer-events-none font-display font-black text-sm sm:text-base z-50 animate-out fade-out slide-out-to-top-8 duration-1000 ${
-                p.type === 'crit'
+                p.type === 'parry'
+                  ? 'text-[#FDE047] text-lg sm:text-2xl font-black drop-shadow-[0_0_16px_rgba(245,158,11,0.9)] scale-110 tracking-wider'
+                  : p.type === 'crit'
                   ? 'text-[#F59E0B] text-lg sm:text-xl font-black drop-shadow-md'
                   : p.type === 'block'
                   ? 'text-[#38BDF8] drop-shadow-md'
@@ -2009,6 +2223,14 @@ export const ArenaScreen: React.FC = () => {
             </div>
           </div>
 
+          {/* Gamepad Active Status Pill */}
+          {gamepadConnected && (
+            <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono text-[#F59E0B] py-1 px-2.5 bg-[#F59E0B]/10 rounded-lg border border-[#F59E0B]/30 shrink-0">
+              <span>🎮 {gamepadName || 'Controller'} Active</span>
+              <span className="text-[#CBD5E1] hidden sm:inline">· (A) Pounce · (B) Parry · (X) Bark · (Y) Bite · (RT) Slam</span>
+            </div>
+          )}
+
           {/* 6. SLAM ACTION MOVES DOCK */}
           <div className="grid grid-cols-5 gap-1.5 shrink-0">
             {/* Card 1: Quick Pounce (2 Energy / Hotkey [1]) */}
@@ -2024,7 +2246,7 @@ export const ArenaScreen: React.FC = () => {
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">2 ⚡</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
-                  [1]
+                  {gamepadConnected ? '(A)' : '[1]'}
                 </span>
               </div>
               <PawPrint className="w-5 h-5 text-[#CBD5E1] my-0.5" />
@@ -2044,31 +2266,49 @@ export const ArenaScreen: React.FC = () => {
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">3 ⚡</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
-                  [2]
+                  {gamepadConnected ? '(X)' : '[2]'}
                 </span>
               </div>
               <Volume2 className="w-5 h-5 text-[#CBD5E1] my-0.5" />
               <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC]">Bark</span>
             </button>
 
-            {/* Card 3: Iron Guard (2 Energy / Hotkey [3]) */}
+            {/* Card 3: Iron Guard / Parry (2 Energy / Hotkey [3]) */}
             <button
               onClick={() => handlePlayCard('shield')}
               disabled={elixir < 2}
               className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative ${
-                elixir >= 2
+                isParryWindowActive
+                  ? 'bg-[#F59E0B]/20 hover:bg-[#F59E0B]/30 border-[#FDE047] text-[#FDE047] shadow-[0_0_18px_rgba(245,158,11,0.7)] animate-pulse scale-105 active:scale-95 z-10'
+                  : elixir >= 2
                   ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC] active:scale-95'
                   : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
               <div className="flex items-center justify-between w-full px-1">
-                <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">2 ⚡</span>
+                <span
+                  className={`text-xs font-mono font-bold tabular-nums ${
+                    isParryWindowActive ? 'text-[#FDE047]' : 'text-[#CBD5E1]'
+                  }`}
+                >
+                  {isParryWindowActive ? '⚡ FREE' : '2 ⚡'}
+                </span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
-                  [3]
+                  {gamepadConnected ? '(B)' : '[3]'}
                 </span>
               </div>
-              <Shield className="w-5 h-5 text-[#CBD5E1] my-0.5" />
-              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC]">Guard</span>
+              <Shield
+                className={`w-5 h-5 my-0.5 ${
+                  isParryWindowActive ? 'text-[#FDE047] animate-bounce' : 'text-[#CBD5E1]'
+                }`}
+              />
+              <span
+                className={`text-xs font-bold uppercase tracking-wider truncate ${
+                  isParryWindowActive ? 'text-[#FDE047] font-black' : 'text-[#F8FAFC]'
+                }`}
+              >
+                {isParryWindowActive ? '⚡ PARRY!' : 'Guard'}
+              </span>
             </button>
 
             {/* Card 4: Fierce Bite (4 Energy / Hotkey [4]) */}
@@ -2084,7 +2324,7 @@ export const ArenaScreen: React.FC = () => {
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">4 ⚡</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
-                  [4]
+                  {gamepadConnected ? '(Y)' : '[4]'}
                 </span>
               </div>
               <Flame className="w-5 h-5 text-[#F43F5E] my-0.5" />
@@ -2102,13 +2342,27 @@ export const ArenaScreen: React.FC = () => {
               }`}
             >
               <div className="flex items-center justify-between w-full px-1">
-                <span className={`text-xs font-mono font-bold tabular-nums ${elixir >= 6 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'}`}>6 ⚡</span>
+                <span
+                  className={`text-xs font-mono font-bold tabular-nums ${
+                    elixir >= 6 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'
+                  }`}
+                >
+                  6 ⚡
+                </span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#CBD5E1] font-bold hidden sm:inline">
-                  [SPC]
+                  {gamepadConnected ? '(RT)' : '[SPC]'}
                 </span>
               </div>
-              <Zap className={`w-5 h-5 my-0.5 ${elixir >= 6 ? 'text-[#0B0F17] fill-[#0B0F17]' : 'text-[#94A3B8]'}`} />
-              <span className={`text-xs font-black uppercase tracking-wider truncate ${elixir >= 6 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'}`}>
+              <Zap
+                className={`w-5 h-5 my-0.5 ${
+                  elixir >= 6 ? 'text-[#0B0F17] fill-[#0B0F17]' : 'text-[#94A3B8]'
+                }`}
+              />
+              <span
+                className={`text-xs font-black uppercase tracking-wider truncate ${
+                  elixir >= 6 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'
+                }`}
+              >
                 {battleMode === '2v2' ? 'DUO SLAM' : 'SLAM'}
               </span>
             </button>

@@ -13,6 +13,8 @@ export interface BattleAction {
   damage?: number;
   isCrit?: boolean;
   isBlocked?: boolean;
+  isParried?: boolean;
+  counterDamage?: number;
 }
 
 export interface PetBattleSceneCanvasProps {
@@ -124,6 +126,10 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
 
     // Chromatic Aberration flash timer
     chromaticFlash: 0,
+
+    // K.O. Finisher Slow-Motion Time Dilation
+    koSlowdownTimer: 0,
+    lastWasKo: false,
 
     action: null as BattleAction | null,
     actionProgress: 0, // 0 to 1
@@ -238,9 +244,33 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
     let lastTime = performance.now();
 
     const render = (now: number) => {
-      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      const rawDt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
       const s = stateRef.current;
+
+      // Check for match K.O. transition to trigger slow-mo finisher dilation
+      const isMatchKo = opponentHp <= 0 || playerHp <= 0;
+      if (isMatchKo && !s.lastWasKo) {
+        s.lastWasKo = true;
+        s.koSlowdownTimer = 0.85;
+      } else if (!isMatchKo) {
+        s.lastWasKo = false;
+      }
+
+      // Hit-Stop System (Visceral Impact Pause)
+      let isHitStopActive = false;
+      if (s.hitStopTimer > 0) {
+        s.hitStopTimer -= rawDt;
+        isHitStopActive = true;
+      }
+
+      // Time delta with hit-stop freeze & K.O. time dilation
+      let dt = isHitStopActive ? 0 : rawDt;
+      if (!isHitStopActive && s.koSlowdownTimer > 0) {
+        s.koSlowdownTimer -= rawDt;
+        dt = rawDt * 0.25; // 4x slow motion for cinematic K.O.
+      }
+
       s.time += dt;
 
       // Handle Device Pixel Ratio for crisp retina rendering
@@ -256,22 +286,13 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // =======================================================================
-      // HIT-STOP SYSTEM (Visceral Freeze Frame Impact)
-      // =======================================================================
-      let isHitStopActive = false;
-      if (s.hitStopTimer > 0) {
-        s.hitStopTimer -= dt;
-        isHitStopActive = true;
-      }
-
       // Camera Shake decay
       let shakeOffsetX = 0;
       let shakeOffsetY = 0;
       if (s.cameraShake > 0) {
         shakeOffsetX = (Math.random() - 0.5) * s.cameraShake;
         shakeOffsetY = (Math.random() - 0.5) * s.cameraShake;
-        s.cameraShake = Math.max(0, s.cameraShake - dt * 28);
+        s.cameraShake = Math.max(0, s.cameraShake - rawDt * 28);
       }
 
       // Spring-physics Camera Zoom & Pan Interpolation
@@ -618,47 +639,145 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
 
               if (!s.hasDealtDamage && rushPct > 0.85) {
                 s.hasDealtDamage = true;
-                p.flinchTimer = 0.38;
-                p.recoilX = -38;
-                s.cameraShake = 8;
-                s.hitStopTimer = 0.055;
-                s.chromaticFlash = 0.25;
 
-                p.scaleX = 0.82;
-                p.scaleY = 1.22;
+                if (s.action.isParried) {
+                  // ⚡ PERFECT PARRY COUNTER!
+                  opp.flinchTimer = 0.55;
+                  opp.recoilX = 65; // Stagger opponent backwards
+                  p.flinchTimer = 0;
+                  p.recoilX = 0;
+                  p.scaleX = 1.08;
+                  p.scaleY = 0.94;
+                  s.cameraShake = 16;
+                  s.hitStopTimer = 0.15; // 150ms visceral freeze frame!
+                  s.chromaticFlash = 0.7;
+                  sound.playParry();
 
-                const impactX = p.baseX;
-                const impactY = p.baseY - 30;
-                for (let i = 0; i < 16; i++) {
+                  const parryX = p.baseX + 25;
+                  const parryY = p.baseY - 25;
+                  // Golden shockwave ring
+                  spawnParticle({
+                    x: parryX,
+                    y: parryY,
+                    type: 'shockwave',
+                    color: '#F59E0B',
+                    size: 38,
+                    life: 0.75,
+                  });
+                  // Golden starburst sparks
+                  for (let i = 0; i < 24; i++) {
+                    spawnParticle({
+                      x: parryX,
+                      y: parryY,
+                      vx: (Math.random() - 0.25) * 12,
+                      vy: (Math.random() - 0.5) * 10,
+                      color: i % 2 === 0 ? '#FDE047' : '#F59E0B',
+                      type: 'spark',
+                      size: 4 + Math.random() * 5,
+                      life: 0.8,
+                    });
+                  }
+                  // Floating parry announcement
+                  spawnParticle({
+                    x: parryX,
+                    y: parryY - 35,
+                    type: 'text',
+                    text: '⚡ PERFECT PARRY!',
+                    color: '#FDE047',
+                    size: 24,
+                    life: 1.2,
+                  });
+                  if (s.action.counterDamage) {
+                    spawnParticle({
+                      x: opp.baseX,
+                      y: opp.baseY - 45,
+                      type: 'text',
+                      text: `💥 RIPOSTE -${s.action.counterDamage}!`,
+                      color: '#F59E0B',
+                      size: 20,
+                      life: 1.25,
+                    });
+                  }
+                } else if (s.action.isBlocked) {
+                  // 🛡️ PASSIVE IRON GUARD BLOCK
+                  p.flinchTimer = 0.15;
+                  p.recoilX = -14;
+                  s.cameraShake = 5;
+                  s.hitStopTimer = 0.05;
+                  sound.playBlock();
+
+                  spawnParticle({
+                    x: p.baseX + 15,
+                    y: p.baseY - 25,
+                    type: 'shockwave',
+                    color: '#38BDF8',
+                    size: 25,
+                    life: 0.5,
+                  });
+                  spawnParticle({
+                    x: p.baseX + 15,
+                    y: p.baseY - 35,
+                    type: 'text',
+                    text: '🛡️ BLOCKED!',
+                    color: '#38BDF8',
+                    size: 16,
+                    life: 0.85,
+                  });
+                  if (s.action.damage) {
+                    spawnParticle({
+                      x: p.baseX,
+                      y: p.baseY - 20,
+                      type: 'text',
+                      text: `-${s.action.damage}`,
+                      color: '#38BDF8',
+                      size: 15,
+                      life: 0.85,
+                    });
+                  }
+                } else {
+                  // Direct Unblocked Hit
+                  p.flinchTimer = 0.38;
+                  p.recoilX = -38;
+                  s.cameraShake = 8;
+                  s.hitStopTimer = 0.055;
+                  s.chromaticFlash = 0.25;
+
+                  p.scaleX = 0.82;
+                  p.scaleY = 1.22;
+
+                  const impactX = p.baseX;
+                  const impactY = p.baseY - 30;
+                  for (let i = 0; i < 16; i++) {
+                    spawnParticle({
+                      x: impactX,
+                      y: impactY,
+                      vx: (Math.random() - 0.7) * 8,
+                      vy: (Math.random() - 0.5) * 7,
+                      color: '#EF4444',
+                      type: 'spark',
+                      size: 4 + Math.random() * 4,
+                    });
+                  }
                   spawnParticle({
                     x: impactX,
                     y: impactY,
-                    vx: (Math.random() - 0.7) * 8,
-                    vy: (Math.random() - 0.5) * 7,
+                    type: 'slash',
                     color: '#EF4444',
-                    type: 'spark',
-                    size: 4 + Math.random() * 4,
+                    life: 0.38,
+                    size: 50,
                   });
-                }
-                spawnParticle({
-                  x: impactX,
-                  y: impactY,
-                  type: 'slash',
-                  color: '#EF4444',
-                  life: 0.38,
-                  size: 50,
-                });
 
-                if (s.action.damage) {
-                  spawnParticle({
-                    x: impactX,
-                    y: impactY - 22,
-                    type: 'text',
-                    text: `-${s.action.damage}`,
-                    color: '#EF4444',
-                    size: 16,
-                    life: 0.95,
-                  });
+                  if (s.action.damage) {
+                    spawnParticle({
+                      x: impactX,
+                      y: impactY - 22,
+                      type: 'text',
+                      text: `-${s.action.damage}`,
+                      color: '#EF4444',
+                      size: 16,
+                      life: 0.95,
+                    });
+                  }
                 }
               }
             } else {
@@ -687,35 +806,130 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
 
               if (!s.hasDealtDamage && downPct > 0.9) {
                 s.hasDealtDamage = true;
-                p.flinchTimer = 0.6;
-                p.recoilX = -55;
-                s.cameraShake = 16;
-                s.hitStopTimer = 0.07;
-                s.chromaticFlash = 0.45;
-                sound.playImpact();
 
-                p.scaleX = 1.35;
-                p.scaleY = 0.68;
+                if (s.action.isParried) {
+                  // ⚡ CRITICAL SLAM PARRY!
+                  opp.flinchTimer = 0.7;
+                  opp.recoilX = 85; // Massive stagger backwards
+                  p.flinchTimer = 0;
+                  p.recoilX = 0;
+                  p.scaleX = 1.15;
+                  p.scaleY = 0.9;
+                  s.cameraShake = 22;
+                  s.hitStopTimer = 0.2; // 200ms epic freeze frame!
+                  s.chromaticFlash = 0.9;
+                  sound.playParry();
 
-                spawnParticle({
-                  x: p.baseX,
-                  y: p.baseY + 10,
-                  type: 'shockwave',
-                  color: '#EF4444',
-                  size: 20,
-                  life: 0.65,
-                });
+                  const parryX = p.baseX + 30;
+                  const parryY = p.baseY - 20;
+                  spawnParticle({
+                    x: parryX,
+                    y: parryY,
+                    type: 'shockwave',
+                    color: '#F59E0B',
+                    size: 60,
+                    life: 0.9,
+                  });
+                  for (let i = 0; i < 30; i++) {
+                    spawnParticle({
+                      x: parryX,
+                      y: parryY,
+                      vx: (Math.random() - 0.2) * 15,
+                      vy: (Math.random() - 0.5) * 14,
+                      color: i % 2 === 0 ? '#FDE047' : '#F59E0B',
+                      type: 'spark',
+                      size: 5 + Math.random() * 6,
+                      life: 0.9,
+                    });
+                  }
+                  spawnParticle({
+                    x: parryX,
+                    y: parryY - 45,
+                    type: 'text',
+                    text: '⚡ CRITICAL PARRY!',
+                    color: '#FDE047',
+                    size: 26,
+                    life: 1.3,
+                  });
+                  if (s.action.counterDamage) {
+                    spawnParticle({
+                      x: opp.baseX,
+                      y: opp.baseY - 50,
+                      type: 'text',
+                      text: `💥 SLAM RIPOSTE -${s.action.counterDamage}!`,
+                      color: '#F59E0B',
+                      size: 22,
+                      life: 1.35,
+                    });
+                  }
+                } else if (s.action.isBlocked) {
+                  // Braced heavy slam block
+                  p.flinchTimer = 0.25;
+                  p.recoilX = -22;
+                  s.cameraShake = 9;
+                  s.hitStopTimer = 0.06;
+                  sound.playBlock();
 
-                if (s.action.damage) {
                   spawnParticle({
                     x: p.baseX,
-                    y: p.baseY - 48,
-                    type: 'text',
-                    text: `💥 OPPONENT SLAM -${s.action.damage}!`,
-                    color: '#EF4444',
-                    size: 22,
-                    life: 1.15,
+                    y: p.baseY + 5,
+                    type: 'shockwave',
+                    color: '#38BDF8',
+                    size: 32,
+                    life: 0.6,
                   });
+                  spawnParticle({
+                    x: p.baseX,
+                    y: p.baseY - 40,
+                    type: 'text',
+                    text: '🛡️ HEAVY BLOCK!',
+                    color: '#38BDF8',
+                    size: 18,
+                    life: 0.9,
+                  });
+                  if (s.action.damage) {
+                    spawnParticle({
+                      x: p.baseX,
+                      y: p.baseY - 20,
+                      type: 'text',
+                      text: `-${s.action.damage}`,
+                      color: '#38BDF8',
+                      size: 17,
+                      life: 0.9,
+                    });
+                  }
+                } else {
+                  // Direct Unblocked Slam
+                  p.flinchTimer = 0.6;
+                  p.recoilX = -55;
+                  s.cameraShake = 16;
+                  s.hitStopTimer = 0.07;
+                  s.chromaticFlash = 0.45;
+                  sound.playImpact();
+
+                  p.scaleX = 1.35;
+                  p.scaleY = 0.68;
+
+                  spawnParticle({
+                    x: p.baseX,
+                    y: p.baseY + 10,
+                    type: 'shockwave',
+                    color: '#EF4444',
+                    size: 20,
+                    life: 0.65,
+                  });
+
+                  if (s.action.damage) {
+                    spawnParticle({
+                      x: p.baseX,
+                      y: p.baseY - 48,
+                      type: 'text',
+                      text: `💥 OPPONENT SLAM -${s.action.damage}!`,
+                      color: '#EF4444',
+                      size: 22,
+                      life: 1.15,
+                    });
+                  }
                 }
               }
             } else {
@@ -962,6 +1176,55 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
 
       ctx.restore(); // Restore Camera Transform
 
+      // =======================================================================
+      // 8. LOW-HP AMBIENT RED VIGNETTE PULSE (Tension Danger state)
+      // =======================================================================
+      if (playerHp > 0 && playerHp <= maxPlayerHp * 0.25) {
+        ctx.save();
+        const pulse = Math.sin(s.time * 6.5) * 0.5 + 0.5;
+        const vignetteGrad = ctx.createRadialGradient(
+          width * 0.5,
+          height * 0.5,
+          Math.min(width, height) * 0.32,
+          width * 0.5,
+          height * 0.5,
+          Math.max(width, height) * 0.72
+        );
+        vignetteGrad.addColorStop(0, 'rgba(239, 68, 68, 0)');
+        vignetteGrad.addColorStop(0.7, `rgba(239, 68, 68, ${0.08 + pulse * 0.12})`);
+        vignetteGrad.addColorStop(1, `rgba(239, 68, 68, ${0.22 + pulse * 0.25})`);
+        ctx.fillStyle = vignetteGrad;
+        ctx.fillRect(0, 0, width, height);
+        ctx.restore();
+      }
+
+      // =======================================================================
+      // 9. ANIME K.O. FINISHER IMPACT FRAME
+      // =======================================================================
+      if (s.koSlowdownTimer > 0.45) {
+        ctx.save();
+        const flashAlpha = Math.min(1, (s.koSlowdownTimer - 0.45) / 0.4);
+        ctx.globalAlpha = flashAlpha * 0.35;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+
+        // Dramatic radial speedlines
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.lineWidth = 2.5;
+        const cx = width * 0.5;
+        const cy = height * 0.55;
+        for (let a = 0; a < 36; a++) {
+          const angle = (a * Math.PI * 2) / 36;
+          const r1 = Math.min(width, height) * 0.4;
+          const r2 = Math.max(width, height);
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+          ctx.lineTo(cx + Math.cos(angle) * r2, cy + Math.sin(angle) * r2);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
       animFrameRef.current = requestAnimationFrame(render);
     };
 
@@ -975,6 +1238,10 @@ export const PetBattleSceneCanvas: React.FC<PetBattleSceneCanvasProps> = ({
   }, [
     playerPet,
     opponentPet,
+    playerHp,
+    maxPlayerHp,
+    opponentHp,
+    maxOpponentHp,
     arenaTheme,
     spawnParticle,
     isPlayerShielded,

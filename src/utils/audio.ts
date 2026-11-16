@@ -183,6 +183,119 @@ class SoundEngine {
     } catch {}
   }
 
+  // Visceral Perfect Parry: High-voltage metallic clash + deep sub-bass ring
+  public playParry() {
+    if (!this.enabled) return;
+    try {
+      const dest = this.getDestination();
+      if (!this.ctx || !dest) return;
+      const now = this.ctx.currentTime;
+
+      // 1. High metallic blade clink
+      const oscClash = this.ctx.createOscillator();
+      const gainClash = this.ctx.createGain();
+      oscClash.type = 'triangle';
+      oscClash.frequency.setValueAtTime(1600, now);
+      oscClash.frequency.exponentialRampToValueAtTime(3200, now + 0.06);
+      gainClash.gain.setValueAtTime(0.35, now);
+      gainClash.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      oscClash.connect(gainClash);
+      gainClash.connect(dest);
+      oscClash.start(now);
+      oscClash.stop(now + 0.3);
+
+      // 2. Harmonic bell chime (880Hz / 1760Hz)
+      const oscBell = this.ctx.createOscillator();
+      const gainBell = this.ctx.createGain();
+      oscBell.type = 'sine';
+      oscBell.frequency.setValueAtTime(880, now);
+      oscBell.frequency.setValueAtTime(1760, now + 0.04);
+      gainBell.gain.setValueAtTime(0.25, now);
+      gainBell.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      oscBell.connect(gainBell);
+      gainBell.connect(dest);
+      oscBell.start(now);
+      oscBell.stop(now + 0.46);
+
+      // 3. Sub-bass ground shockwave
+      const oscSub = this.ctx.createOscillator();
+      const gainSub = this.ctx.createGain();
+      oscSub.type = 'sine';
+      oscSub.frequency.setValueAtTime(120, now);
+      oscSub.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+      gainSub.gain.setValueAtTime(0.4, now);
+      gainSub.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      oscSub.connect(gainSub);
+      gainSub.connect(dest);
+      oscSub.start(now);
+      oscSub.stop(now + 0.32);
+    } catch {}
+  }
+
+  // Dramatic K.O. Finisher Boom
+  public playKO() {
+    if (!this.enabled) return;
+    try {
+      const dest = this.getDestination();
+      if (!this.ctx || !dest) return;
+      const now = this.ctx.currentTime;
+
+      // Heavy earthquake sub thud
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(30, now + 0.6);
+      gain.gain.setValueAtTime(0.5, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+      osc.connect(gain);
+      gain.connect(dest);
+      osc.start(now);
+      osc.stop(now + 0.85);
+
+      // Dramatic brass chord
+      [220, 277.18, 329.63, 440].forEach((freq) => {
+        if (!this.ctx) return;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(freq, now + 0.05);
+        g.gain.setValueAtTime(0.18, now + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+        o.connect(g);
+        g.connect(dest);
+        o.start(now + 0.05);
+        o.stop(now + 0.72);
+      });
+    } catch {}
+  }
+
+  // Low HP Tension Heartbeat Thump
+  public playHeartbeat() {
+    if (!this.enabled) return;
+    try {
+      const dest = this.getDestination();
+      if (!this.ctx || !dest) return;
+      const now = this.ctx.currentTime;
+
+      [0, 0.14].forEach((delay, idx) => {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const startFreq = idx === 0 ? 65 : 55;
+        osc.frequency.setValueAtTime(startFreq, now + delay);
+        osc.frequency.exponentialRampToValueAtTime(30, now + delay + 0.1);
+        gain.gain.setValueAtTime(0.3, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+        osc.connect(gain);
+        gain.connect(dest);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.14);
+      });
+    } catch {}
+  }
+
   public playDodge() {
     if (!this.enabled) return;
     try {

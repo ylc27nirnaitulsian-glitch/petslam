@@ -9,6 +9,8 @@ export interface BattlePlayerAction {
   damage: number;
   isCrit: boolean;
   isBlocked: boolean;
+  isParried?: boolean;
+  counterDamage?: number;
   newOpponentHp: number;
   newOpponentAllyHp?: number;
   log: string;
@@ -25,6 +27,8 @@ export interface BattleOpponentAction {
   newHostHp: number;
   newPartnerHp: number;
   isBlocked: boolean;
+  isParried?: boolean;
+  counterDamage?: number;
   log: string;
   timestamp: number;
 }
