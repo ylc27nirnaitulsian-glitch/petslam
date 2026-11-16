@@ -639,6 +639,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const selectActiveBeast = (id: string) => {
     sound.playClick();
+    setOwnedBeasts((prev) => {
+      if (prev.some((b) => b.id === id)) return prev;
+      const matched = ANIMALS_DATA.find((a) => a.id === id);
+      if (matched) return [...prev, { ...matched, level: 1 }];
+      return prev;
+    });
     setActiveBeastId(id);
   };
 

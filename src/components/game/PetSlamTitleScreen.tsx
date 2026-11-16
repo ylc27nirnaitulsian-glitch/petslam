@@ -36,7 +36,16 @@ interface PetSlamTitleScreenProps {
 export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
   onEnterGame,
 }) => {
-  const { trainerName, setTrainerName, activeBeast, soundEnabled, toggleSound, connectedAccount, loginAccount } = useGame();
+  const {
+    trainerName,
+    setTrainerName,
+    activeBeast,
+    selectActiveBeast,
+    soundEnabled,
+    toggleSound,
+    connectedAccount,
+    loginAccount,
+  } = useGame();
   const { pet } = usePetCompanion();
   const [guideOpen, setGuideOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -252,6 +261,73 @@ export const PetSlamTitleScreen: React.FC<PetSlamTitleScreenProps> = ({
                 <PawPrint className="w-3.5 h-3.5 text-[#F59E0B]" /> {pet.name}
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* 1-Click Instant Demo Beast Quick-Pick Tray */}
+        <div className="mt-4 w-full max-w-sm space-y-2">
+          <div className="flex items-center justify-between text-xs font-mono text-[#94A3B8] px-1">
+            <span className="flex items-center gap-1 font-bold text-[#CBD5E1]">
+              <Sparkles className="w-3.5 h-3.5 text-[#F59E0B]" />
+              <span>OR TRY WITH DEMO BEAST:</span>
+            </span>
+            <span className="text-[11px] text-[#F59E0B]">1-Click Play</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              {
+                id: 'dog_05',
+                name: 'Rocky',
+                badge: '🛡️ TANK',
+                breed: 'Frenchie',
+                image: 'https://images.unsplash.com/photo-1532542926727-b5ce6f1c3164?auto=format&fit=crop&w=300&q=80',
+              },
+              {
+                id: 'cat_03',
+                name: 'Mochi',
+                badge: '⚡ SPEED',
+                breed: 'Siamese',
+                image: 'https://images.unsplash.com/photo-1579272527475-1db5f8e4f27c?auto=format&fit=crop&w=300&q=80',
+              },
+              {
+                id: 'dog_03',
+                name: 'Buddy',
+                badge: '🏆 CHAMP',
+                breed: 'Retriever',
+                image: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=300&q=80',
+              },
+            ].map((demo) => {
+              const isLead = activeBeast.id === demo.id;
+              return (
+                <button
+                  key={demo.id}
+                  type="button"
+                  onClick={() => {
+                    selectActiveBeast(demo.id);
+                    if (!connectedAccount.isLoggedIn) {
+                      loginAccount('Guest', 'trainer.guest@petslam.app', trainerName || 'Trainer');
+                    }
+                    try {
+                      localStorage.setItem('petslam_has_entered_game', 'true');
+                    } catch {}
+                    sound.playVictory();
+                    onEnterGame();
+                  }}
+                  className={`p-2 rounded-xl border flex flex-col items-center text-center transition-all cursor-pointer relative ${
+                    isLead
+                      ? 'bg-[#F59E0B]/15 border-[#F59E0B] shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                      : 'bg-[#151C28] hover:bg-[#1E2738] border-[#2A364F] hover:border-[#F59E0B]/50'
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-lg overflow-hidden border border-[#2A364F] mb-1.5 shrink-0 bg-[#0B0F17]">
+                    <img src={demo.image} alt={demo.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="text-xs font-bold text-[#F8FAFC] truncate w-full">{demo.name}</div>
+                  <div className="text-[10px] text-[#F59E0B] font-mono font-bold tracking-tight">{demo.badge}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
 

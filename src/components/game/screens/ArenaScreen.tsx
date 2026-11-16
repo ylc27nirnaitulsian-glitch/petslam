@@ -31,6 +31,7 @@ import { getRarityBadgeClasses, mapBeastToSpecies, getPetPhoto } from '../../../
 import { usePetCompanion } from '../../../context/PetCompanionContext';
 import { ProceduralPetCanvas } from '../pet/ProceduralPetCanvas';
 import { PetBattleSceneCanvas, BattleAction, ArenaTheme } from '../arena/PetBattleSceneCanvas';
+import { GladiatorVictoryCardModal } from '../arena/GladiatorVictoryCardModal';
 import { triggerVictoryExplosion } from '../../../utils/confetti';
 import {
   multiplayerBattleSync,
@@ -199,6 +200,10 @@ export const ArenaScreen: React.FC = () => {
   const [gamepadName, setGamepadName] = useState<string>('');
   const prevGamepadButtonsRef = useRef<boolean[]>([]);
 
+  // Gladiator Victory Card & Battle Match Stats
+  const [matchParryCount, setMatchParryCount] = useState<number>(0);
+  const [showVictoryCardModal, setShowVictoryCardModal] = useState<boolean>(false);
+
   // Real-time Multiplayer Party Battle State (2v2 Co-Op & 1v1 Friendly Duel)
   const [isMultiplayerBattle, setIsMultiplayerBattle] = useState<boolean>(false);
   const [isBattleHost, setIsBattleHost] = useState<boolean>(false);
@@ -347,6 +352,8 @@ export const ArenaScreen: React.FC = () => {
     setBattleOver(false);
     setBattleResult(null);
     setBattleTimerSec(180);
+    setMatchParryCount(0);
+    setShowVictoryCardModal(false);
 
     const pHp = Math.round(currentActiveFighter.health || 1000);
     const pDmg = Math.round(currentActiveFighter.damage || 200);
@@ -1014,6 +1021,7 @@ export const ArenaScreen: React.FC = () => {
 
         // Visceral Metallic Parry Clank
         sound.playParry();
+        setMatchParryCount((prev) => prev + 1);
 
         // Energy Surge: Full refund of the 2 shield cost + 1 bonus Elixir!
         setElixir((prev) => Math.min(10, Number((prev + 1).toFixed(1))));
@@ -2439,16 +2447,29 @@ export const ArenaScreen: React.FC = () => {
                 </div>
 
                 {battleResult === 'victory' && (
-                  <div className="p-3 bg-[#0B0F17] rounded-xl border border-[#2A364F] flex items-center justify-around font-mono text-sm font-bold tabular-nums">
-                    <span className="text-[#F59E0B] flex items-center gap-1.5">
-                      <Trophy className="w-4 h-4" />
-                      <span>+30 Trophies</span>
-                    </span>
-                    <span className="text-[#CBD5E1] flex items-center gap-1.5">
-                      <Coins className="w-4 h-4 text-[#F59E0B]" />
-                      <span>+450 Coins</span>
-                    </span>
-                  </div>
+                  <>
+                    <div className="p-3 bg-[#0B0F17] rounded-xl border border-[#2A364F] flex items-center justify-around font-mono text-sm font-bold tabular-nums">
+                      <span className="text-[#F59E0B] flex items-center gap-1.5">
+                        <Trophy className="w-4 h-4" />
+                        <span>+30 Trophies</span>
+                      </span>
+                      <span className="text-[#CBD5E1] flex items-center gap-1.5">
+                        <Coins className="w-4 h-4 text-[#F59E0B]" />
+                        <span>+450 Coins</span>
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        sound.playLevelUp();
+                        setShowVictoryCardModal(true);
+                      }}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#F59E0B]/20 via-[#FDE047]/30 to-[#F59E0B]/20 hover:from-[#F59E0B]/30 hover:to-[#F59E0B]/30 border border-[#FDE047]/60 text-[#FDE047] font-display font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98 transition-all"
+                    >
+                      <Trophy className="w-4 h-4 text-[#FDE047]" />
+                      <span>🏆 Share Gladiator Victory Card</span>
+                    </button>
+                  </>
                 )}
 
                 <div className="space-y-2 pt-1">
@@ -2475,6 +2496,21 @@ export const ArenaScreen: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* 4:5 Vertical Gladiator Victory Card Modal */}
+      {showVictoryCardModal && (
+        <GladiatorVictoryCardModal
+          playerPet={currentActiveFighter}
+          trainerName={trainerName || 'Trainer'}
+          opponentPet={selectedOpponent}
+          matchDurationSec={180 - battleTimerSec}
+          playerHp={playerHp}
+          maxPlayerHp={maxPlayerHp}
+          parryCount={matchParryCount}
+          trophiesEarned={30}
+          onClose={() => setShowVictoryCardModal(false)}
+        />
       )}
     </div>
   );
