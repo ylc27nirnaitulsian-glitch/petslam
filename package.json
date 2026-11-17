@@ -19,6 +19,7 @@
     "@capacitor/cli": "^8.5.3",
     "@capacitor/core": "^8.5.3",
     "@capacitor/haptics": "^8.0.2",
+    "@discord/embedded-app-sdk": "^2.5.0",
     "@google/genai": "^2.4.0",
     "@supabase/supabase-js": "^2.118.0",
     "@tailwindcss/vite": "^4.3.3",
