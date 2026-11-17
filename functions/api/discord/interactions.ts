@@ -54,7 +54,7 @@ async function verifyDiscordSignature(
 
     const cryptoKey = await crypto.subtle.importKey(
       'raw',
-      keyBytes,
+      keyBytes as unknown as BufferSource,
       { name: 'Ed25519' },
       false,
       ['verify']
@@ -63,8 +63,8 @@ async function verifyDiscordSignature(
     return await crypto.subtle.verify(
       { name: 'Ed25519' },
       cryptoKey,
-      sigBytes,
-      messageBytes
+      sigBytes as unknown as BufferSource,
+      messageBytes as unknown as BufferSource
     );
   } catch (err) {
     console.error('[Discord WebCrypto Verify Error]:', err);
