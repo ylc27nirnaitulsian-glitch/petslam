@@ -60,6 +60,19 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
   const [speechBubble, setSpeechBubble] = useState<string | null>(null);
   const [isMinimized, setIsMinimized] = useState<boolean>(true);
   const [petScaleMode, setPetScaleMode] = useState<'normal' | 'large'>('normal');
+  const [inBattle, setInBattle] = useState<boolean>(false);
+
+  // Automatically hide floating screen pet during active live arena battles
+  useEffect(() => {
+    const handleBattleStatus = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail && typeof detail.inBattle === 'boolean') {
+        setInBattle(detail.inBattle);
+      }
+    };
+    window.addEventListener('petslam:battle-status', handleBattleStatus);
+    return () => window.removeEventListener('petslam:battle-status', handleBattleStatus);
+  }, []);
 
   // Keep pet inside screen bounds on window resize
   useEffect(() => {
@@ -444,7 +457,7 @@ export const FloatingPetOverlay: React.FC<FloatingPetOverlayProps> = ({
     }
   };
 
-  if (!isOverlayActive) return null;
+  if (!isOverlayActive || inBattle) return null;
 
   return (
     <div

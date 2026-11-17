@@ -80,6 +80,19 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   const [questsDrawerOpen, setQuestsDrawerOpen] = useState<boolean>(false);
   const [leaderboardModalOpen, setLeaderboardModalOpen] = useState<boolean>(false);
   const [radarModalOpen, setRadarModalOpen] = useState<boolean>(false);
+  const [inBattle, setInBattle] = useState<boolean>(false);
+
+  // Battle Status Listener to hide bottom dock & floating pet during active combat
+  useEffect(() => {
+    const handleBattleStatus = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail && typeof detail.inBattle === 'boolean') {
+        setInBattle(detail.inBattle);
+      }
+    };
+    window.addEventListener('petslam:battle-status', handleBattleStatus);
+    return () => window.removeEventListener('petslam:battle-status', handleBattleStatus);
+  }, []);
 
   // Real-time Social Party Invite Listener & Global Friends Trigger
   useEffect(() => {
@@ -342,7 +355,11 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
         )}
 
         {/* Active Screen Frame */}
-        <div className="flex-1 overflow-y-auto relative pb-[70px] lg:pb-0 scrollbar-thin">
+        <div
+          className={`flex-1 overflow-y-auto relative ${
+            inBattle && currentTab === 'arena' ? 'pb-0' : 'pb-[70px] lg:pb-0'
+          } scrollbar-thin`}
+        >
           {currentTab === 'arena' && <ArenaScreen />}
           {currentTab === 'sanctuary' && (
             <PetSanctuaryScreen onGoToArena={() => setCurrentTab('arena')} />
@@ -368,8 +385,10 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
         onOpenQuests={() => setQuestsDrawerOpen(true)}
       />
 
-      {/* 4. Mobile Bottom Navigation Dock (< 1024px) */}
-      <MobileBottomDock currentTab={currentTab} onTabChange={handleNavSelect} />
+      {/* 4. Mobile Bottom Navigation Dock (< 1024px) - Hidden during live battle so it cannot obstruct battle cards */}
+      {!(inBattle && currentTab === 'arena') && (
+        <MobileBottomDock currentTab={currentTab} onTabChange={handleNavSelect} />
+      )}
 
       {/* 5. Modals & Hubs */}
       {/* Real-time Incoming Battle / Party Invite Notification Banner */}
@@ -633,8 +652,10 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
         }}
       />
 
-      {/* 7. Screen Companion Pet Overlay */}
-      <FloatingPetOverlay onOpenSanctuary={handleOpenSanctuary} />
+      {/* 7. Screen Companion Pet Overlay - Hidden during live battle so it cannot obstruct touch moves */}
+      {!(inBattle && currentTab === 'arena') && (
+        <FloatingPetOverlay onOpenSanctuary={handleOpenSanctuary} />
+      )}
     </div>
   );
 };

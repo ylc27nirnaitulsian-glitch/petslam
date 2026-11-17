@@ -115,6 +115,15 @@ export const ArenaScreen: React.FC = () => {
     return () => window.removeEventListener('petslam:beast-changed', handleBeastChanged);
   }, [ownedBeasts, inBattle]);
 
+  // Dispatch battle status so layout shell and overlays know whether a battle is live
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('petslam:battle-status', {
+        detail: { inBattle },
+      })
+    );
+  }, [inBattle]);
+
   // Battle HP & Stats
   const [playerHp, setPlayerHp] = useState<number>(1000);
   const [maxPlayerHp, setMaxPlayerHp] = useState<number>(1000);
@@ -798,7 +807,7 @@ export const ArenaScreen: React.FC = () => {
     const interval = setInterval(() => {
       setElixir((prev) => {
         const next = Math.min(10, Number((prev + 0.35).toFixed(1)));
-        if (prev < 6 && next >= 6 && !hasAnnouncedOverdrive) {
+        if (prev < 5 && next >= 5 && !hasAnnouncedOverdrive) {
           setHasAnnouncedOverdrive(true);
           setAnnouncerText('⚡ OVERDRIVE READY!');
           setAnnouncerPulse(true);
@@ -910,9 +919,9 @@ export const ArenaScreen: React.FC = () => {
         }
       }
 
-      // STRATEGY C: HEAVY BURST ULTIMATE (costs 6 elixir)
-      if (curElixir >= 6 && (!isPlayerShieldedNow || curElixir >= 9)) {
-        const nextElixir = Math.max(0, Number((curElixir - 6).toFixed(1)));
+      // STRATEGY C: HEAVY BURST ULTIMATE (costs 5 elixir)
+      if (curElixir >= 5 && (!isPlayerShieldedNow || curElixir >= 8)) {
+        const nextElixir = Math.max(0, Number((curElixir - 5).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
         setOpponentIntent('🔥 PET SLAM OVERDRIVE!');
@@ -1066,7 +1075,7 @@ export const ArenaScreen: React.FC = () => {
   const handlePlayCard = (cardType: 'pounce' | 'bark' | 'shield' | 'bite' | 'slam') => {
     if (!inBattle || battleOver || battleOverRef.current || playerHpRef.current <= 0) return;
 
-    const costs = { pounce: 2, bark: 3, shield: 2, bite: 4, slam: 6 };
+    const costs = { pounce: 2, bark: 3, shield: 2, bite: 4, slam: 5 };
     const cost = costs[cardType];
 
     if (elixir < cost) {
@@ -1153,7 +1162,7 @@ export const ArenaScreen: React.FC = () => {
           setTimeout(() => {
             setPracticeStep(3);
             sound.playBell();
-            setElixir(6);
+            setElixir(5);
             setLastCombatLog('🥋 DOJO STEP 3/4: Energy Maxed! Unleash PET SLAM Overdrive [SPACE]!');
             setAnnouncerText('🥋 DOJO: STEP 3/4');
             setAnnouncerPulse(true);
@@ -1197,7 +1206,7 @@ export const ArenaScreen: React.FC = () => {
         setTimeout(() => {
           setPracticeStep(3);
           sound.playBell();
-          setElixir(6); // Maximize energy immediately for Overdrive!
+          setElixir(5); // Maximize energy immediately for Overdrive!
           setLastCombatLog('🥋 DOJO STEP 3/4: Energy Maxed! Unleash PET SLAM Overdrive [SPACE]!');
           setAnnouncerText('🥋 DOJO: STEP 3/4');
           setAnnouncerPulse(true);
@@ -1912,7 +1921,7 @@ export const ArenaScreen: React.FC = () => {
          ========================================================================= */}
       {inBattle && (
         <div
-          className={`flex-1 flex flex-col justify-between p-1.5 sm:p-2.5 relative max-w-lg mx-auto w-full h-full min-h-0 overflow-y-auto sm:overflow-hidden select-none pb-20 sm:pb-2.5 ${
+          className={`flex-1 flex flex-col justify-between p-1.5 sm:p-2.5 relative max-w-lg mx-auto w-full h-full min-h-0 overflow-y-auto sm:overflow-hidden select-none pb-2 sm:pb-2.5 ${
             screenShake ? 'animate-arenaShake' : ''
           }`}
         >
@@ -2265,62 +2274,62 @@ export const ArenaScreen: React.FC = () => {
           </div>
 
           {/* 6. SLAM ACTION MOVES DOCK */}
-          <div className="grid grid-cols-5 gap-1.5 shrink-0">
+          <div className="grid grid-cols-5 gap-1.5 shrink-0 relative z-30 touch-manipulation">
             {/* Card 1: Quick Pounce (2 Energy / Hotkey [1]) */}
             <button
               onClick={() => handlePlayCard('pounce')}
-              disabled={elixir < 2}
-              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative ${
+              aria-disabled={elixir < 2}
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative select-none touch-manipulation active:scale-95 ${
                 elixir >= 2
-                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC] active:scale-95'
+                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC]'
                   : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-1">
+              <div className="flex items-center justify-between w-full px-1 pointer-events-none">
                 <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">2 ⚡</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
                   [1]
                 </span>
               </div>
-              <PawPrint className="w-5 h-5 text-[#CBD5E1] my-0.5" />
-              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC]">Pounce</span>
+              <PawPrint className="w-5 h-5 text-[#CBD5E1] my-0.5 pointer-events-none" />
+              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC] pointer-events-none">Pounce</span>
             </button>
 
             {/* Card 2: Sonic Bark (3 Energy / Hotkey [2]) */}
             <button
               onClick={() => handlePlayCard('bark')}
-              disabled={elixir < 3}
-              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative ${
+              aria-disabled={elixir < 3}
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative select-none touch-manipulation active:scale-95 ${
                 elixir >= 3
-                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC] active:scale-95'
+                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC]'
                   : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-1">
+              <div className="flex items-center justify-between w-full px-1 pointer-events-none">
                 <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">3 ⚡</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
                   [2]
                 </span>
               </div>
-              <Volume2 className="w-5 h-5 text-[#CBD5E1] my-0.5" />
-              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC]">Bark</span>
+              <Volume2 className="w-5 h-5 text-[#CBD5E1] my-0.5 pointer-events-none" />
+              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC] pointer-events-none">Bark</span>
             </button>
 
             {/* Card 3: Iron Guard / Parry (2 Energy / Hotkey [3]) */}
             <button
               onClick={() => handlePlayCard('shield')}
-              disabled={elixir < 2}
-              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative ${
+              aria-disabled={!isParryWindowActive && elixir < 2}
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative select-none touch-manipulation active:scale-95 ${
                 isParryWindowActive
-                  ? 'bg-[#F59E0B]/20 hover:bg-[#F59E0B]/30 border-[#FDE047] text-[#FDE047] shadow-[0_0_18px_rgba(245,158,11,0.7)] animate-pulse scale-105 active:scale-95 z-10'
+                  ? 'bg-[#F59E0B]/20 hover:bg-[#F59E0B]/30 border-[#FDE047] text-[#FDE047] shadow-[0_0_18px_rgba(245,158,11,0.7)] animate-pulse scale-105 z-10'
                   : elixir >= 2
-                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC] active:scale-95'
+                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC]'
                   : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-1">
+              <div className="flex items-center justify-between w-full px-1 pointer-events-none">
                 <span
-                  className={`text-xs font-mono font-bold tabular-nums ${
+                  className={`text-xs font-mono font-bold tabular-nums pointer-events-none ${
                     isParryWindowActive ? 'text-[#FDE047]' : 'text-[#CBD5E1]'
                   }`}
                 >
@@ -2331,12 +2340,12 @@ export const ArenaScreen: React.FC = () => {
                 </span>
               </div>
               <Shield
-                className={`w-5 h-5 my-0.5 ${
+                className={`w-5 h-5 my-0.5 pointer-events-none ${
                   isParryWindowActive ? 'text-[#FDE047] animate-bounce' : 'text-[#CBD5E1]'
                 }`}
               />
               <span
-                className={`text-xs font-bold uppercase tracking-wider truncate ${
+                className={`text-xs font-bold uppercase tracking-wider truncate pointer-events-none ${
                   isParryWindowActive ? 'text-[#FDE047] font-black' : 'text-[#F8FAFC]'
                 }`}
               >
@@ -2347,53 +2356,53 @@ export const ArenaScreen: React.FC = () => {
             {/* Card 4: Fierce Bite (4 Energy / Hotkey [4]) */}
             <button
               onClick={() => handlePlayCard('bite')}
-              disabled={elixir < 4}
-              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative ${
+              aria-disabled={elixir < 4}
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative select-none touch-manipulation active:scale-95 ${
                 elixir >= 4
-                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC] active:scale-95'
+                  ? 'bg-[#1E2738] hover:bg-[#2A364F] border-[#2A364F] text-[#F8FAFC]'
                   : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-1">
-                <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums">4 ⚡</span>
+              <div className="flex items-center justify-between w-full px-1 pointer-events-none">
+                <span className="text-xs font-mono font-bold text-[#CBD5E1] tabular-nums pointer-events-none">4 ⚡</span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#94A3B8] font-bold hidden sm:inline">
                   [4]
                 </span>
               </div>
-              <Flame className="w-5 h-5 text-[#F43F5E] my-0.5" />
-              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC]">Bite</span>
+              <Flame className="w-5 h-5 text-[#F43F5E] my-0.5 pointer-events-none" />
+              <span className="text-xs font-bold uppercase tracking-wider truncate text-[#F8FAFC] pointer-events-none">Bite</span>
             </button>
 
-            {/* Card 5: PET SLAM OVERDRIVE (6 Energy / Hotkey [SPACE]) */}
+            {/* Card 5: PET SLAM OVERDRIVE (5 Energy / Hotkey [SPACE]) */}
             <button
               onClick={() => handlePlayCard('slam')}
-              disabled={elixir < 6}
-              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative shadow-md ${
-                elixir >= 6
-                  ? 'bg-[#F59E0B] hover:bg-[#D97706] border-[#F59E0B] text-[#0B0F17] active:scale-95 font-bold'
+              aria-disabled={elixir < 5}
+              className={`p-1.5 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer h-16 sm:h-20 relative shadow-md select-none touch-manipulation active:scale-95 ${
+                elixir >= 5
+                  ? 'bg-[#F59E0B] hover:bg-[#D97706] border-[#F59E0B] text-[#0B0F17] font-bold shadow-[0_0_15px_rgba(245,158,11,0.4)]'
                   : 'bg-[#0B0F17] border-[#2A364F]/50 text-[#94A3B8] opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-center justify-between w-full px-1">
+              <div className="flex items-center justify-between w-full px-1 pointer-events-none">
                 <span
-                  className={`text-xs font-mono font-bold tabular-nums ${
-                    elixir >= 6 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'
+                  className={`text-xs font-mono font-bold tabular-nums pointer-events-none ${
+                    elixir >= 5 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'
                   }`}
                 >
-                  6 ⚡
+                  5 ⚡
                 </span>
                 <span className="text-[10px] font-mono px-1 rounded bg-[#0B0F17] border border-[#2A364F] text-[#CBD5E1] font-bold hidden sm:inline">
                   [SPC]
                 </span>
               </div>
               <Zap
-                className={`w-5 h-5 my-0.5 ${
-                  elixir >= 6 ? 'text-[#0B0F17] fill-[#0B0F17]' : 'text-[#94A3B8]'
+                className={`w-5 h-5 my-0.5 pointer-events-none ${
+                  elixir >= 5 ? 'text-[#0B0F17] fill-[#0B0F17]' : 'text-[#94A3B8]'
                 }`}
               />
               <span
-                className={`text-xs font-black uppercase tracking-wider truncate ${
-                  elixir >= 6 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'
+                className={`text-xs font-black uppercase tracking-wider truncate pointer-events-none ${
+                  elixir >= 5 ? 'text-[#0B0F17]' : 'text-[#94A3B8]'
                 }`}
               >
                 {battleMode === '2v2' ? 'DUO SLAM' : 'SLAM'}
