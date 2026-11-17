@@ -9,6 +9,7 @@ import { GoogleGenAI } from '@google/genai';
 import DodoPayments from 'dodopayments';
 import Exa from 'exa-js';
 import { authoritativeCombatServer } from './src/server/authoritativeCombatServer';
+import { handleDiscordInteraction } from './src/server/discordInteractions';
 import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
@@ -1108,6 +1109,11 @@ app.post('/api/bug-report', async (req, res) => {
     res.status(500).json({ success: false, error: err.message || 'Failed to process bug report.' });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Discord Application Interactions Endpoint (Slash Commands & Ping Handler)
+// ---------------------------------------------------------------------------
+app.post('/api/discord/interactions', handleDiscordInteraction);
 
 // Setup Vite middleware in dev or static files in production
 async function startServer() {
