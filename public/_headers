@@ -11,10 +11,10 @@
   Pragma: no-cache
   Expires: 0
 
-# 3. Global Security Headers for petslam.app
+# 3. Global Security Headers for petslam.app (Discord Activities & Web Compatible)
 /*
   X-Content-Type-Options: nosniff
-  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self' https://*.discordsays.com https://*.discord.com https://discord.com https://*.cloudflare.com https://www.petslam.app https://petslam.app;
   X-XSS-Protection: 1; mode=block
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(self), microphone=(self), geolocation=(self), interest-cohort=()
