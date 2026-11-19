@@ -317,22 +317,39 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Sync Supabase Auth State (OAuth Redirect & Session Restoration)
+  // Sync Supabase Auth State (OAuth Redirect & Session Restoration for Google & Discord)
   useEffect(() => {
     if (!supabase) return;
 
-    // Check active session on initial page mount (e.g. returning from Google OAuth)
+    const parseSessionUser = (u: any) => {
+      const gName =
+        u.user_metadata?.full_name ||
+        u.user_metadata?.custom_claims?.global_name ||
+        u.user_metadata?.name ||
+        u.user_metadata?.username ||
+        u.email?.split('@')[0] ||
+        'Trainer';
+      const gAvatar = u.user_metadata?.avatar_url || u.user_metadata?.picture;
+      const rawProvider = (u.app_metadata?.provider || '').toLowerCase();
+      const providerName =
+        rawProvider === 'discord'
+          ? 'Discord'
+          : rawProvider === 'google'
+          ? 'Google'
+          : rawProvider
+          ? rawProvider.charAt(0).toUpperCase() + rawProvider.slice(1)
+          : 'Cloud';
+      loginAccount(providerName, u.email, gName, gAvatar, u.id);
+      try {
+        localStorage.setItem('petslam_has_entered_game', 'true');
+        localStorage.setItem('petslam_remember_me', 'true');
+      } catch {}
+    };
+
+    // Check active session on initial page mount (e.g. returning from Google / Discord OAuth)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const u = session.user;
-        const gName =
-          u.user_metadata?.full_name ||
-          u.user_metadata?.name ||
-          u.user_metadata?.username ||
-          u.email?.split('@')[0] ||
-          'Trainer';
-        const gAvatar = u.user_metadata?.avatar_url || u.user_metadata?.picture;
-        loginAccount('Google', u.email, gName, gAvatar, u.id);
+        parseSessionUser(session.user);
       }
     });
 
@@ -340,15 +357,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const u = session.user;
-        const gName =
-          u.user_metadata?.full_name ||
-          u.user_metadata?.name ||
-          u.user_metadata?.username ||
-          u.email?.split('@')[0] ||
-          'Trainer';
-        const gAvatar = u.user_metadata?.avatar_url || u.user_metadata?.picture;
-        loginAccount('Google', u.email, gName, gAvatar, u.id);
+        parseSessionUser(session.user);
       }
     });
 

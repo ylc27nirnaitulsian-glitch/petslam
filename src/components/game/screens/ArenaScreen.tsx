@@ -215,6 +215,10 @@ export const ArenaScreen: React.FC = () => {
   const playerAllyHpRef = useRef<number>(playerAllyHp);
   playerAllyHpRef.current = playerAllyHp;
 
+  // Active Guard Duration Timer Refs (2.5s auto-expiration)
+  const playerGuardTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const opponentGuardTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Active Parry & Counter Mechanics
   const [isParryWindowActive, setIsParryWindowActive] = useState<boolean>(false);
   const parryWindowActiveRef = useRef<boolean>(false);
@@ -449,9 +453,17 @@ export const ArenaScreen: React.FC = () => {
 
     setElixir(5);
     setOpponentElixir(5);
+    if (playerGuardTimerRef.current) {
+      clearTimeout(playerGuardTimerRef.current);
+      playerGuardTimerRef.current = null;
+    }
+    if (opponentGuardTimerRef.current) {
+      clearTimeout(opponentGuardTimerRef.current);
+      opponentGuardTimerRef.current = null;
+    }
     setIsPlayerShielded(false);
     setIsOpponentShielded(false);
-    setOpponentIntent(battleMode === '2v2' ? '👥 Tag Team Syncing...' : '⚡ Preparing Pounce...');
+    setOpponentIntent(battleMode === '2v2' ? '👥 Tag Team Syncing...' : '⚡ Ready to Strike');
     setLastCombatLog(
       battleMode === '2v2'
         ? `👥 2v2 Tag Team Commenced! ${currentActiveFighter.name} & ${(ally || playerAlly).name} vs ${opp.name} & ${(oppAlly || opponentAlly).name}!`
@@ -531,6 +543,10 @@ export const ArenaScreen: React.FC = () => {
       });
 
       if (isBlocked) {
+        if (playerGuardTimerRef.current) {
+          clearTimeout(playerGuardTimerRef.current);
+          playerGuardTimerRef.current = null;
+        }
         setIsPlayerShielded(false);
         isPlayerShieldedRef.current = false;
         sound.playBlock();
@@ -801,12 +817,13 @@ export const ArenaScreen: React.FC = () => {
   useEffect(() => {
     if (!inBattle || battleOver) return;
 
-    // Double elixir during the last 60 seconds!
-    const intervalRate = isDoubleElixir ? 250 : 450;
+    // Fast-flowing competitive combat: 350ms normal, 220ms in double elixir
+    const intervalRate = isDoubleElixir ? 220 : 350;
+    const elixirGain = isDoubleElixir ? 0.5 : 0.45;
 
     const interval = setInterval(() => {
       setElixir((prev) => {
-        const next = Math.min(10, Number((prev + 0.35).toFixed(1)));
+        const next = Math.min(10, Number((prev + elixirGain).toFixed(1)));
         if (prev < 5 && next >= 5 && !hasAnnouncedOverdrive) {
           setHasAnnouncedOverdrive(true);
           setAnnouncerText('⚡ OVERDRIVE READY!');
@@ -816,7 +833,7 @@ export const ArenaScreen: React.FC = () => {
         return next;
       });
       setOpponentElixir((prev) => {
-        const next = Math.min(10, Number((prev + 0.35).toFixed(1)));
+        const next = Math.min(10, Number((prev + elixirGain).toFixed(1)));
         opponentElixirRef.current = next;
         return next;
       });
@@ -825,12 +842,12 @@ export const ArenaScreen: React.FC = () => {
     return () => clearInterval(interval);
   }, [inBattle, battleOver, isDoubleElixir, hasAnnouncedOverdrive]);
 
-  // AI Opponent Tactical Loop: Aggressive, competitive Grandmaster decision engine
+  // AI Opponent Tactical Loop: Aggressive, high-tempo Grandmaster decision engine
   useEffect(() => {
     if (!inBattle || battleOver || isPracticeDrill) return;
 
-    // Fast competitive cadence: 520ms normal, 340ms in double elixir
-    const aiIntervalMs = isDoubleElixir ? 340 : 520;
+    // Fast competitive cadence: 350ms normal, 220ms in double elixir
+    const aiIntervalMs = isDoubleElixir ? 220 : 350;
 
     const aiInterval = setInterval(() => {
       if (battleOver || battleOverRef.current || playerHpRef.current <= 0 || isPracticeDrill) return;
@@ -878,10 +895,29 @@ export const ArenaScreen: React.FC = () => {
 
       const aiRoll = Math.random();
 
-      // STRATEGY A: LETHAL FINISHER (If player is under 38% HP, bot goes for the kill!)
-      if (curPlayerHp < maxPlayerHp * 0.38 && !isPlayerShieldedNow) {
-        if (curElixir >= 6) {
-          const nextElixir = Math.max(0, Number((curElixir - 6).toFixed(1)));
+      // SHIELD BREAKER: If player is shielded, bot immediately strikes to shatter the guard!
+      if (isPlayerShieldedNow && curElixir >= 2) {
+        if (curElixir >= 3 && aiRoll < 0.5) {
+          const nextElixir = Math.max(0, Number((curElixir - 3).toFixed(1)));
+          opponentElixirRef.current = nextElixir;
+          setOpponentElixir(nextElixir);
+          setOpponentIntent('📢 Sonic Shockwave!');
+          executeOpponentAttack(Math.round(opp.damage * 1.1), 'Sonic Roar');
+          return;
+        } else {
+          const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
+          opponentElixirRef.current = nextElixir;
+          setOpponentElixir(nextElixir);
+          setOpponentIntent('⚡ Quick Pounce!');
+          executeOpponentAttack(Math.round(opp.damage * 0.9), 'Quick Pounce');
+          return;
+        }
+      }
+
+      // STRATEGY A: LETHAL FINISHER (If player is under 40% HP, bot goes for the kill!)
+      if (curPlayerHp < maxPlayerHp * 0.40) {
+        if (curElixir >= 5) {
+          const nextElixir = Math.max(0, Number((curElixir - 5).toFixed(1)));
           opponentElixirRef.current = nextElixir;
           setOpponentElixir(nextElixir);
           setOpponentIntent('🔥 LETHAL PET SLAM OVERDRIVE!');
@@ -898,9 +934,9 @@ export const ArenaScreen: React.FC = () => {
         }
       }
 
-      // STRATEGY B: DEFENSIVE IRON GUARD (If bot HP < 60% and unshielded, or player has high energy)
+      // STRATEGY B: DEFENSIVE IRON GUARD (If bot HP < 50% and unshielded, or player has high energy)
       if (curElixir >= 2 && !isOppShieldedNow) {
-        const shouldShield = (currentOppHp < maxOpponentHp * 0.60 && aiRoll < 0.65) || (elixir >= 6 && aiRoll < 0.60);
+        const shouldShield = (currentOppHp < maxOpponentHp * 0.50 && aiRoll < 0.35) || (elixir >= 6 && aiRoll < 0.30);
         if (shouldShield) {
           const nextElixir = Math.max(0, Number((curElixir - 2).toFixed(1)));
           opponentElixirRef.current = nextElixir;
@@ -909,18 +945,21 @@ export const ArenaScreen: React.FC = () => {
           isOpponentShieldedRef.current = true;
           setOpponentIntent('🛡️ Iron Guard Active');
           sound.playBlock();
-          setTimeout(() => {
+          if (opponentGuardTimerRef.current) {
+            clearTimeout(opponentGuardTimerRef.current);
+          }
+          opponentGuardTimerRef.current = setTimeout(() => {
             if (isOpponentShieldedRef.current) {
               setIsOpponentShielded(false);
               isOpponentShieldedRef.current = false;
             }
-          }, 2400);
+          }, 2500);
           return;
         }
       }
 
       // STRATEGY C: HEAVY BURST ULTIMATE (costs 5 elixir)
-      if (curElixir >= 5 && (!isPlayerShieldedNow || curElixir >= 8)) {
+      if (curElixir >= 5) {
         const nextElixir = Math.max(0, Number((curElixir - 5).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
@@ -930,7 +969,7 @@ export const ArenaScreen: React.FC = () => {
       }
 
       // STRATEGY D: PUNISHING FIERCE BITE (costs 4 elixir)
-      if (curElixir >= 4 && (!isPlayerShieldedNow || curElixir >= 7)) {
+      if (curElixir >= 4) {
         const nextElixir = Math.max(0, Number((curElixir - 4).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
@@ -940,7 +979,7 @@ export const ArenaScreen: React.FC = () => {
       }
 
       // STRATEGY E: SONIC SHOCKWAVE / ROAR (costs 3 elixir)
-      if (curElixir >= 3 && aiRoll < 0.75) {
+      if (curElixir >= 3 && aiRoll < 0.85) {
         const nextElixir = Math.max(0, Number((curElixir - 3).toFixed(1)));
         opponentElixirRef.current = nextElixir;
         setOpponentElixir(nextElixir);
@@ -1017,6 +1056,10 @@ export const ArenaScreen: React.FC = () => {
 
       if (targetWho === 'host') {
         if (isPlayerShieldedRef.current) {
+          if (playerGuardTimerRef.current) {
+            clearTimeout(playerGuardTimerRef.current);
+            playerGuardTimerRef.current = null;
+          }
           setIsPlayerShielded(false);
           isPlayerShieldedRef.current = false;
           addPopup('BLOCKED 60%!', 'block', 140, 220);
@@ -1044,6 +1087,7 @@ export const ArenaScreen: React.FC = () => {
       setTimeout(() => {
         setOpponentAnim('idle');
         setPlayerAnim('idle');
+        setOpponentIntent('⚡ Ready to Strike');
       }, 400);
 
       // Broadcast to guest so guest's screen stays in exact lockstep!
@@ -1172,12 +1216,23 @@ export const ArenaScreen: React.FC = () => {
         return;
       }
 
-      // Normal passive Iron Guard
+      // Normal passive Iron Guard (2.5s duration)
+      if (playerGuardTimerRef.current) {
+        clearTimeout(playerGuardTimerRef.current);
+        playerGuardTimerRef.current = null;
+      }
       setIsPlayerShielded(true);
       isPlayerShieldedRef.current = true;
       sound.playCardPlay();
-      addPopup('SHIELD READY!', 'block', 140, 220);
+      addPopup('GUARD (2.5s)', 'block', 140, 220);
       setLastCombatLog(`🛡️ ${currentActiveFighter.name} raised Iron Guard!`);
+      playerGuardTimerRef.current = setTimeout(() => {
+        if (isPlayerShieldedRef.current) {
+          setIsPlayerShielded(false);
+          isPlayerShieldedRef.current = false;
+          addPopup('GUARD EXPIRED', 'player', 140, 220);
+        }
+      }, 2500);
       setCurrentCanvasAction({
         id: Date.now(),
         attacker: 'player',
@@ -1310,6 +1365,10 @@ export const ArenaScreen: React.FC = () => {
       if (battleOverRef.current || playerHpRef.current <= 0) return;
 
       if (isOpponentShieldedRef.current) {
+        if (opponentGuardTimerRef.current) {
+          clearTimeout(opponentGuardTimerRef.current);
+          opponentGuardTimerRef.current = null;
+        }
         setIsOpponentShielded(false);
         isOpponentShieldedRef.current = false;
         addPopup('SHIELD DEFLECTED!', 'block', 170, 80);
@@ -1467,6 +1526,15 @@ export const ArenaScreen: React.FC = () => {
     setAnnouncerText(won ? '🏆 K.O.! VICTORY!' : '💀 K.O.! DEFEATED');
     setAnnouncerPulse(true);
 
+    if (playerGuardTimerRef.current) {
+      clearTimeout(playerGuardTimerRef.current);
+      playerGuardTimerRef.current = null;
+    }
+    if (opponentGuardTimerRef.current) {
+      clearTimeout(opponentGuardTimerRef.current);
+      opponentGuardTimerRef.current = null;
+    }
+
     // Visceral K.O. Impact Boom & Haptic Crunch
     sound.playKO();
     triggerHeavyImpactHaptic();
@@ -1570,6 +1638,13 @@ export const ArenaScreen: React.FC = () => {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, [inBattle, battleOver, elixir, safeDeck, currentActiveFighter, isOpponentShielded, isPlayerShielded]);
+
+  useEffect(() => {
+    return () => {
+      if (playerGuardTimerRef.current) clearTimeout(playerGuardTimerRef.current);
+      if (opponentGuardTimerRef.current) clearTimeout(opponentGuardTimerRef.current);
+    };
+  }, []);
 
   const playerHpPct = Math.max(0, Math.min(100, (playerHp / maxPlayerHp) * 100));
   const oppHpPct = Math.max(0, Math.min(100, (opponentHp / maxOpponentHp) * 100));

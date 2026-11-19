@@ -95,6 +95,28 @@ export async function signInWithGoogle(): Promise<{ error?: string }> {
 }
 
 /**
+ * Sign in player using Discord OAuth via Supabase
+ */
+export async function signInWithDiscord(): Promise<{ error?: string }> {
+  if (!supabase) {
+    return { error: 'Supabase credentials are not configured.' };
+  }
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'discord',
+    options: {
+      redirectTo: `${window.location.origin}/`,
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return {};
+}
+
+/**
  * Register a new player with Email, Password & Username
  */
 export async function registerPlayerWithSupabase(

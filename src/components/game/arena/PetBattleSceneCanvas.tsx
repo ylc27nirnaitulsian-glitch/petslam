@@ -1889,13 +1889,14 @@ function drawCombatant(ctx: CanvasRenderingContext2D, p: CombatantRenderProps) {
     ctx.arc(2, -10, 1.4, 0, Math.PI * 2);
     ctx.fill();
 
+    // Sleek dual cyber-armor trim ribs (non-crossing, contour ridges)
     ctx.strokeStyle = '#F59E0B';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(-11, -16);
-    ctx.lineTo(8, -4);
-    ctx.moveTo(-9, -4);
-    ctx.lineTo(9, -16);
+    ctx.arc(0, -10, 16, 0.25 * Math.PI, 0.75 * Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, -10, 11, 0.3 * Math.PI, 0.7 * Math.PI);
     ctx.stroke();
     ctx.restore();
   }

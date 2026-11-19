@@ -30,7 +30,7 @@ import { SlamBattlePassModal } from '../game/liveops/SlamBattlePassModal';
 import { DailyQuestsDrawer } from '../game/liveops/DailyQuestsDrawer';
 import { LeaderboardModal } from '../Leaderboards/LeaderboardModal';
 import { PetWorldMapView } from '../game/pet/PetWorldMapView';
-import { RotateCw, Smartphone, Sparkles } from 'lucide-react';
+import { RotateCw, Smartphone, Sparkles, X } from 'lucide-react';
 
 interface DualOrientationShellProps {
   onReturnToTitle?: () => void;
@@ -142,6 +142,13 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
   // Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState<boolean>(false);
+  const [dismissedRotateTip, setDismissedRotateTip] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('petslam_dismiss_rotate_tip') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   // Development-only Hotkey Listener (Ctrl + Shift + D / Cmd + Shift + D)
   useEffect(() => {
@@ -337,20 +344,34 @@ export const DualOrientationShell: React.FC<DualOrientationShellProps> = ({
           onOpenRadar={() => setRadarModalOpen(true)}
         />
 
-        {/* Mobile Orientation Suggestion Banner in Arena */}
-        {currentTab === 'arena' && isPortrait && (
-          <div className="lg:hidden bg-[#151C28] border-b border-[#2A364F] px-3 py-1.5 flex items-center justify-between text-xs font-mono shrink-0">
-            <div className="flex items-center gap-1.5 text-[#CBD5E1] text-[11px]">
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Tip: Rotate to Landscape for Wide Arena</span>
+        {/* Mobile Orientation Suggestion Banner in Arena (Auto-hidden during battle or if dismissed) */}
+        {currentTab === 'arena' && isPortrait && !inBattle && !dismissedRotateTip && (
+          <div className="lg:hidden bg-[#151C28] border-b border-[#2A364F] px-3 py-1 flex items-center justify-between text-xs font-mono shrink-0">
+            <div className="flex items-center gap-1.5 text-[#CBD5E1] text-[11px] truncate">
+              <Smartphone className="w-3.5 h-3.5 text-[#F59E0B] shrink-0" />
+              <span className="truncate">Tip: Rotate for Wide Arena</span>
             </div>
-            <button
-              onClick={handleToggleFullscreen}
-              className="px-2 py-0.5 rounded bg-[#F59E0B] text-[#0B0F17] font-bold text-[10px] flex items-center gap-1 cursor-pointer"
-            >
-              <RotateCw className="w-3 h-3" />
-              <span>Fullscreen</span>
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={handleToggleFullscreen}
+                className="px-2 py-0.5 rounded bg-[#F59E0B] text-[#0B0F17] font-bold text-[10px] flex items-center gap-1 cursor-pointer"
+              >
+                <RotateCw className="w-3 h-3" />
+                <span>Fullscreen</span>
+              </button>
+              <button
+                onClick={() => {
+                  setDismissedRotateTip(true);
+                  try {
+                    localStorage.setItem('petslam_dismiss_rotate_tip', 'true');
+                  } catch {}
+                }}
+                className="p-1 rounded text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer"
+                title="Dismiss tip"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         )}
 
